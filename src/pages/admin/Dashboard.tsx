@@ -88,8 +88,13 @@ const Dashboard = () => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     try {
-      const res = await api.get<{ data: Submission[] }>('/admin/submissions')
-      const data = res.data?.data ?? (res.data as unknown as Submission[])
+      const res = await api.get('/admin/submissions')
+      // Tangani format paginasi Laravel (res.data.data.data) atau array biasa
+      const responseData = res.data?.data
+      const data: Submission[] = Array.isArray(responseData) 
+        ? responseData 
+        : (responseData?.data ?? [])
+      
       setSubmissions(data)
       setStats({
         total: data.length,
