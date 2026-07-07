@@ -1,7 +1,7 @@
-import PublicLogo from '../common/PublicLogo'
-import heroImage from '../../assets/o1.webp'
+import PublicLogo from '../../common/PublicLogo'
+import heroImage from '../../../assets/o1.webp'
 
-const HomeHero = () => {
+const Hero = () => {
   return (
     <section
       className="min-h-screen bg-cover bg-center bg-no-repeat"
@@ -24,4 +24,4 @@ const HomeHero = () => {
   )
 }
 
-export default HomeHero
+export default Hero

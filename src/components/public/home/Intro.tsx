@@ -1,14 +1,15 @@
 import { ArrowRight } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import PhotoCard from './PhotoCard'
-import introCard from '../../assets/02.webp'
+import introCard from '../../../assets/02.webp'
 
-const HomeIntro = () => {
+const Intro = () => {
   return (
     <section
       className="mx-auto my-20 grid max-w-[1210px] items-center gap-10 px-6 text-center lg:my-32 lg:grid-cols-[minmax(240px,420px)_minmax(0,1fr)] lg:gap-[clamp(48px,8vw,132px)] lg:px-0 lg:text-left"
       id="registration"
     >
-      {/* Left — Card rotated RIGHT */}
+      {/* Left — Photo card */}
       <div className="flex justify-center lg:justify-start">
         <PhotoCard
           imageSrc={introCard}
@@ -51,8 +52,8 @@ const HomeIntro = () => {
 
         {/* CTA Button */}
         <div className="mt-2">
-          <a
-            href="#guideline"
+          <Link
+            to="/daftar"
             className="group inline-flex items-center justify-center gap-4 rounded-2xl bg-primary px-10 py-4 text-[1.15rem] font-bold tracking-wide text-white shadow-[0_8px_32px_rgba(110,71,59,0.30)] transition-all duration-300 hover:-translate-y-1 hover:bg-primary-dark hover:shadow-[0_12px_40px_rgba(110,71,59,0.40)] sm:text-[1.25rem]"
           >
             <span>Daftar Sekarang</span>
@@ -61,7 +62,7 @@ const HomeIntro = () => {
               strokeWidth={2.5}
               className="transition-transform duration-300 group-hover:translate-x-1"
             />
-          </a>
+          </Link>
         </div>
 
       </div>
@@ -69,4 +70,4 @@ const HomeIntro = () => {
   )
 }
 
-export default HomeIntro
+export default Intro

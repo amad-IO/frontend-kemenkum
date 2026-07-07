@@ -38,13 +38,13 @@ const PhotoCard = ({
         className="
           text-center
           italic
-          text-[#888888]
+          text-[#6E473B]
           text-[0.78rem]
           leading-[1.55]
           px-4
           pt-4
           pb-2
-          font-normal
+          font-medium
         "
       >
         {caption}

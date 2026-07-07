@@ -1,14 +1,14 @@
 import PublicFooter from '../../components/common/PublicFooter'
 import PublicNavbar from '../../components/common/PublicNavbar'
-import HomeHero from '../../components/public/HomeHero'
-import HomeInfoCards from '../../components/public/HomeInfoCards'
-import HomeIntro from '../../components/public/HomeIntro'
+import Hero from '../../components/public/home/Hero'
+import InfoCards from '../../components/public/home/InfoCards'
+import Intro from '../../components/public/home/Intro'
 
 const LandingPage = () => {
   return (
     <div className="min-h-screen bg-neutral-card">
       {/* Hero dengan background image */}
-      <HomeHero />
+      <Hero />
 
       {/* Wrapper dengan strip gelap tipis di belakang radius navbar */}
       <div className="relative -mt-10 sm:-mt-14 lg:-mt-16">
@@ -24,9 +24,9 @@ const LandingPage = () => {
 
         {/* Konten menyatu langsung */}
         <main className="bg-neutral-card px-6 lg:px-12">
-          <HomeIntro />
+          <Intro />
           <section className="pb-20 lg:pb-32">
-            <HomeInfoCards />
+            <InfoCards />
           </section>
         </main>
       </div>

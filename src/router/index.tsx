@@ -4,6 +4,7 @@ import useAuthStore from '../store/authStore'
 
 // Public Pages
 import LandingPage from '../pages/public/LandingPage'
+import DaftarPage from '../pages/public/DaftarPage'
 import DetailProgram from '../pages/public/DetailProgram'
 import FormMagang from '../pages/public/FormMagang'
 import FormPenelitian from '../pages/public/FormPenelitian'
@@ -34,6 +35,10 @@ const router = createBrowserRouter([
   {
     path: '/',
     element: <LandingPage />,
+  },
+  {
+    path: '/daftar',
+    element: <DaftarPage />,
   },
   {
     path: '/program/:id',

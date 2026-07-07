@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 const navItems = [
   { label: 'Home', to: '/' },
   { label: 'Guideline', to: '#guideline' },
-  { label: 'Registration', to: '#registration' },
+  { label: 'Registration', to: '/daftar' },
 ]
 
 const PublicNavbar = () => {

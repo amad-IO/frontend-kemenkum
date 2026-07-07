@@ -82,14 +82,15 @@ Semua warna tersimpan di `tailwind.config.js` dan bisa langsung dipakai sebagai 
 
 | Token | Class Tailwind | Warna |
 |---|---|---|
-| Primary | `bg-primary`, `text-primary` | `#1a3c6e` (biru Kemenkuham) |
-| Primary Light | `bg-primary-light` | `#2855a0` |
-| Primary Dark | `bg-primary-dark` | `#102848` |
-| Secondary | `bg-secondary`, `text-secondary` | `#c8960c` (emas) |
-| Secondary Light | `bg-secondary-light` | `#f0b429` |
-| Background | `bg-neutral-bg` | `#f4f6fa` |
-| Card | `bg-neutral-card` | `#ffffff` |
-| Border | `border-neutral-border` | `#e5e7eb` |
+| Primary | `bg-primary`, `text-primary` | `#6E473B` (coklat tua) |
+| Primary Light | `bg-primary-light` | `#8A6A5E` |
+| Primary Dark | `bg-primary-dark` | `#4F332B` |
+| Secondary | `bg-secondary`, `text-secondary` | `#E1D4C2` (krem) |
+| Secondary Light | `bg-secondary-light` | `#EFE6D9` |
+| Background | `bg-neutral-bg` | `#F3EEE7` |
+| Card | `bg-neutral-card` | `#FAF8F4` |
+| Border | `border-neutral-border` | `#D4C5B3` |
+| Text Utama | `text-neutral-text` | `#211D1B` |
 
 ---
 
@@ -99,48 +100,59 @@ Semua warna tersimpan di `tailwind.config.js` dan bisa langsung dipakai sebagai 
 frontend/
 ├── public/
 ├── src/
-│   ├── assets/                     ← Gambar & file statis
+│   ├── assets/                     ← Gambar & file statis (gunakan .webp)
 │   │
-│   ├── components/                 ← Komponen reusable
-│   │   ├── common/                 ← Komponen umum (Navbar, Footer, dll)
-│   │   └── admin/                  ← Komponen khusus admin
-│   │       └── AdminLayout.tsx     ← Layout sidebar + konten admin
-│   │
-│   ├── pages/                      ← Halaman utama
-│   │   ├── public/                 ← Halaman yang bisa diakses publik
-│   │   │   ├── LandingPage.tsx     ← Daftar loker magang & penelitian
-│   │   │   ├── DetailProgram.tsx   ← Detail satu program
-│   │   │   ├── FormMagang.tsx      ← Form pendaftaran magang
-│   │   │   ├── FormPenelitian.tsx  ← Form pendaftaran penelitian
-│   │   │   └── Konfirmasi.tsx      ← Bukti & nomor pendaftaran
+│   ├── components/
+│   │   ├── common/                 ← Komponen lintas halaman (Navbar, Footer, Logo)
+│   │   │   ├── PublicNavbar.tsx
+│   │   │   ├── PublicFooter.tsx
+│   │   │   └── PublicLogo.tsx
 │   │   │
-│   │   └── admin/                  ← Halaman khusus admin (perlu login)
-│   │       ├── Login.tsx           ← Login admin
-│   │       ├── Dashboard.tsx       ← Statistik pendaftar
-│   │       ├── KelolaProgram.tsx   ← CRUD loker magang & penelitian
-│   │       ├── ListPendaftar.tsx   ← Tabel pendaftar + filter + export CSV
-│   │       └── SettingForm.tsx     ← Konfigurasi field form dinamis
+│   │   ├── public/                 ← Komponen per halaman publik
+│   │   │   ├── home/               ← Komponen khusus halaman Home
+│   │   │   │   ├── Hero.tsx
+│   │   │   │   ├── Intro.tsx
+│   │   │   │   ├── InfoCards.tsx
+│   │   │   │   └── PhotoCard.tsx
+│   │   │   ├── daftar/             ← Komponen khusus halaman Daftar
+│   │   │   └── guideline/          ← Komponen khusus halaman Guideline
+│   │   │
+│   │   └── admin/                  ← Komponen khusus halaman Admin
+│   │       └── AdminLayout.tsx
+│   │
+│   ├── pages/
+│   │   ├── public/                 ← Halaman publik (tanpa login)
+│   │   │   ├── LandingPage.tsx     ← Halaman utama (Home)
+│   │   │   ├── Daftar.tsx          ← Halaman pendaftaran
+│   │   │   └── Guideline.tsx       ← Halaman panduan
+│   │   │
+│   │   └── admin/                  ← Halaman admin (perlu login)
+│   │       ├── Login.tsx
+│   │       ├── Dashboard.tsx
+│   │       ├── KelolaProgram.tsx
+│   │       ├── ListPendaftar.tsx
+│   │       └── SettingForm.tsx
 │   │
 │   ├── router/
-│   │   └── index.tsx               ← Konfigurasi React Router + route guard
+│   │   └── index.tsx               ← React Router + route guard
 │   │
 │   ├── store/
 │   │   └── authStore.ts            ← Zustand: state login admin
 │   │
 │   ├── services/                   ← Semua pemanggilan API via Axios
 │   │   ├── api.ts                  ← Instance Axios + interceptor token
-│   │   ├── programService.ts       ← API loker magang & penelitian
-│   │   ├── pendaftarService.ts     ← API data pendaftar
-│   │   └── authService.ts          ← API login/logout admin
+│   │   ├── programService.ts
+│   │   ├── pendaftarService.ts
+│   │   └── authService.ts
 │   │
 │   ├── hooks/                      ← Custom React hooks
 │   ├── index.css                   ← Tailwind directives + global styles
 │   └── main.tsx                    ← Entry point app
 │
-├── .env                            ← Konfigurasi URL API (jangan di-commit)
+├── .env                            ← URL API (jangan di-commit!)
 ├── .env.example                    ← Template .env
 ├── index.html
-├── tailwind.config.js              ← Konfigurasi tema warna & font
+├── tailwind.config.js              ← Tema warna & font
 ├── postcss.config.js
 ├── tsconfig.json
 ├── vite.config.ts
@@ -152,13 +164,11 @@ frontend/
 ## 🗺️ Halaman & Akses
 
 ### 🌐 Publik (Tanpa Login)
-| Route | Halaman | Fungsi |
+| Route | Halaman | File |
 |---|---|---|
-| `/` | Landing Page | Tampilkan info loker magang & penelitian |
-| `/program/:id` | Detail Program | Info lengkap satu posisi |
-| `/daftar/magang/:id` | Form Magang | Form pendaftaran magang |
-| `/daftar/penelitian/:id` | Form Penelitian | Form pendaftaran penelitian |
-| `/konfirmasi` | Konfirmasi | Nomor pendaftaran + bukti |
+| `/` | **Home** | `LandingPage.tsx` |
+| `/daftar` | **Daftar** | `Daftar.tsx` |
+| `/guideline` | **Guideline** | `Guideline.tsx` |
 
 ### 🛡️ Admin (Perlu Login)
 | Route | Halaman | Fungsi |
@@ -213,11 +223,13 @@ App akan berjalan di → **http://localhost:5173**
 ## 📋 Aturan Kontribusi
 
 1. **Jangan pernah edit file backend** — semua `.php`, `composer.json`, migration, dll
-2. Semua styling menggunakan **Tailwind CSS** — tidak menggunakan file `.css` terpisah per komponen
-3. Semua pemanggilan API harus melalui folder `src/services/`
-4. Jangan hardcode URL API — selalu gunakan `import.meta.env.VITE_API_URL`
-5. Jangan commit file `.env` — hanya `.env.example` yang boleh di-commit
-6. Gunakan TypeScript dengan benar — hindari penggunaan `any`
+2. Semua styling menggunakan **Tailwind CSS** — tidak pakai file `.css` terpisah per komponen
+3. Komponen dikelompokkan per halaman di `components/public/home/`, `components/public/daftar/`, dll
+4. Semua pemanggilan API harus melalui folder `src/services/`
+5. Jangan hardcode URL API — selalu gunakan `import.meta.env.VITE_API_URL`
+6. Jangan commit file `.env` — hanya `.env.example` yang boleh di-commit
+7. Gunakan TypeScript dengan benar — hindari penggunaan `any`
+8. Gambar wajib format **WebP** untuk performa optimal
 
 ---
 
