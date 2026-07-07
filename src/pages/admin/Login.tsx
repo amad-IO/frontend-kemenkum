@@ -28,7 +28,7 @@ const Login = () => {
   const onSubmit = async (values: LoginForm) => {
     try {
       const res = await api.post('/admin/login', values)
-      const { token, user } = res.data
+      const { token, user } = res.data.data
       localStorage.setItem('admin_token', token)
       setAuth(token, user)
       toast.success('Selamat datang kembali!')
