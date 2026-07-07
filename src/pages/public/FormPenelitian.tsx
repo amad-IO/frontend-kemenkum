@@ -9,31 +9,35 @@ const FormPenelitian = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-neutral-bg">
-      <PublicNavbar />
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:px-6 lg:px-8">
-        <section className="flex flex-col gap-2">
+    <div className="min-h-screen bg-neutral-bg px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl">
+        <PublicNavbar />
+      </div>
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-6 pb-12 pt-6 sm:gap-8 sm:pt-8">
+        <section className="rounded-xl border border-neutral-border bg-white p-5 shadow-card sm:p-6">
           <p className="text-sm font-semibold uppercase tracking-wide text-primary">
             Pendaftaran Program
           </p>
-          <h1 className="text-3xl font-bold text-neutral-text sm:text-4xl">
+          <h1 className="mt-2 text-2xl font-bold text-neutral-text sm:text-3xl">
             Form Pendaftaran Penelitian
           </h1>
-          <p className="max-w-3xl text-sm leading-6 text-neutral-muted sm:text-base">
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-neutral-muted sm:text-base">
             Lengkapi data penelitian dan unggah dokumen persyaratan dalam format ZIP.
           </p>
         </section>
 
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <section className="rounded-2xl border border-neutral-border bg-white p-5 shadow-card sm:p-7">
+        <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <section className="min-w-0">
             <FormPenelitianSection onSuccess={() => navigate('/konfirmasi')} />
           </section>
-          <aside>
+          <aside className="min-w-0 xl:sticky xl:top-6">
             <PersyaratanBox kategoriList={getPersyaratanPenelitian()} jenis="penelitian" />
           </aside>
         </div>
       </main>
-      <PublicFooter />
+      <div className="mx-auto w-full max-w-7xl">
+        <PublicFooter />
+      </div>
     </div>
   )
 }
