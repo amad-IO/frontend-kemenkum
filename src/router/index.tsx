@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import type { ReactNode } from 'react'
 import useAuthStore from '../store/authStore'
 
 // Public Pages
@@ -19,7 +20,11 @@ import SettingForm from '../pages/admin/SettingForm'
 import AdminLayout from '../components/admin/AdminLayout'
 
 // Guard route admin
-const ProtectedRoute = ({ children }) => {
+type ProtectedRouteProps = {
+  children: ReactNode
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated } = useAuthStore()
   return isAuthenticated ? children : <Navigate to="/admin/login" replace />
 }

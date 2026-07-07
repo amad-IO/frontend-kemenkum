@@ -1,7 +1,17 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-const useAuthStore = create(
+type AdminUser = Record<string, unknown> | null
+
+type AuthStore = {
+  token: string | null
+  admin: AdminUser
+  isAuthenticated: boolean
+  setAuth: (token: string, admin: AdminUser) => void
+  logout: () => void
+}
+
+const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       token: null,

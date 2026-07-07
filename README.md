@@ -6,7 +6,7 @@
 ## 👤 Tentang Repository Ini
 
 Repository ini adalah **frontend** dari sistem pendaftaran magang dan penelitian Kemenkuham.
-Dikerjakan oleh **frontend developer** menggunakan **React 18 + Vite + JSX**.
+Dikerjakan oleh **frontend developer** menggunakan **React 18 + Vite + TypeScript**.
 
 > ⚠️ **PENTING UNTUK AI AGENT:**
 > Repository ini adalah **khusus frontend saja**.
@@ -20,7 +20,8 @@ Dikerjakan oleh **frontend developer** menggunakan **React 18 + Vite + JSX**.
 | Aksi | Status |
 |---|---|
 | Edit file di folder `src/` | ✅ Boleh |
-| Edit `vite.config.js` | ✅ Boleh |
+| Edit `vite.config.ts` | ✅ Boleh |
+| Edit `tailwind.config.js` | ✅ Boleh |
 | Edit `package.json` frontend | ✅ Boleh |
 | Tambah dependencies npm | ✅ Boleh |
 | Edit file di folder `backend/` | ❌ **TIDAK BOLEH** |
@@ -36,9 +37,9 @@ Dikerjakan oleh **frontend developer** menggunakan **React 18 + Vite + JSX**.
 ```
 ┌──────────────────────┐        ┌──────────────────────┐
 │   FRONTEND (kamu)    │        │   BACKEND (tim lain) │
-│   React 18 + Vite    │◄──────►│   Laravel + MySQL    │
-│   localhost:5173     │  API   │   localhost:8000     │
-│                      │  JSON  │                      │
+│  React 18 + Vite +  │◄──────►│   Laravel + MySQL    │
+│     TypeScript       │  API   │   localhost:8000     │
+│   localhost:5173     │  JSON  │                      │
 │  repo: frontend-     │        │  repo: WebMagang-    │
 │  kemenkum (amad-IO)  │        │  Kemenkuham (rahmrafi│
 └──────────────────────┘        └──────────────────────┘
@@ -58,20 +59,37 @@ Dikerjakan oleh **frontend developer** menggunakan **React 18 + Vite + JSX**.
 |---|---|
 | Framework | React 18 |
 | Build Tool | Vite |
-| Language | JavaScript + JSX |
+| Language | **TypeScript + TSX** |
+| Styling | **Tailwind CSS v3** |
+| Font | **Plus Jakarta Sans** |
 | Routing | React Router v6 |
 | State Management | Zustand |
 | Server State / Cache | TanStack Query (React Query) |
 | HTTP Client | Axios |
 | Form & Validasi | React Hook Form + Zod |
 | UI Component | Ant Design (antd) |
-| CSS | Vanilla CSS + CSS Variables |
 | Icons | Lucide React |
 | Animasi | Framer Motion |
 | Notifikasi | React Toastify |
-| Tabel Admin | Ant Design Table |
 | Export CSV | Papa Parse |
 | Chart Dashboard | Recharts |
+
+---
+
+## 🎨 Tema Warna (Tailwind)
+
+Semua warna tersimpan di `tailwind.config.js` dan bisa langsung dipakai sebagai class:
+
+| Token | Class Tailwind | Warna |
+|---|---|---|
+| Primary | `bg-primary`, `text-primary` | `#1a3c6e` (biru Kemenkuham) |
+| Primary Light | `bg-primary-light` | `#2855a0` |
+| Primary Dark | `bg-primary-dark` | `#102848` |
+| Secondary | `bg-secondary`, `text-secondary` | `#c8960c` (emas) |
+| Secondary Light | `bg-secondary-light` | `#f0b429` |
+| Background | `bg-neutral-bg` | `#f4f6fa` |
+| Card | `bg-neutral-card` | `#ffffff` |
+| Border | `border-neutral-border` | `#e5e7eb` |
 
 ---
 
@@ -81,49 +99,51 @@ Dikerjakan oleh **frontend developer** menggunakan **React 18 + Vite + JSX**.
 frontend/
 ├── public/
 ├── src/
-│   ├── assets/
-│   │   └── styles/
-│   │       └── global.css          ← CSS global & variabel warna tema
+│   ├── assets/                     ← Gambar & file statis
 │   │
 │   ├── components/                 ← Komponen reusable
 │   │   ├── common/                 ← Komponen umum (Navbar, Footer, dll)
 │   │   └── admin/                  ← Komponen khusus admin
-│   │       └── AdminLayout.jsx     ← Layout sidebar + konten admin
+│   │       └── AdminLayout.tsx     ← Layout sidebar + konten admin
 │   │
 │   ├── pages/                      ← Halaman utama
 │   │   ├── public/                 ← Halaman yang bisa diakses publik
-│   │   │   ├── LandingPage.jsx     ← Daftar loker magang & penelitian
-│   │   │   ├── DetailProgram.jsx   ← Detail satu program
-│   │   │   ├── FormMagang.jsx      ← Form pendaftaran magang
-│   │   │   ├── FormPenelitian.jsx  ← Form pendaftaran penelitian
-│   │   │   └── Konfirmasi.jsx      ← Bukti & nomor pendaftaran
+│   │   │   ├── LandingPage.tsx     ← Daftar loker magang & penelitian
+│   │   │   ├── DetailProgram.tsx   ← Detail satu program
+│   │   │   ├── FormMagang.tsx      ← Form pendaftaran magang
+│   │   │   ├── FormPenelitian.tsx  ← Form pendaftaran penelitian
+│   │   │   └── Konfirmasi.tsx      ← Bukti & nomor pendaftaran
 │   │   │
 │   │   └── admin/                  ← Halaman khusus admin (perlu login)
-│   │       ├── Login.jsx           ← Login admin
-│   │       ├── Dashboard.jsx       ← Statistik pendaftar
-│   │       ├── KelolaProgram.jsx   ← CRUD loker magang & penelitian
-│   │       ├── ListPendaftar.jsx   ← Tabel pendaftar + filter + export CSV
-│   │       └── SettingForm.jsx     ← Konfigurasi field form dinamis
+│   │       ├── Login.tsx           ← Login admin
+│   │       ├── Dashboard.tsx       ← Statistik pendaftar
+│   │       ├── KelolaProgram.tsx   ← CRUD loker magang & penelitian
+│   │       ├── ListPendaftar.tsx   ← Tabel pendaftar + filter + export CSV
+│   │       └── SettingForm.tsx     ← Konfigurasi field form dinamis
 │   │
 │   ├── router/
-│   │   └── index.jsx               ← Konfigurasi React Router + route guard
+│   │   └── index.tsx               ← Konfigurasi React Router + route guard
 │   │
 │   ├── store/
-│   │   └── authStore.js            ← Zustand: state login admin
+│   │   └── authStore.ts            ← Zustand: state login admin
 │   │
 │   ├── services/                   ← Semua pemanggilan API via Axios
-│   │   ├── api.js                  ← Instance Axios + interceptor token
-│   │   ├── programService.js       ← API loker magang & penelitian
-│   │   ├── pendaftarService.js     ← API data pendaftar
-│   │   └── authService.js          ← API login/logout admin
+│   │   ├── api.ts                  ← Instance Axios + interceptor token
+│   │   ├── programService.ts       ← API loker magang & penelitian
+│   │   ├── pendaftarService.ts     ← API data pendaftar
+│   │   └── authService.ts          ← API login/logout admin
 │   │
 │   ├── hooks/                      ← Custom React hooks
-│   └── main.jsx                    ← Entry point app
+│   ├── index.css                   ← Tailwind directives + global styles
+│   └── main.tsx                    ← Entry point app
 │
 ├── .env                            ← Konfigurasi URL API (jangan di-commit)
 ├── .env.example                    ← Template .env
 ├── index.html
-├── vite.config.js
+├── tailwind.config.js              ← Konfigurasi tema warna & font
+├── postcss.config.js
+├── tsconfig.json
+├── vite.config.ts
 └── package.json
 ```
 
@@ -185,7 +205,7 @@ App akan berjalan di → **http://localhost:5173**
 
 | Repo | Link | Keterangan |
 |---|---|---|
-| **Frontend** (ini) | [amad-IO/frontend-kemenkum](https://github.com/amad-IO/frontend-kemenkum) | React + Vite |
+| **Frontend** (ini) | [amad-IO/frontend-kemenkum](https://github.com/amad-IO/frontend-kemenkum) | React + Vite + TypeScript |
 | **Backend** | [rahmrafi/WebMagang-Kemenkuham](https://github.com/rahmrafi/WebMagang-Kemenkuham) | Laravel + MySQL Azure |
 
 ---
@@ -193,10 +213,11 @@ App akan berjalan di → **http://localhost:5173**
 ## 📋 Aturan Kontribusi
 
 1. **Jangan pernah edit file backend** — semua `.php`, `composer.json`, migration, dll
-2. Selalu buat **branch baru** untuk setiap fitur: `git checkout -b feat/nama-fitur`
+2. Semua styling menggunakan **Tailwind CSS** — tidak menggunakan file `.css` terpisah per komponen
 3. Semua pemanggilan API harus melalui folder `src/services/`
 4. Jangan hardcode URL API — selalu gunakan `import.meta.env.VITE_API_URL`
 5. Jangan commit file `.env` — hanya `.env.example` yang boleh di-commit
+6. Gunakan TypeScript dengan benar — hindari penggunaan `any`
 
 ---
 
