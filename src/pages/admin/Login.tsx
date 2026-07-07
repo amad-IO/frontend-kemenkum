@@ -9,7 +9,7 @@ import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 
 const loginSchema = z.object({
-  email: z.string().min(1, 'Username / email wajib diisi'),
+  username: z.string().min(1, 'Username wajib diisi'),
   password: z.string().min(1, 'Password wajib diisi'),
 })
 type LoginForm = z.infer<typeof loginSchema>
@@ -66,26 +66,26 @@ const Login = () => {
           {/* Form */}
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
 
-            {/* Email / Username */}
+            {/* Username */}
             <div className="flex flex-col gap-1.5">
-              <label htmlFor="email" className="text-sm font-semibold text-neutral-text">
-                Username / Email
+              <label htmlFor="username" className="text-sm font-semibold text-neutral-text">
+                Username
               </label>
               <div className="relative">
                 <span className="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-neutral-muted">
                   <User size={17} />
                 </span>
                 <input
-                  id="email"
+                  id="username"
                   type="text"
                   autoComplete="username"
-                  placeholder="Masukkan username atau email"
-                  {...register('email')}
+                  placeholder="Masukkan username admin"
+                  {...register('username')}
                   className="input-field pl-10"
                 />
               </div>
-              {errors.email && (
-                <p className="text-xs text-red-500">{errors.email.message}</p>
+              {errors.username && (
+                <p className="text-xs text-red-500">{errors.username.message}</p>
               )}
             </div>
 
