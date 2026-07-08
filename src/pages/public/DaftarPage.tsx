@@ -25,14 +25,14 @@ const DaftarPage = () => {
 
   return (
     <PublicHeroLayout>
-      <main className="bg-neutral-bg">
+      <main className="bg-neutral-card">
         <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
 
           {/* ── Breadcrumb ── */}
           <nav className="mb-6 flex items-center gap-1.5 text-xs text-neutral-muted" aria-label="Breadcrumb">
             <Link to="/" className="hover:text-primary transition-colors">Home</Link>
             <ChevronRight size={13} />
-            <span className="font-semibold text-primary">Pendaftaran</span>
+            <span className="font-semibold text-primary">Registration</span>
           </nav>
 
           {/* ── Tab Toggle ── */}

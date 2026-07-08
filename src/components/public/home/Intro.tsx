@@ -6,7 +6,7 @@ import introCard from '../../../assets/02.webp'
 const Intro = () => {
   return (
     <section
-      className="mx-auto mb-20 mt-12 grid max-w-[1210px] items-center gap-10 px-6 text-center sm:mt-16 lg:mb-32 lg:mt-20 lg:grid-cols-[minmax(240px,420px)_minmax(0,1fr)] lg:gap-[clamp(48px,8vw,132px)] lg:px-0 lg:text-left"
+      className="mx-auto mb-20 mt-10 grid max-w-[1210px] items-center gap-10 px-6 text-center sm:mt-14 lg:mb-32 lg:mt-16 lg:grid-cols-[minmax(240px,420px)_minmax(0,1fr)] lg:gap-[clamp(48px,8vw,132px)] lg:px-0 lg:text-left"
       id="registration"
     >
       {/* Left — Photo card */}

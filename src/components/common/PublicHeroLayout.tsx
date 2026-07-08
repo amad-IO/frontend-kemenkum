@@ -57,12 +57,14 @@ const PublicHeroLayout = ({ children }: PublicHeroLayoutProps) => {
         </div>
       </section>
 
-      <div className="relative z-50 -mt-20 sm:-mt-20 lg:-mt-20 bg-neutral-card rounded-t-[40px] sm:rounded-t-[56px] lg:rounded-t-[72px] flex flex-col">
-        <header className="mx-auto w-full max-w-[1330px] px-6 lg:px-12">
-          <PublicNavbar />
-        </header>
+      <div className="-mt-20 bg-neutral-card rounded-t-[40px] sm:-mt-20 sm:rounded-t-[56px] lg:-mt-20 lg:rounded-t-[72px]">
+        <div className="sticky top-0 z-50 bg-neutral-card rounded-t-[40px] sm:rounded-t-[56px] lg:rounded-t-[72px]">
+          <header className="mx-auto w-full max-w-[1330px] px-6 lg:px-12">
+            <PublicNavbar />
+          </header>
+        </div>
 
-        <div className="flex-1">
+        <div className="flow-root flex-1 bg-neutral-card">
           {children}
         </div>
       </div>
