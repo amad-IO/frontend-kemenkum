@@ -1,29 +1,19 @@
 import { useEffect, useState } from 'react'
-import {
-  Users,
-  ClipboardList,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  TrendingUp,
-  Download,
-  RefreshCw,
+import { 
+  Users, 
+  ClipboardList, 
+  CheckCircle2, 
+  XCircle, 
+  Clock, 
+  TrendingUp, 
+  Download, 
+  RefreshCw 
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import api from '../../services/api'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface Submission {
-  id: number
-  type: 'magang' | 'penelitian'
-  institution: string
-  member_1: string
-  letter_number: string
-  status: 'pending' | 'approved' | 'rejected'
-  created_at: string
-  position?: { position_name: string }
-}
+import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
+import SubmissionTable from '../../components/admin/SubmissionTable'
+import type { Submission } from './ListPendaftar'
 
 interface Stats {
   total: number
@@ -34,7 +24,7 @@ interface Stats {
   penelitian: number
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// ─── Stat Card Component ──────────────────────────────────────────────────────
 
 const StatCard = ({
   label,
@@ -61,37 +51,26 @@ const StatCard = ({
   </div>
 )
 
-// ─── Status Badge ─────────────────────────────────────────────────────────────
-
-const StatusBadge = ({ status }: { status: Submission['status'] }) => {
-  const map = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
-  }
-  const label = { pending: 'Menunggu', approved: 'Diterima', rejected: 'Ditolak' }
-  return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${map[status]}`}>
-      {label[status]}
-    </span>
-  )
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main Dashboard Component ─────────────────────────────────────────────────
 
 const Dashboard = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, approved: 0, rejected: 0, magang: 0, penelitian: 0 })
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  
+  const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isDownloading, setIsDownloading] = useState(false)
 
   const fetchData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     try {
       const res = await api.get('/admin/submissions')
-      // Tangani format paginasi Laravel (res.data.data.data) atau array biasa
       const responseData = res.data?.data
+      
+      // Pengaman: Pastikan data selalu berbentuk array sebelum dimasukkan ke state
       const data: Submission[] = Array.isArray(responseData) 
         ? responseData 
         : (responseData?.data ?? [])
@@ -105,20 +84,72 @@ const Dashboard = () => {
         magang: data.filter((s) => s.type === 'magang').length,
         penelitian: data.filter((s) => s.type === 'penelitian').length,
       })
-    } catch {
-      // Hapus penggunaan data dummy. Biarkan tetap bernilai array kosong/0
-      toast.error('Gagal memuat data Dashboard. Pastikan backend aktif.');
+    } catch (error) {
+      console.error('Dashboard Fetch Error:', error)
+      toast.error('Gagal memuat data Dashboard. Pastikan backend aktif.')
+      
+      // Jika API error, paksa state kembali ke array kosong agar tidak melempar undefined
+      setSubmissions([])
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
   }
 
-  useEffect(() => { fetchData() }, [])
+  const handleStatusChange = async (id: number, status: 'approved' | 'rejected') => {
+    try {
+      setIsUpdating(true)
+      await api.patch(`/admin/submissions/${id}/status`, { status })
+      
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status } : s))
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, status } : null)
+      }
+      
+      toast.success(`Status permohonan berhasil diperbarui`)
+      fetchData(true)
+    } catch {
+      toast.error('Gagal mengubah status permohonan')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
-  const getName = (member1: string) => member1.split('|')[0] ?? '-'
+  const handleDownload = async (id: number, e?: React.MouseEvent) => {
+    e?.stopPropagation()
+    try {
+      setIsDownloading(true)
+      const res = await api.get(`/admin/submissions/${id}/download`, { responseType: 'blob' })
+      const submission = submissions.find(s => s.id === id)
+      let filename = `permohonan-${id}.zip`
+      
+      if (submission) {
+        const ketua = submission.member_1.split('|')[0] || 'ketua'
+        const kampus = submission.institution || 'kampus'
+        filename = `permohonan_${ketua.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${kampus.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.zip`
+      }
+      
+      const url = window.URL.createObjectURL(new Blob([res.data]))
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', filename)
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      toast.success('Berkas berhasil diunduh')
+    } catch {
+      toast.error('Gagal mengunduh berkas ZIP.')
+    } finally {
+      setIsDownloading(false)
+    }
+  }
 
-  const recentFive = submissions.slice(0, 5)
+  useEffect(() => { 
+    fetchData() 
+  }, [])
+
+  // Pengaman tambahan: Pastikan submissions divalidasi array sebelum di-slice
+  const recentFive = Array.isArray(submissions) ? submissions.slice(0, 5) : []
 
   if (loading) {
     return (
@@ -130,22 +161,19 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-6">
-
+      
       {/* ── Page Header ── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Dashboard</h1>
-          <p className="mt-0.5 text-sm text-neutral-muted">
-            Ringkasan pendaftaran Magang & Penelitian
-          </p>
+          <p className="mt-0.5 text-sm text-neutral-muted">Ringkasan pendaftaran Magang & Penelitian</p>
         </div>
-        <button
-          onClick={() => fetchData(true)}
-          disabled={refreshing}
+        <button 
+          onClick={() => fetchData(true)} 
+          disabled={refreshing} 
           className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
         >
-          <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
-          Refresh
+          <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
 
@@ -157,45 +185,34 @@ const Dashboard = () => {
         <StatCard label="Ditolak" value={stats.rejected} icon={XCircle} color="bg-red-400" />
       </div>
 
-      {/* ── Row 2: Split cards ── */}
+      {/* ── Split Cards Row ── */}
       <div className="grid gap-4 lg:grid-cols-3">
-
-        {/* Jenis Program */}
+        {/* Jenis Program Card */}
         <div className="rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold text-neutral-text">Jenis Program</h2>
             <TrendingUp size={16} className="text-primary" />
           </div>
           <div className="flex flex-col gap-3">
-            {/* Magang */}
             <div>
               <div className="mb-1 flex justify-between text-xs">
                 <span className="font-semibold text-neutral-subtle">Magang</span>
                 <span className="font-bold text-primary">{stats.magang}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-neutral-bg">
-                <div
-                  className="h-full rounded-full bg-primary transition-all duration-500"
-                  style={{ width: stats.total ? `${(stats.magang / stats.total) * 100}%` : '0%' }}
-                />
+                <div className="h-full rounded-full bg-primary transition-all duration-500" style={{ width: stats.total ? `${(stats.magang / stats.total) * 100}%` : '0%' }} />
               </div>
             </div>
-            {/* Penelitian */}
             <div>
               <div className="mb-1 flex justify-between text-xs">
                 <span className="font-semibold text-neutral-subtle">Penelitian</span>
                 <span className="font-bold text-secondary">{stats.penelitian}</span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-neutral-bg">
-                <div
-                  className="h-full rounded-full bg-secondary transition-all duration-500"
-                  style={{ width: stats.total ? `${(stats.penelitian / stats.total) * 100}%` : '0%' }}
-                />
+                <div className="h-full rounded-full bg-secondary transition-all duration-500" style={{ width: stats.total ? `${(stats.penelitian / stats.total) * 100}%` : '0%' }} />
               </div>
             </div>
           </div>
-
-          {/* Summary number */}
           <div className="mt-5 flex gap-4 border-t border-neutral-border pt-4">
             <div className="text-center flex-1">
               <p className="text-xl font-extrabold text-primary">{stats.magang}</p>
@@ -209,24 +226,19 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Status overview */}
+        {/* Status Overview Card */}
         <div className="rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card">
           <div className="mb-4 flex items-center justify-between">
             <h2 className="text-sm font-bold text-neutral-text">Status Overview</h2>
             <Users size={16} className="text-primary" />
           </div>
           <div className="flex flex-col gap-3">
-            {[
-              { label: 'Menunggu', val: stats.pending, color: 'bg-yellow-400' },
-              { label: 'Diterima', val: stats.approved, color: 'bg-green-500' },
-              { label: 'Ditolak', val: stats.rejected, color: 'bg-red-400' },
-            ].map(({ label, val, color }) => (
+            {[{ label: 'Menunggu', val: stats.pending, color: 'bg-yellow-400' }, { label: 'Diterima', val: stats.approved, color: 'bg-green-500' }, { label: 'Ditolak', val: stats.rejected, color: 'bg-red-400' }].map(({ label, val, color }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${color}`} />
                 <span className="flex-1 text-xs font-semibold text-neutral-subtle">{label}</span>
-                <span className="text-sm font-extrabold text-neutral-text">{val}</span>
-                <span className="text-xs text-neutral-muted">
-                  ({stats.total ? Math.round((val / stats.total) * 100) : 0}%)
+                <span className="text-sm font-extrabold text-neutral-text">
+                  {val} <span className="text-xs text-neutral-muted font-normal">({stats.total ? Math.round((val / stats.total) * 100) : 0}%)</span>
                 </span>
               </div>
             ))}
@@ -238,95 +250,43 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Quick actions */}
+        {/* Quick Actions Card */}
         <div className="rounded-2xl border border-neutral-border bg-primary p-5 shadow-card text-white">
           <h2 className="mb-4 text-sm font-bold">Aksi Cepat</h2>
           <div className="flex flex-col gap-2">
-            <a
-              href="/admin/pendaftar"
-              className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25"
-            >
-              <Users size={15} />
-              Lihat Semua Pendaftar
+            <a href="/admin/pendaftar" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
+              <Users size={15} /> Lihat Semua Pendaftar
             </a>
-            <a
-              href="/admin/pendaftar?status=pending"
-              className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25"
-            >
-              <Clock size={15} />
-              Review Pending ({stats.pending})
+            <a href="/admin/pendaftar?status=pending" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
+              <Clock size={15} /> Review Pending ({stats.pending})
             </a>
-            <a
-              href="/admin/setting-form"
-              className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25"
-            >
-              <Download size={15} />
-              Setting Form
+            <a href="/admin/setting-form" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
+              <Download size={15} /> Setting Form
             </a>
           </div>
         </div>
       </div>
 
-      {/* ── Recent Submissions Table ── */}
+      {/* ── Recent Submissions Table Container ── */}
       <div className="rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
         <div className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
           <h2 className="text-sm font-bold text-neutral-text">Pendaftaran Terbaru</h2>
-          <a
-            href="/admin/pendaftar"
-            className="text-xs font-semibold text-primary hover:underline"
-          >
-            Lihat semua →
-          </a>
+          <a href="/admin/pendaftar" className="text-xs font-semibold text-primary hover:underline">Lihat semua →</a>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-border bg-neutral-bg text-xs text-neutral-muted">
-                <th className="px-5 py-3 text-left font-semibold">Nama</th>
-                <th className="px-5 py-3 text-left font-semibold">Instansi</th>
-                <th className="px-5 py-3 text-left font-semibold">Jenis</th>
-                <th className="px-5 py-3 text-left font-semibold">No. Surat</th>
-                <th className="px-5 py-3 text-left font-semibold">Tanggal</th>
-                <th className="px-5 py-3 text-left font-semibold">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentFive.map((s, i) => (
-                <tr
-                  key={s.id}
-                  className={`transition-colors hover:bg-neutral-bg ${i !== recentFive.length - 1 ? 'border-b border-neutral-border' : ''}`}
-                >
-                  <td className="px-5 py-3 font-semibold text-neutral-text">
-                    {getName(s.member_1)}
-                  </td>
-                  <td className="px-5 py-3 text-neutral-subtle">{s.institution}</td>
-                  <td className="px-5 py-3">
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${s.type === 'magang' ? 'bg-primary/10 text-primary' : 'bg-secondary text-neutral-subtle'}`}>
-                      {s.type === 'magang' ? 'Magang' : 'Penelitian'}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3 font-mono text-xs text-neutral-muted">
-                    {s.letter_number}
-                  </td>
-                  <td className="px-5 py-3 text-neutral-muted">
-                    {new Date(s.created_at).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
-                  </td>
-                  <td className="px-5 py-3">
-                    <StatusBadge status={s.status} />
-                  </td>
-                </tr>
-              ))}
-              {recentFive.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="py-10 text-center text-sm text-neutral-muted">
-                    Belum ada data pendaftaran
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        
+        {/* Memanggil Reusable Table Component */}
+        <SubmissionTable data={recentFive} onOpenDetail={(s) => setSelectedSubmission(s)} />
       </div>
+
+      {/* Modal Detail Pendaftar */}
+      <DetailPendaftarModal 
+        submission={selectedSubmission} 
+        onClose={() => setSelectedSubmission(null)}
+        onStatusChange={handleStatusChange} 
+        onDownload={handleDownload}
+        isUpdating={isUpdating} 
+        isDownloading={isDownloading}
+      />
     </div>
   )
 }

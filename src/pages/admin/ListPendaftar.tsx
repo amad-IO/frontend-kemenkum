@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, Eye } from 'lucide-react'
+import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'react-toastify'
 import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
+import SubmissionTable from '../../components/admin/SubmissionTable' // <-- Import Komponen Tabel Baru
 
 export interface Submission {
   id: number
@@ -34,7 +35,7 @@ const ListPendaftar = () => {
   const [typeFilter, setTypeFilter] = useState<string>('all')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  // Pagination client-side (Karena API mungkin mengembalikan semua data dalam array jika dimodifikasi, tapi asumsikan kita punya array data utuh)
+  // Pagination client-side
   const [currentPage, setCurrentPage] = useState(1)
   const itemsPerPage = 10
 
@@ -143,14 +144,12 @@ const ListPendaftar = () => {
         const ketua = submission.member_1.split('|')[0] || 'ketua'
         const kampus = submission.institution || 'kampus'
         
-        // Clean characters for filename safety
         const cleanKetua = ketua.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
         const cleanKampus = kampus.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
         
         filename = `permohonan_${cleanKetua}_${cleanKampus}.zip`
       }
       
-      // Create object url and download
       const url = window.URL.createObjectURL(new Blob([res.data]))
       const link = document.createElement('a')
       link.href = url
@@ -165,23 +164,6 @@ const ListPendaftar = () => {
       setIsDownloading(false)
     }
   }
-
-  // UI Helpers
-  const StatusBadge = ({ status }: { status: Submission['status'] }) => {
-    const map = {
-      pending: 'bg-yellow-100 text-yellow-700',
-      approved: 'bg-green-100 text-green-700',
-      rejected: 'bg-red-100 text-red-700',
-    }
-    const label = { pending: 'Menunggu', approved: 'Diterima', rejected: 'Ditolak' }
-    return (
-      <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${map[status]}`}>
-        {label[status]}
-      </span>
-    )
-  }
-
-  const getName = (member1: string) => member1.split('|')[0] ?? '-'
 
   return (
     <div className="flex flex-col gap-6">
@@ -248,69 +230,19 @@ const ListPendaftar = () => {
 
       {/* ── Data Table ── */}
       <div className="rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-border bg-neutral-bg text-xs text-neutral-muted">
-                <th className="px-5 py-3 text-left font-semibold">Peserta</th>
-                <th className="px-5 py-3 text-left font-semibold">Program & Instansi</th>
-                <th className="px-5 py-3 text-left font-semibold">Tanggal Kegiatan</th>
-                <th className="px-5 py-3 text-left font-semibold">Status</th>
-                <th className="px-5 py-3 text-right font-semibold">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="py-16 text-center">
-                    <RefreshCw size={30} className="mx-auto animate-spin text-primary" />
-                    <p className="mt-3 text-sm text-neutral-muted">Memuat data pendaftar...</p>
-                  </td>
-                </tr>
-              ) : paginatedData.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-16 text-center">
-                    <p className="text-sm font-semibold text-neutral-muted">Tidak ada data pendaftar yang ditemukan.</p>
-                  </td>
-                </tr>
-              ) : (
-                paginatedData.map((s, i) => (
-                  <tr
-                    key={s.id}
-                    onClick={() => setSelectedSubmission(s)}
-                    className={`cursor-pointer transition-colors hover:bg-primary/5 ${i !== paginatedData.length - 1 ? 'border-b border-neutral-border' : ''}`}
-                  >
-                    <td className="px-5 py-3">
-                      <p className="font-extrabold text-neutral-text">{getName(s.member_1)}</p>
-                      <p className="font-mono text-xs text-neutral-muted mt-0.5">{s.letter_number}</p>
-                    </td>
-                    <td className="px-5 py-3">
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold mb-1 ${s.type === 'magang' ? 'bg-primary/10 text-primary' : 'bg-secondary text-neutral-subtle'}`}>
-                        {s.type === 'magang' ? 'Magang' : 'Penelitian'}
-                      </span>
-                      <p className="text-xs font-semibold text-neutral-subtle">{s.institution}</p>
-                    </td>
-                    <td className="px-5 py-3 text-xs text-neutral-subtle">
-                      <p>{new Date(s.start_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} -</p>
-                      <p>{new Date(s.end_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                    </td>
-                    <td className="px-5 py-3">
-                      <StatusBadge status={s.status} />
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setSelectedSubmission(s); }}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
-                      >
-                        <Eye size={14} /> Detail
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {loading ? (
+          <div className="py-16 text-center">
+            <RefreshCw size={30} className="mx-auto animate-spin text-primary" />
+            <p className="mt-3 text-sm text-neutral-muted">Memuat data pendaftar...</p>
+          </div>
+        ) : paginatedData.length === 0 ? (
+          <div className="py-16 text-center">
+            <p className="text-sm font-semibold text-neutral-muted">Tidak ada data pendaftar yang ditemukan.</p>
+          </div>
+        ) : (
+          /* Menggunakan komponen tabel reusable */
+          <SubmissionTable data={paginatedData} onOpenDetail={(s) => setSelectedSubmission(s)} />
+        )}
 
         {/* ── Pagination Footer ── */}
         {!loading && totalPages > 1 && (
