@@ -23,7 +23,7 @@ const PublicHeroLayout = ({ children }: PublicHeroLayoutProps) => {
   const titleLines = isRegistration ? ['Pendaftaran Program'] : homeTitle
 
   return (
-    <div className="min-h-screen bg-neutral-card">
+    <div className="min-h-screen bg-[#211D1B]">
       <section
         className="min-h-screen bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${heroImage})` }}
@@ -57,15 +57,14 @@ const PublicHeroLayout = ({ children }: PublicHeroLayoutProps) => {
         </div>
       </section>
 
-      <div className="relative -mt-20 bg-neutral-card sm:-mt-20 lg:-mt-20">
-        <div className="absolute inset-x-0 top-0 h-20 bg-[#211D1B]" />
-        <header className="sticky top-0 z-50 bg-neutral-card rounded-tl-[40px] rounded-tr-[40px] sm:rounded-tl-[56px] sm:rounded-tr-[56px] lg:rounded-tl-[72px] lg:rounded-tr-[72px]">
-          <div className="mx-auto max-w-[1330px] px-6 lg:px-12">
-            <PublicNavbar />
-          </div>
+      <div className="relative z-50 -mt-20 sm:-mt-20 lg:-mt-20 bg-neutral-card rounded-t-[40px] sm:rounded-t-[56px] lg:rounded-t-[72px] flex flex-col">
+        <header className="mx-auto w-full max-w-[1330px] px-6 lg:px-12">
+          <PublicNavbar />
         </header>
 
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
       </div>
     </div>
   )
