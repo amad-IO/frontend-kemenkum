@@ -9,6 +9,7 @@ import {
   Download,
   RefreshCw,
 } from 'lucide-react'
+import { toast } from 'react-toastify'
 import api from '../../services/api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -105,16 +106,8 @@ const Dashboard = () => {
         penelitian: data.filter((s) => s.type === 'penelitian').length,
       })
     } catch {
-      // Gunakan dummy jika API belum tersedia
-      const dummy: Submission[] = [
-        { id: 1, type: 'magang', institution: 'Universitas Indonesia', member_1: 'Ahmad Fauzi|2021010001|ahmad@ui.ac.id', letter_number: 'UI/2026/001', status: 'pending', created_at: '2026-07-01', position: { position_name: 'Hukum Perdata' } },
-        { id: 2, type: 'penelitian', institution: 'Universitas Gadjah Mada', member_1: 'Sari Dewi|2020020002|sari@ugm.ac.id', letter_number: 'UGM/2026/012', status: 'approved', created_at: '2026-07-02' },
-        { id: 3, type: 'magang', institution: 'Universitas Brawijaya', member_1: 'Budi Santoso|2021030003|budi@ub.ac.id', letter_number: 'UB/2026/008', status: 'pending', created_at: '2026-07-03', position: { position_name: 'Administrasi' } },
-        { id: 4, type: 'penelitian', institution: 'Institut Teknologi Bandung', member_1: 'Rina Putri|2020040004|rina@itb.ac.id', letter_number: 'ITB/2026/005', status: 'rejected', created_at: '2026-07-04' },
-        { id: 5, type: 'magang', institution: 'Universitas Airlangga', member_1: 'Dani Kusuma|2021050005|dani@unair.ac.id', letter_number: 'UNAIR/2026/003', status: 'approved', created_at: '2026-07-05', position: { position_name: 'Hukum Pidana' } },
-      ]
-      setSubmissions(dummy)
-      setStats({ total: 5, pending: 2, approved: 2, rejected: 1, magang: 3, penelitian: 2 })
+      // Hapus penggunaan data dummy. Biarkan tetap bernilai array kosong/0
+      toast.error('Gagal memuat data Dashboard. Pastikan backend aktif.');
     } finally {
       setLoading(false)
       setRefreshing(false)
