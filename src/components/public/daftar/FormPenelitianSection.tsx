@@ -6,6 +6,7 @@ import { BookOpenText, CalendarDays, Loader2, Plus, Trash2, Upload, User, Users 
 import { toast } from 'react-toastify'
 import { submitPendaftaran } from '../../../services/daftarService'
 import DateRangePickerField from './DateRangePickerField'
+import ConfirmModal from './ConfirmModal'
 
 const anggotaSchema = z.object({
   nama: z.string().min(2, 'Nama minimal 2 karakter'),
@@ -45,10 +46,16 @@ interface Props {
 const fieldWrap = 'flex flex-col gap-1.5'
 const sectionClass = 'rounded-xl border border-neutral-border bg-white p-4 sm:p-5'
 const sectionTitleClass = 'mb-4 flex items-center gap-2 text-base font-bold text-neutral-text'
+const successRedirectDelay = 1400
 
 const FormPenelitianSection = ({ onSuccess }: Props) => {
   const [dragOver, setDragOver] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
+  
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false)
+  const [submitData, setSubmitData] = useState<FormData | null>(null)
+  const [isModalSubmitting, setIsModalSubmitting] = useState(false)
+  const [isModalSuccess, setIsModalSuccess] = useState(false)
 
   const {
     register,
@@ -70,7 +77,7 @@ const FormPenelitianSection = ({ onSuccess }: Props) => {
   const startDate = watch('start_date')
   const endDate = watch('end_date')
 
-  const onSubmit = async (values: PenelitianFormValues) => {
+  const onSubmit = (values: PenelitianFormValues) => {
     const formData = new FormData()
     formData.append('type', 'penelitian')
     formData.append('institution', values.institution)
@@ -90,21 +97,39 @@ const FormPenelitianSection = ({ onSuccess }: Props) => {
 
     formData.append('document', values.document[0])
 
+    setSubmitData(formData)
+    setIsModalSuccess(false)
+    setIsConfirmOpen(true)
+  }
+
+  const handleConfirmSubmit = async () => {
+    if (!submitData) return
+    setIsModalSubmitting(true)
+    setIsModalSuccess(false)
     try {
-      await submitPendaftaran(formData)
-      toast.success('Pendaftaran berhasil dikirim!')
+      await submitPendaftaran(submitData)
+      setIsModalSubmitting(false)
+      setIsModalSuccess(true)
+      await new Promise((resolve) => setTimeout(resolve, successRedirectDelay))
       onSuccess()
     } catch (error: any) {
+      setIsConfirmOpen(false)
+      setIsModalSuccess(false)
       if (error.response?.data?.message) {
         toast.error(error.response.data.message)
       } else {
         toast.error('Gagal mengirim pendaftaran. Coba lagi.')
       }
+      setIsModalSubmitting(false)
     }
   }
 
+  const onError = () => {
+    toast.error('Mohon periksa kembali, ada isian yang belum lengkap atau tidak valid.')
+  }
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-5">
       <section className={sectionClass}>
         <h2 className={sectionTitleClass}>
           <BookOpenText size={18} className="text-primary" />
@@ -337,12 +362,23 @@ const FormPenelitianSection = ({ onSuccess }: Props) => {
         {isSubmitting ? (
           <>
             <Loader2 size={18} className="animate-spin" />
-            Mengirim Pendaftaran...
+            Memproses...
           </>
         ) : (
           'Kirim Pendaftaran Penelitian'
         )}
       </button>
+
+      <ConfirmModal
+        isOpen={isConfirmOpen}
+        isSubmitting={isModalSubmitting}
+        isSuccess={isModalSuccess}
+        onClose={() => {
+          setIsConfirmOpen(false)
+          setIsModalSuccess(false)
+        }}
+        onConfirm={handleConfirmSubmit}
+      />
     </form>
   )
 }

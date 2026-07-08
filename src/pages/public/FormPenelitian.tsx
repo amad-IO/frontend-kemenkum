@@ -30,7 +30,7 @@ const FormPenelitian = () => {
 
           <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section className="min-w-0">
-              <FormPenelitianSection onSuccess={() => navigate('/konfirmasi')} />
+              <FormPenelitianSection onSuccess={() => navigate('/daftar')} />
             </section>
             <aside className="min-w-0 xl:sticky xl:top-6">
               <PersyaratanBox kategoriList={getPersyaratanPenelitian()} jenis="penelitian" />

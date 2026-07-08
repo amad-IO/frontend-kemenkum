@@ -155,4 +155,5 @@ export const getPosisiMagang = (): Promise<Posisi[]> =>
 export const submitPendaftaran = (formData: FormData) =>
   api.post('/submit', formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 30000,
   })

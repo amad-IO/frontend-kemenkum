@@ -24,7 +24,7 @@ const Intro = () => {
 
         {/* Eyebrow label */}
         <span className="inline-flex w-fit mx-auto lg:mx-0 items-center gap-2 rounded-full bg-[#6E473B]/10 px-4 py-1.5 text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-primary">
-          Program Resmi Kemenkuham
+          Program Resmi Kementerian Hukum
         </span>
 
         {/* Heading */}

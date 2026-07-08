@@ -31,7 +31,7 @@ const FormMagang = () => {
 
           <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
             <section className="min-w-0">
-              <FormMagangSection onSuccess={() => navigate('/konfirmasi')} />
+              <FormMagangSection onSuccess={() => navigate('/daftar')} />
             </section>
             <aside className="min-w-0 xl:sticky xl:top-6">
               <PersyaratanBox kategoriList={getPersyaratanMagang()} jenis="magang" />
