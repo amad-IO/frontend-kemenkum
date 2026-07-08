@@ -136,11 +136,25 @@ const ListPendaftar = () => {
         responseType: 'blob'
       })
       
+      const submission = submissions.find(s => s.id === id)
+      let filename = `permohonan-${id}.zip`
+      
+      if (submission) {
+        const ketua = submission.member_1.split('|')[0] || 'ketua'
+        const kampus = submission.institution || 'kampus'
+        
+        // Clean characters for filename safety
+        const cleanKetua = ketua.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+        const cleanKampus = kampus.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '')
+        
+        filename = `permohonan_${cleanKetua}_${cleanKampus}.zip`
+      }
+      
       // Create object url and download
       const url = window.URL.createObjectURL(new Blob([res.data]))
       const link = document.createElement('a')
       link.href = url
-      link.setAttribute('download', `permohonan-${id}.zip`)
+      link.setAttribute('download', filename)
       document.body.appendChild(link)
       link.click()
       link.remove()

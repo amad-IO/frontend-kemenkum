@@ -48,7 +48,7 @@ const DaftarPage = () => {
                     : 'text-neutral-subtle hover:text-primary'
                 }`}
               >
-                {tab === 'magang' ? '📋 Magang' : '🔬 Penelitian'}
+                {tab === 'magang' ? 'Magang' : 'Penelitian'}
               </button>
             ))}
           </div>

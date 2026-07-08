@@ -24,7 +24,7 @@ const penelitianSchema = z
     nim_ketua: z.string().min(3, 'NIM/NISN tidak valid'),
     whatsapp: z.string().min(9, 'Nomor WhatsApp tidak valid'),
     email: z.string().email('Email tidak valid'),
-    anggota: z.array(anggotaSchema).max(2),
+    anggota: z.array(anggotaSchema).max(9),
     letter_number: z.string().min(3, 'Nomor surat tidak valid'),
     document: z
       .instanceof(FileList)
@@ -94,8 +94,12 @@ const FormPenelitianSection = ({ onSuccess }: Props) => {
       await submitPendaftaran(formData)
       toast.success('Pendaftaran berhasil dikirim!')
       onSuccess()
-    } catch {
-      toast.error('Gagal mengirim pendaftaran. Coba lagi.')
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message)
+      } else {
+        toast.error('Gagal mengirim pendaftaran. Coba lagi.')
+      }
     }
   }
 
@@ -252,7 +256,7 @@ const FormPenelitianSection = ({ onSuccess }: Props) => {
               </div>
             ))}
 
-            {fields.length < 2 && (
+            {fields.length < 9 && (
               <button
                 type="button"
                 onClick={() => append({ nama: '', nim: '' })}

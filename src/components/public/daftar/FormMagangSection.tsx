@@ -110,8 +110,12 @@ const FormMagangSection = ({ onSuccess }: Props) => {
       await submitPendaftaran(formData)
       toast.success('Pendaftaran berhasil dikirim!')
       onSuccess()
-    } catch {
-      toast.error('Gagal mengirim pendaftaran. Coba lagi.')
+    } catch (error: any) {
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message)
+      } else {
+        toast.error('Gagal mengirim pendaftaran. Coba lagi.')
+      }
     }
   }
 
