@@ -39,9 +39,9 @@ const PublicHeroLayout = ({ children }: PublicHeroLayoutProps) => {
                 </span>
               )}
 
-              <h1 className={`${isRegistration ? 'mt-4 text-[clamp(2rem,4vw,4rem)]' : 'text-[clamp(1.25rem,2.8vw,2.55rem)]'} font-bold italic leading-[1.12] tracking-normal text-neutral-card drop-shadow-[0_2px_4px_rgba(0,0,0,0.24)]`}>
+              <h1 className={`${isRegistration ? 'mt-4 text-3xl sm:text-5xl lg:text-6xl' : 'text-xl sm:text-3xl lg:text-[2.55rem]'} font-bold italic leading-[1.12] tracking-normal text-neutral-card drop-shadow-[0_2px_4px_rgba(0,0,0,0.24)]`}>
                 {titleLines.map((line) => (
-                  <span key={line} className="block whitespace-nowrap">
+                  <span key={line} className="block sm:whitespace-nowrap">
                     {line}
                   </span>
                 ))}
@@ -57,8 +57,8 @@ const PublicHeroLayout = ({ children }: PublicHeroLayoutProps) => {
         </div>
       </section>
 
-      <div className="relative -mt-20 sm:-mt-20 lg:-mt-20">
-        <div className="absolute inset-x-0 top-0 h-20 bg-[#211D1B] -z-10" />
+      <div className="relative -mt-20 bg-neutral-card sm:-mt-20 lg:-mt-20">
+        <div className="absolute inset-x-0 top-0 h-20 bg-[#211D1B]" />
         <header className="sticky top-0 z-50 bg-neutral-card rounded-tl-[40px] rounded-tr-[40px] sm:rounded-tl-[56px] sm:rounded-tr-[56px] lg:rounded-tl-[72px] lg:rounded-tr-[72px]">
           <div className="mx-auto max-w-[1330px] px-6 lg:px-12">
             <PublicNavbar />

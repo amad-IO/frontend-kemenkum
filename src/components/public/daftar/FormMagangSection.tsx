@@ -81,7 +81,7 @@ const FormMagangSection = ({ onSuccess }: Props) => {
 
   useEffect(() => {
     getPosisiMagang()
-      .then((data) => setPosisiList(data.filter((p) => p.status === 'active')))
+      .then((data) => setPosisiList(data))
       .catch(() => toast.error('Gagal memuat daftar posisi'))
       .finally(() => setLoadingPosisi(false))
   }, [])
