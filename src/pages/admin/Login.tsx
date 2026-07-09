@@ -9,8 +9,15 @@ import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username wajib diisi'),
-  password: z.string().min(1, 'Password wajib diisi'),
+  username: z
+    .string()
+    .min(3, 'Username minimal 3 karakter')
+    .max(50, 'Username maksimal 50 karakter')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username hanya boleh huruf, angka, dan underscore (_)'),
+  password: z
+    .string()
+    .min(8, 'Password minimal 8 karakter')
+    .max(100, 'Password maksimal 100 karakter'),
 })
 type LoginForm = z.infer<typeof loginSchema>
 
@@ -27,10 +34,14 @@ const Login = () => {
 
   const onSubmit = async (values: LoginForm) => {
     try {
+      // Ambil CSRF Cookie terlebih dahulu
+      await api.get('/sanctum/csrf-cookie', {
+        baseURL: (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', ''),
+      })
+
       const res = await api.post('/admin/login', values)
-      const { token, user } = res.data.data
-      localStorage.setItem('admin_token', token)
-      setAuth(token, user)
+      const { user } = res.data.data
+      setAuth(user)
       toast.success('Selamat datang kembali!')
       navigate('/admin/dashboard', { replace: true })
     } catch {
