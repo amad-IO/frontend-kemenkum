@@ -1,5 +1,5 @@
 import { Mail, MapPin, Phone } from 'lucide-react'
-import Logo from '../../../../shared/Logo'
+import Logo from '../../../shared/Logo'
 
 type IconProps = React.SVGProps<SVGSVGElement>
 

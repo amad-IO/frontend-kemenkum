@@ -1,4 +1,4 @@
-import infoCardImage from '../../../../assets/o1.webp'
+import infoCardImage from '../../../assets/o1.webp'
 
 const InfoCards = () => {
   return (

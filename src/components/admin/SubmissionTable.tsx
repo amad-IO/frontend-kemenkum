@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-react'
-import type { Submission } from '../ListPendaftarPage'
+import type { Submission } from '../../pages/admin/ListPendaftar'
 
 interface SubmissionTableProps {
   data: Submission[]

@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import PhotoCard from './PhotoCard'
-import introCard from '../../../../assets/02.webp'
+import introCard from "../../../assets/02.webp"
 
 const Intro = () => {
   return (

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Search, ChevronRight, ClipboardEdit, FileSearch, CheckSquare, MessageCircle, Megaphone } from 'lucide-react'
-import Footer from './components/layout/Footer'
-import HeroLayout from './components/layout/HeroLayout'
+import Footer from '../../components/public/layout/Footer'
+import HeroLayout from '../../components/public/layout/HeroLayout'
 import checkStatusImage from '../../assets/03.webp'
 
 const steps = [

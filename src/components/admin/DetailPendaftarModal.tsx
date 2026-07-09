@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2 } from 'lucide-react'
-import type { Submission } from '../ListPendaftarPage'
-import DateRangePickerField from '../../public/components/forms/DateRangePickerField'
+import type { Submission } from '../../pages/admin/ListPendaftar'
+import DateRangePickerField from '../public/forms/DateRangePickerField'
 
 interface Props {
   submission: Submission | null
