@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -35,20 +34,19 @@ const Login = () => {
 
   const onSubmit = async (values: LoginForm) => {
     try {
-      // Step 1: Ambil CSRF Cookie melalui Vite proxy
-      // Axios raw dipakai agar baseURL tidak tercampur dengan instance /api
-      await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
-
-      // Step 2: Login - lewat proxy ke http://localhost:8000/api/admin/login
+      console.log('[DEBUG] Attempting login to:', '/api/admin/login')
       const res = await api.post('/admin/login', values)
-      const { user } = res.data.data
-      setAuth(user)
+      console.log('[DEBUG] Response:', res.status, res.data)
+      const { token, user } = res.data.data
+      setAuth(user, token)
       toast.success('Selamat datang kembali!')
       navigate('/admin/dashboard', { replace: true })
     } catch (err: any) {
-      console.error('Login error:', err)
-      const msg = err.response?.data?.message || err.message || 'Terjadi kesalahan.'
-      toast.error('Error: ' + msg)
+      console.error('[DEBUG] Login error:', err.response?.status, err.response?.data, err.message)
+      const msg = err.response?.data?.message
+        || err.response?.data?.errors?.username?.[0]
+        || 'Username atau password salah.'
+      toast.error(msg)
     }
   }
 
