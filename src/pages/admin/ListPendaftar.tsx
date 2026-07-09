@@ -176,9 +176,28 @@ const ListPendaftarPage = () => {
       document.body.appendChild(link)
       link.click()
       link.remove()
+      window.URL.revokeObjectURL(url)
       toast.success('Berkas berhasil diunduh')
-    } catch {
-      toast.error('Gagal mengunduh berkas ZIP. File mungkin tidak ditemukan.')
+    } catch (error: unknown) {
+      let message = 'Gagal mengunduh berkas ZIP. File mungkin tidak ditemukan.'
+
+      const responseData = error && typeof error === 'object' && 'response' in error
+        ? (error as { response?: { data?: unknown } }).response?.data
+        : undefined
+      if (responseData instanceof Blob) {
+        try {
+          const errorPayload = JSON.parse(await responseData.text())
+          message = errorPayload?.message ?? message
+        } catch {
+          // Keep the default message when the server returns a non-JSON error body.
+        }
+      } else {
+        message = responseData && typeof responseData === 'object' && 'message' in responseData
+          ? String(responseData.message)
+          : message
+      }
+
+      toast.error(message)
     } finally {
       setIsDownloading(false)
     }
