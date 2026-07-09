@@ -6,10 +6,10 @@ import { BookOpenText, CalendarDays, ChevronRight, Loader2, Plus, Trash2, Upload
 import { toast } from 'react-toastify'
 import { Link, useNavigate } from 'react-router-dom'
 import { submitPendaftaran } from '../../services/daftarService'
-import HeroLayout from './components/layout/HeroLayout'
-import Footer from './components/layout/Footer'
-import ConfirmModal from './components/forms/ConfirmModal'
-import DateRangePickerField from './components/forms/DateRangePickerField'
+import HeroLayout from '../../components/public/layout/HeroLayout'
+import Footer from '../../components/public/layout/Footer'
+import ConfirmModal from '../../components/public/forms/ConfirmModal'
+import DateRangePickerField from '../../components/public/forms/DateRangePickerField'
 import daftarHeroImage from '../../assets/03.webp'
 
 const anggotaSchema = z.object({

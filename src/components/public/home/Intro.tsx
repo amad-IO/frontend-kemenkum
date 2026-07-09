@@ -1,7 +1,7 @@
 import { ArrowRight } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import PhotoCard from './PhotoCard'
-import introCard from '../../../assets/02.webp'
+import introCard from '../../../../assets/02.webp'
 
 const Intro = () => {
   return (
@@ -9,7 +9,6 @@ const Intro = () => {
       className="mx-auto mb-20 mt-10 grid max-w-[1210px] items-center gap-10 px-6 text-center sm:mt-14 lg:mb-32 lg:mt-16 lg:grid-cols-[minmax(240px,420px)_minmax(0,1fr)] lg:gap-[clamp(48px,8vw,132px)] lg:px-0 lg:text-left"
       id="registration"
     >
-      {/* Left — Photo card */}
       <div className="flex justify-center lg:justify-start">
         <PhotoCard
           imageSrc={introCard}
@@ -19,15 +18,11 @@ const Intro = () => {
         />
       </div>
 
-      {/* Right — Text content */}
       <div className="flex flex-col gap-5">
-
-        {/* Eyebrow label */}
         <span className="inline-flex w-fit mx-auto lg:mx-0 items-center gap-2 rounded-full bg-[#6E473B]/10 px-4 py-1.5 text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-primary">
           Program Resmi Kementerian Hukum
         </span>
 
-        {/* Heading */}
         <h2 className="mx-auto max-w-[640px] text-[clamp(1.7rem,2.8vw,3.1rem)] font-extrabold leading-[1.08] tracking-[-0.02em] text-[#211D1B] lg:mx-0">
           Eksplorasi ruang belajar{' '}
           <span className="text-primary">profesional,</span>{' '}
@@ -38,7 +33,6 @@ const Intro = () => {
           Anda di sini.
         </h2>
 
-        {/* Subtitle pills */}
         <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
           {['Kerja Praktik', 'Penelitian Akademik', 'Pengembangan Karir'].map((tag) => (
             <span
@@ -50,7 +44,6 @@ const Intro = () => {
           ))}
         </div>
 
-        {/* CTA Button */}
         <div className="mt-2">
           <Link
             to="/daftar"
@@ -64,7 +57,6 @@ const Intro = () => {
             />
           </Link>
         </div>
-
       </div>
     </section>
   )

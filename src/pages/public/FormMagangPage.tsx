@@ -10,9 +10,9 @@ import {
   submitPendaftaran,
   type Periode,
 } from '../../services/daftarService'
-import HeroLayout from './components/layout/HeroLayout'
-import Footer from './components/layout/Footer'
-import ConfirmModal from './components/forms/ConfirmModal'
+import HeroLayout from '../../components/public/layout/HeroLayout'
+import Footer from '../../components/public/layout/Footer'
+import ConfirmModal from '../../components/public/forms/ConfirmModal'
 import daftarHeroImage from '../../assets/03.webp'
 
 const anggotaSchema = z.object({

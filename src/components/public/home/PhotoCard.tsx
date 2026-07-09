@@ -24,7 +24,6 @@ const PhotoCard = ({
         ${className}
       `}
     >
-      {/* Image Area */}
       <div className="overflow-hidden rounded-[20px] w-full">
         <img
           src={imageSrc}
@@ -33,7 +32,6 @@ const PhotoCard = ({
         />
       </div>
 
-      {/* Caption */}
       <p
         className="
           text-center

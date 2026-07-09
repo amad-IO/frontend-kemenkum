@@ -1,7 +1,7 @@
-import Footer from './components/layout/Footer'
-import HeroLayout from './components/layout/HeroLayout'
-import InfoCards from './components/home/InfoCards'
-import Intro from './components/home/Intro'
+import Footer from '../../components/public/layout/Footer'
+import HeroLayout from '../../components/public/layout/HeroLayout'
+import InfoCards from '../../components/public/home/InfoCards'
+import Intro from '../../components/public/home/Intro'
 import homeHeroImage from '../../assets/o1.webp'
 
 const homeTitle = [

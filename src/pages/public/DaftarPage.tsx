@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipboardCheck, ChevronRight } from 'lucide-react'
-import Footer from './components/layout/Footer'
-import HeroLayout from './components/layout/HeroLayout'
-import PersyaratanBox from './components/forms/PersyaratanBox'
+import Footer from '../../components/public/layout/Footer'
+import HeroLayout from '../../components/public/layout/HeroLayout'
+import PersyaratanBox from '../../components/public/forms/PersyaratanBox'
 import {
   getPersyaratanMagang,
   getPersyaratanPenelitian,
