@@ -5,34 +5,58 @@ import Footer from '../../components/public/layout/Footer'
 import HeroLayout from '../../components/public/layout/HeroLayout'
 import checkStatusImage from '../../assets/03.webp'
 
+import api from '../../services/api'
+import { toast } from 'react-toastify'
+
 const steps = [
   { id: 1, title: 'Pendaftaran', description: 'Berkas berhasil dikirim', icon: ClipboardEdit },
-  { id: 2, title: 'Review Berkas', description: 'Admin sedang mengecek kelengkapan dokumen', icon: FileSearch },
-  { id: 3, title: 'Verifikasi', description: 'Persetujuan pimpinan Kemenkumham', icon: CheckSquare },
-  { id: 4, title: 'Forum Diskusi', description: 'Tanya jawab dan Wawancara', icon: MessageCircle },
+  { id: 2, title: 'Verifikasi', description: 'Verifikasi kelengkapan data peserta', icon: CheckSquare },
+  { id: 3, title: 'Review Berkas', description: 'Admin sedang meninjau dokumen pendaftaran', icon: FileSearch },
+  { id: 4, title: 'Forum Diskusi', description: 'Sesi QnA dengan Admin', icon: MessageCircle },
   { id: 5, title: 'Pengumuman', description: 'Hasil akhir & Dokumen Izin Magang', icon: Megaphone },
 ]
 
 const CheckStatusPage = () => {
-  const [searchValue, setSearchValue] = useState('')
+  const [emailValue, setEmailValue] = useState('')
+  const [nimValue, setNimValue] = useState('')
   const [isSearching, setIsSearching] = useState(false)
   const [hasResult, setHasResult] = useState(false)
+  const [currentStep, setCurrentStep] = useState(1)
+  const [statusMessage, setStatusMessage] = useState('')
 
-  // Dummy current step (misalnya tertahan di langkah 2: Review Berkas)
-  const currentStep = 2
-
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!searchValue.trim()) return
+    if (!emailValue.trim() || !nimValue.trim()) {
+      toast.error('Email dan NIM wajib diisi')
+      return
+    }
 
     setIsSearching(true)
     setHasResult(false)
     
-    // Simulate API call
-    setTimeout(() => {
-      setIsSearching(false)
+    try {
+      const response = await api.get('/check-status', {
+        params: { email: emailValue, nim: nimValue }
+      })
+      
+      const status = response.data?.data?.status
+      if (status === 'approved') {
+        setCurrentStep(5)
+        setStatusMessage('Selamat, permohonan Anda telah disetujui!')
+      } else if (status === 'rejected') {
+        setCurrentStep(5)
+        setStatusMessage('Mohon maaf, permohonan Anda belum dapat kami terima.')
+      } else {
+        // Pending
+        setCurrentStep(2)
+        setStatusMessage('Berkas permohonan Anda telah kami terima dan saat ini sedang dalam proses pengecekan awal oleh tim kami. Harap memantau halaman ini secara berkala.')
+      }
       setHasResult(true)
-    }, 1000)
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Pendaftaran tidak ditemukan atau terjadi kesalahan server.')
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   return (
@@ -55,20 +79,27 @@ const CheckStatusPage = () => {
           <div className="rounded-2xl border border-neutral-border bg-white p-6 shadow-card sm:p-8">
             <h2 className="mb-2 text-xl font-bold text-neutral-text">Lacak Permohonan</h2>
             <p className="mb-6 text-sm text-neutral-subtle">
-              Masukkan <strong>Email Ketua Kelompok</strong> atau <strong>Nomor Surat Pengantar</strong> untuk melihat status pendaftaran Anda saat ini.
+              Masukkan <strong>Email</strong> dan <strong>NIM</strong> Ketua Kelompok untuk melihat status pendaftaran Anda saat ini.
             </p>
 
             <form onSubmit={handleSearch} className="flex flex-col gap-3 sm:flex-row">
               <div className="relative flex-1">
-                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-neutral-muted">
-                  <Search size={18} />
-                </div>
+                <input
+                  type="email"
+                  placeholder="Email Ketua Kelompok"
+                  value={emailValue}
+                  onChange={(e) => setEmailValue(e.target.value)}
+                  className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  required
+                />
+              </div>
+              <div className="relative flex-1">
                 <input
                   type="text"
-                  placeholder="Contoh: B-1234/UNIV/2026 atau email@kampus.ac.id"
-                  value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
-                  className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft pl-11 pr-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+                  placeholder="NIM Ketua Kelompok"
+                  value={nimValue}
+                  onChange={(e) => setNimValue(e.target.value)}
+                  className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
                   required
                 />
               </div>
@@ -91,8 +122,13 @@ const CheckStatusPage = () => {
             <div className="mt-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="rounded-2xl border border-neutral-border bg-white p-6 shadow-card sm:p-8">
                 <div className="mb-8 border-b border-neutral-border pb-4">
-                  <h3 className="text-lg font-bold text-neutral-text">Status Permohonan: <span className="text-primary">Sedang Diproses</span></h3>
-                  <p className="text-sm text-neutral-subtle mt-1">Ditemukan data pendaftaran atas pencarian: <strong>{searchValue}</strong></p>
+                  <h3 className="text-lg font-bold text-neutral-text">
+                    Status Permohonan:{' '}
+                    <span className={currentStep === 5 ? (statusMessage.includes('maaf') ? 'text-red-500' : 'text-green-500') : 'text-primary'}>
+                      {currentStep === 5 ? (statusMessage.includes('maaf') ? 'Ditolak' : 'Diterima') : 'Sedang Diproses'}
+                    </span>
+                  </h3>
+                  <p className="text-sm text-neutral-subtle mt-1">Ditemukan data pendaftaran atas pencarian: <strong>{emailValue}</strong> - <strong>{nimValue}</strong></p>
                 </div>
 
                 {/* Vertical Stepper */}
@@ -133,7 +169,7 @@ const CheckStatusPage = () => {
                             
                             {isActive && (
                               <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3 text-xs sm:text-sm text-neutral-text">
-                                <span className="font-semibold text-primary">Informasi:</span> Berkas permohonan Anda telah kami terima dan saat ini sedang dalam proses pengecekan awal oleh tim kami. Harap memantau halaman ini secara berkala.
+                                <span className="font-semibold text-primary">Informasi:</span> {statusMessage}
                               </div>
                             )}
                           </div>
