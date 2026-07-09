@@ -1,5 +1,5 @@
 import { Eye } from 'lucide-react'
-import type { Submission } from '../../pages/admin/ListPendaftar' // Sesuaikan path ini jika perlu
+import type { Submission } from '../ListPendaftarPage'
 
 interface SubmissionTableProps {
   data: Submission[]
@@ -25,7 +25,6 @@ const getName = (member1: string) => member1.split('|')[0] ?? '-'
 const SubmissionTable = ({ data, onOpenDetail }: SubmissionTableProps) => {
   return (
     <div className="overflow-x-auto">
-      {/* table-fixed dan explicit widths menjamin space kolom sama rata */}
       <table className="w-full text-sm table-fixed min-w-[850px]">
         <thead>
           <tr className="border-b border-neutral-border bg-neutral-bg text-xs text-neutral-muted">
@@ -37,23 +36,19 @@ const SubmissionTable = ({ data, onOpenDetail }: SubmissionTableProps) => {
           </tr>
         </thead>
         <tbody>
-          {/* Validasi aman menggunakan Array.isArray agar tidak memicu crash saat data belum siap */}
           {Array.isArray(data) && data.length > 0 ? (
             data.map((s, i) => (
               <tr
                 key={s.id}
-                onClick={() => onOpenDetail(s)}
-                className={`cursor-pointer transition-colors hover:bg-primary/5 ${
+                className={`transition-colors ${
                   i !== data.length - 1 ? 'border-b border-neutral-border' : ''
                 }`}
               >
-                {/* Kolom Peserta (Nama & No Surat) */}
                 <td className="px-5 py-3 truncate">
                   <p className="font-extrabold text-neutral-text truncate">{getName(s.member_1)}</p>
                   <p className="font-mono text-xs text-neutral-muted mt-0.5 truncate">{s.letter_number}</p>
                 </td>
 
-                {/* Kolom Program & Instansi */}
                 <td className="px-5 py-3 truncate">
                   <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold mb-1 ${
                     s.type === 'magang' ? 'bg-primary/10 text-primary' : 'bg-secondary text-neutral-subtle'
@@ -63,18 +58,15 @@ const SubmissionTable = ({ data, onOpenDetail }: SubmissionTableProps) => {
                   <p className="text-xs font-semibold text-neutral-subtle truncate">{s.institution}</p>
                 </td>
 
-                {/* Kolom Tanggal */}
                 <td className="px-5 py-3 text-xs text-neutral-subtle">
                   <p>{new Date(s.start_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} -</p>
                   <p>{new Date(s.end_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                 </td>
 
-                {/* Kolom Status */}
                 <td className="px-5 py-3">
                   <StatusBadge status={s.status} />
                 </td>
 
-                {/* Kolom Tombol Aksi */}
                 <td className="px-5 py-3 text-right">
                   <button
                     onClick={(e) => {
@@ -89,7 +81,6 @@ const SubmissionTable = ({ data, onOpenDetail }: SubmissionTableProps) => {
               </tr>
             ))
           ) : (
-            /* Menampilkan fallback UI jika array kosong atau undefined selama proses fetch berjalan */
             <tr>
               <td colSpan={5} className="py-10 text-center text-sm text-neutral-muted">
                 Belum ada data pendaftaran

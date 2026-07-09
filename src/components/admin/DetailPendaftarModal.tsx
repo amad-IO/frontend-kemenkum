@@ -1,10 +1,13 @@
-import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText } from 'lucide-react'
-import type { Submission } from '../../pages/admin/ListPendaftar'
+import { useState, useEffect } from 'react'
+import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2 } from 'lucide-react'
+import type { Submission } from '../ListPendaftarPage'
+import DateRangePickerField from '../../public/components/forms/DateRangePickerField'
 
 interface Props {
   submission: Submission | null
   onClose: () => void
   onStatusChange: (id: number, status: 'approved' | 'rejected') => void
+  onDatesChange: (id: number, start_date: string, end_date: string) => void
   onDownload: (id: number, e: React.MouseEvent) => void
   isUpdating: boolean
   isDownloading: boolean
@@ -14,13 +17,23 @@ const DetailPendaftarModal = ({
   submission,
   onClose,
   onStatusChange,
+  onDatesChange,
   onDownload,
   isUpdating,
   isDownloading,
 }: Props) => {
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+
+  useEffect(() => {
+    if (submission) {
+      setEditStart(submission.start_date.split('T')[0])
+      setEditEnd(submission.end_date.split('T')[0])
+    }
+  }, [submission])
+
   if (!submission) return null
 
-  // Utils
   const parseMember = (memberStr: string | null) => {
     if (!memberStr) return null
     const [nama, nim, email] = memberStr.split('|')
@@ -30,13 +43,11 @@ const DetailPendaftarModal = ({
   const ketua = parseMember(submission.member_1)
   const anggota2 = parseMember(submission.member_2)
   const anggota3 = parseMember(submission.member_3)
-
   const anggotaList = [anggota2, anggota3].filter(Boolean)
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
 
-  // Status Badge
   const StatusBadge = () => {
     const map = {
       pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
@@ -54,9 +65,8 @@ const DetailPendaftarModal = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      
+
       <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl">
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-neutral-border px-6 py-5">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-extrabold text-neutral-text">Detail Pendaftar</h2>
@@ -70,13 +80,10 @@ const DetailPendaftarModal = ({
           </button>
         </div>
 
-        {/* Body */}
         <div className="flex-1 overflow-y-auto p-6">
           <div className="grid gap-6 md:grid-cols-2">
-            
-            {/* Kolom Kiri: Informasi Program & Instansi */}
+
             <div className="flex flex-col gap-6">
-              
               <section>
                 <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-muted">Informasi Program</h3>
                 <div className="rounded-xl border border-neutral-border bg-neutral-card p-4 shadow-sm">
@@ -87,7 +94,7 @@ const DetailPendaftarModal = ({
                     <div>
                       <p className="text-sm font-extrabold capitalize text-neutral-text">{submission.type}</p>
                       <p className="text-xs text-neutral-muted">
-                        {submission.type === 'magang' && submission.position ? submission.position.position_name : 'Program Penelitian'}
+                        {submission.type === 'magang' ? 'Program Magang' : 'Program Penelitian'}
                       </p>
                     </div>
                   </div>
@@ -99,9 +106,28 @@ const DetailPendaftarModal = ({
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-sm text-neutral-subtle">
-                    <Calendar size={15} className="shrink-0" />
-                    <span>{formatDate(submission.start_date)} - {formatDate(submission.end_date)}</span>
+                  <div className="flex items-start gap-2 text-sm text-neutral-subtle">
+                    <Calendar size={15} className="mt-0.5 shrink-0" />
+                    <div className="w-full">
+                      <DateRangePickerField
+                        label=""
+                        startDate={editStart}
+                        endDate={editEnd}
+                        onStartChange={setEditStart}
+                        onEndChange={setEditEnd}
+                        onConfirm={(start, end) => onDatesChange(submission.id, start, end)}
+                        renderTrigger={(openPicker) => (
+                          <div className="flex w-full flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <button onClick={openPicker} className="text-left text-neutral-text transition hover:text-primary font-medium">
+                              {formatDate(submission.start_date)} - {formatDate(submission.end_date)}
+                            </button>
+                            <button onClick={openPicker} title="Edit Tanggal Kegiatan" className="mt-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-neutral-bg text-primary transition hover:bg-primary/10 sm:mt-0">
+                              <Edit2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
               </section>
@@ -127,12 +153,9 @@ const DetailPendaftarModal = ({
                   </ul>
                 </div>
               </section>
-
             </div>
 
-            {/* Kolom Kanan: Informasi Peserta & Dokumen */}
             <div className="flex flex-col gap-6">
-              
               <section>
                 <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-muted">Data Peserta</h3>
                 <div className="rounded-xl border border-neutral-border bg-neutral-card p-4 shadow-sm">
@@ -140,7 +163,7 @@ const DetailPendaftarModal = ({
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-primary">Ketua / Pendaftar Utama</p>
                     <p className="mt-1 text-sm font-extrabold text-neutral-text">{ketua?.nama}</p>
                     <p className="text-xs font-semibold text-neutral-muted">NIM/NISN: {ketua?.nim}</p>
-                    
+
                     <div className="mt-3 flex flex-col gap-1.5 border-t border-neutral-border pt-3">
                       {ketua?.email && (
                         <div className="flex items-center gap-2 text-xs font-semibold text-neutral-subtle">
@@ -190,12 +213,10 @@ const DetailPendaftarModal = ({
                   </button>
                 </div>
               </section>
-
             </div>
           </div>
         </div>
 
-        {/* Footer Actions */}
         <div className="flex items-center justify-end gap-3 rounded-b-2xl border-t border-neutral-border bg-neutral-bg px-6 py-4">
           <button
             onClick={onClose}
@@ -203,7 +224,7 @@ const DetailPendaftarModal = ({
           >
             Tutup
           </button>
-          
+
           {submission.status !== 'rejected' && (
             <button
               onClick={() => onStatusChange(submission.id, 'rejected')}

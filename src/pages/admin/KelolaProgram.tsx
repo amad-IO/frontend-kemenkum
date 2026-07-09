@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Edit2, Trash2, RefreshCw, CalendarDays, AlertCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { getAllPeriod, createPeriod, updatePeriod, deletePeriod } from '../../services/programService'
-import PeriodModal, { PeriodFormValues } from './components/PeriodModal'
+import PeriodModal, { PeriodFormValues } from '../../components/admin/PeriodModal'
 
 interface Period {
   id: number

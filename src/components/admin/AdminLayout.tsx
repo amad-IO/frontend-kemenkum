@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Menu } from 'lucide-react'
-import Sidebar from './Sidebar'
+import Sidebar from '../../../components/admin/Sidebar'
 
-const navItems = [
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 

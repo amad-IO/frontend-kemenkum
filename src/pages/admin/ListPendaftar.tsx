@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'react-toastify'
 import api from '../../services/api'
-import DetailPendaftarModal from './components/DetailPendaftarModal'
-import SubmissionTable from './components/SubmissionTable'
+import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
+import SubmissionTable from '../../components/admin/SubmissionTable'
 import CustomSelect from '../../components/admin/CustomSelect'
 
 export interface Submission {

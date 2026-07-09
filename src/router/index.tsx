@@ -15,8 +15,7 @@ import Dashboard from '../pages/admin/Dashboard'
 import KelolaProgramPage from '../pages/admin/KelolaProgram'
 import ListPendaftarPage from '../pages/admin/ListPendaftar'
 
-// Layout
-import AdminLayout from '../pages/admin/components/AdminLayout'
+import AdminLayout from '../components/admin/AdminLayout'
 
 // Guard route admin
 type ProtectedRouteProps = {

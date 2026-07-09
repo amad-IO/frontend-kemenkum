@@ -11,8 +11,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import api from '../../services/api'
-import DetailPendaftarModal from './components/DetailPendaftarModal'
-import SubmissionTable from './components/SubmissionTable'
+import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
+import SubmissionTable from '../../components/admin/SubmissionTable'
 import type { Submission } from './ListPendaftar'
 
 interface Stats {
