@@ -1,3 +1,5 @@
+import axios from 'axios'
+
 // Base URL Backend Laravel
 // VITE_API_URL = http://localhost:8000 (TANPA /api)
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
