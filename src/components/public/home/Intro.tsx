@@ -3,6 +3,20 @@ import { Link } from 'react-router-dom'
 import PhotoCard from './PhotoCard'
 import introCard from "../../../assets/02.webp"
 
+const renderHoverWords = (text: string, className = '') => {
+  const words = text.split(' ')
+
+  return words.map((word, index) => (
+    <span
+      key={`${word}-${index}`}
+      className={`inline-block cursor-default transition-transform duration-300 ease-out hover:-translate-y-2 ${className}`}
+    >
+      {word}
+      {index < words.length - 1 ? '\u00A0' : ''}
+    </span>
+  ))
+}
+
 const Intro = () => {
   return (
     <section
@@ -14,7 +28,7 @@ const Intro = () => {
           imageSrc={introCard}
           imageAlt="Mahasiswa berdiskusi dalam program magang"
           caption="Buka potensi Anda dan rasakan pengalaman kerja profesional bersama Kementerian Hukum."
-          className="rotate-[8deg] origin-bottom-right drop-shadow-[0_32px_48px_rgba(110,71,59,0.18)]"
+          className="photo-card-bounce-upright origin-bottom-right rotate-[8deg] cursor-pointer drop-shadow-[0_32px_48px_rgba(110,71,59,0.18)]"
         />
       </div>
 
@@ -24,13 +38,11 @@ const Intro = () => {
         </span>
 
         <h2 className="mx-auto max-w-[640px] text-[clamp(1.7rem,2.8vw,3.1rem)] font-extrabold leading-[1.08] tracking-[-0.02em] text-[#211D1B] lg:mx-0">
-          Eksplorasi ruang belajar{' '}
-          <span className="text-primary">profesional,</span>{' '}
-          kembangkan inovasi bersama para ahli, dan bangun{' '}
-          <span className="italic font-medium text-[#6E473B]/70">
-            fondasi karir masa depan
-          </span>{' '}
-          Anda di sini.
+          {renderHoverWords('Eksplorasi ruang belajar')}{' '}
+          {renderHoverWords('profesional,', 'text-primary')}{' '}
+          {renderHoverWords('kembangkan inovasi bersama para ahli, dan bangun')}{' '}
+          {renderHoverWords('fondasi karir masa depan', 'italic font-medium text-[#6E473B]/70')}{' '}
+          {renderHoverWords('Anda di sini.')}
         </h2>
 
         <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
