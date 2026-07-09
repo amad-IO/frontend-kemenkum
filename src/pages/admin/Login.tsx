@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -9,8 +10,15 @@ import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 
 const loginSchema = z.object({
-  username: z.string().min(1, 'Username wajib diisi'),
-  password: z.string().min(1, 'Password wajib diisi'),
+  username: z
+    .string()
+    .min(3, 'Username minimal 3 karakter')
+    .max(50, 'Username maksimal 50 karakter')
+    .regex(/^[a-zA-Z0-9_]+$/, 'Username hanya boleh huruf, angka, dan underscore (_)'),
+  password: z
+    .string()
+    .min(8, 'Password minimal 8 karakter')
+    .max(100, 'Password maksimal 100 karakter'),
 })
 type LoginForm = z.infer<typeof loginSchema>
 
@@ -27,14 +35,20 @@ const Login = () => {
 
   const onSubmit = async (values: LoginForm) => {
     try {
+      // Step 1: Ambil CSRF Cookie melalui Vite proxy
+      // Axios raw dipakai agar baseURL tidak tercampur dengan instance /api
+      await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
+
+      // Step 2: Login - lewat proxy ke http://localhost:8000/api/admin/login
       const res = await api.post('/admin/login', values)
-      const { token, user } = res.data.data
-      localStorage.setItem('admin_token', token)
-      setAuth(token, user)
+      const { user } = res.data.data
+      setAuth(user)
       toast.success('Selamat datang kembali!')
       navigate('/admin/dashboard', { replace: true })
-    } catch {
-      toast.error('Username atau password salah.')
+    } catch (err: any) {
+      console.error('Login error:', err)
+      const msg = err.response?.data?.message || err.message || 'Terjadi kesalahan.'
+      toast.error('Error: ' + msg)
     }
   }
 
