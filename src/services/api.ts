@@ -1,11 +1,10 @@
 import axios from 'axios'
 
-// Base URL Backend Laravel
-// VITE_API_URL = http://localhost:8000 (TANPA /api)
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
+// Dengan Vite proxy, semua request ke /api dan /sanctum
+// otomatis diteruskan ke http://localhost:8000 oleh Vite.
+// Sehingga tidak ada lagi masalah CORS atau CSRF cookie.
 const api = axios.create({
-  baseURL: `${BASE_URL}/api`,
+  baseURL: '/api',
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

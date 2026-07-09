@@ -34,9 +34,8 @@ const Login = () => {
 
   const onSubmit = async (values: LoginForm) => {
     try {
-      // Ambil CSRF Cookie dari root backend (bukan /api)
-      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-      await api.get('/sanctum/csrf-cookie', { baseURL: baseUrl })
+      // Ambil CSRF Cookie (Vite proxy meneruskan ke http://localhost:8000/sanctum/csrf-cookie)
+      await api.get('/sanctum/csrf-cookie', { baseURL: '/' })
 
       const res = await api.post('/admin/login', values)
       const { user } = res.data.data
