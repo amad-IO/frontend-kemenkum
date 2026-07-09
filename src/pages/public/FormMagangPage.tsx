@@ -29,7 +29,7 @@ const magangSchema = z
     nama_ketua: z.string().min(2, 'Nama minimal 2 karakter'),
     nim_ketua: z.string().min(3, 'NIM/NISN tidak valid'),
     whatsapp: z.string().min(9).refine((v) => /^\+?[1-9]\d{7,14}$/.test(v.replace(/[\s\-()]/g, '')), { message: "Nomor telepon tidak valid."}),
-    email: z.string().email('Email tidak valid'),
+    email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email tidak valid'),
     anggota: z.array(anggotaSchema).max(2),
     letter_number: z.string().min(3, 'Nomor surat tidak valid'),
     document: z
