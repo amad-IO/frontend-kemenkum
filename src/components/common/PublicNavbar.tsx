@@ -2,8 +2,8 @@ import { Link, useLocation } from 'react-router-dom'
 
 const navItems = [
   { label: 'Home', to: '/' },
-  { label: 'Guideline', to: '#guideline' },
   { label: 'Registration', to: '/daftar' },
+  { label: 'Check Status', to: '/status' },
 ]
 
 const PublicNavbar = () => {

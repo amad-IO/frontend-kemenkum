@@ -7,6 +7,7 @@ import LandingPage from '../pages/public/LandingPage'
 import DaftarPage from '../pages/public/DaftarPage'
 import FormMagangPage from '../pages/public/FormMagangPage'
 import FormPenelitianPage from '../pages/public/FormPenelitianPage'
+import CheckStatusPage from '../pages/public/CheckStatusPage'
 
 // Admin Pages
 import Login from '../pages/admin/Login'
@@ -36,6 +37,10 @@ const router = createBrowserRouter([
   {
     path: '/daftar',
     element: <DaftarPage />,
+  },
+  {
+    path: '/status',
+    element: <CheckStatusPage />,
   },
   {
     path: '/daftar/magang/:id',
