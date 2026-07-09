@@ -1,39 +1,44 @@
 import { useState, useEffect } from 'react'
-import { Plus, Edit2, Trash2, RefreshCw, BriefcaseBusiness, AlertCircle } from 'lucide-react'
+import { Plus, Edit2, Trash2, RefreshCw, CalendarDays, AlertCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
-import api from '../../services/api'
-import PositionModal, { PositionFormValues } from '../../components/admin/PositionModal'
+import { getAllPeriod, createPeriod, updatePeriod, deletePeriod } from '../../services/programService'
+import PeriodModal, { PeriodFormValues } from './components/PeriodModal'
 
-interface Position {
+interface Period {
   id: number
-  position_name: string
+  start_date: string
+  end_date: string
+  quota: number
   status: 'active' | 'inactive'
   created_at: string
 }
 
-const KelolaProgram = () => {
-  const [positions, setPositions] = useState<Position[]>([])
+const KelolaProgramPage = () => {
+  const [periods, setPeriods] = useState<Period[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
   
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
-  const [editingPosition, setEditingPosition] = useState<Position | null>(null)
+  const [editingPeriod, setEditingPeriod] = useState<Period | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Delete state
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  
+  // Toggle status state
+  const [togglingId, setTogglingId] = useState<number | null>(null)
 
   const fetchData = async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     
     try {
-      const res = await api.get('/admin/positions')
+      const res = await getAllPeriod()
       const data = res.data?.data || []
-      setPositions(data)
+      setPeriods(data)
     } catch {
-      toast.error('Gagal memuat daftar posisi magang')
+      toast.error('Gagal memuat daftar periode magang')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -45,53 +50,73 @@ const KelolaProgram = () => {
   }, [])
 
   const handleOpenAdd = () => {
-    setEditingPosition(null)
+    setEditingPeriod(null)
     setModalOpen(true)
   }
 
-  const handleOpenEdit = (pos: Position) => {
-    setEditingPosition(pos)
+  const handleOpenEdit = (period: Period) => {
+    setEditingPeriod(period)
     setModalOpen(true)
   }
 
-  const handleSubmit = async (data: PositionFormValues) => {
+  const handleSubmit = async (data: PeriodFormValues) => {
     setIsSubmitting(true)
     try {
-      if (editingPosition) {
+      if (editingPeriod) {
         // Edit
-        const res = await api.patch(`/admin/positions/${editingPosition.id}`, data)
+        const res = await updatePeriod(editingPeriod.id, data)
         const updated = res.data.data
-        setPositions((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
-        toast.success('Posisi berhasil diperbarui')
+        setPeriods((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+        toast.success('Periode berhasil diperbarui')
       } else {
         // Create
-        const res = await api.post('/admin/positions', data)
+        const res = await createPeriod(data)
         const created = res.data.data
-        // Add to beginning of array
-        setPositions((prev) => [created, ...prev])
-        toast.success('Posisi baru berhasil ditambahkan')
+        setPeriods((prev) => [created, ...prev])
+        toast.success('Periode baru berhasil ditambahkan')
       }
       setModalOpen(false)
     } catch (err: any) {
-      toast.error(err.response?.data?.message || 'Gagal menyimpan posisi')
+      toast.error(err.response?.data?.message || 'Gagal menyimpan periode')
     } finally {
       setIsSubmitting(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus posisi ini? Tindakan ini tidak dapat dibatalkan.')) return
+    if (!window.confirm('Apakah Anda yakin ingin menghapus periode ini? Tindakan ini tidak dapat dibatalkan.')) return
     
     setDeletingId(id)
     try {
-      await api.delete(`/admin/positions/${id}`)
-      setPositions((prev) => prev.filter((p) => p.id !== id))
-      toast.success('Posisi berhasil dihapus')
+      await deletePeriod(id)
+      setPeriods((prev) => prev.filter((p) => p.id !== id))
+      toast.success('Periode berhasil dihapus')
     } catch {
-      toast.error('Gagal menghapus posisi')
+      toast.error('Gagal menghapus periode')
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const handleToggleStatus = async (period: Period) => {
+    setTogglingId(period.id)
+    const newStatus = period.status === 'active' ? 'inactive' : 'active'
+    try {
+      const res = await updatePeriod(period.id, { status: newStatus })
+      const updated = res.data.data
+      setPeriods((prev) => prev.map((p) => (p.id === period.id ? updated : p)))
+      toast.success(`Status berhasil diubah menjadi ${newStatus === 'active' ? 'Aktif' : 'Tidak Aktif'}`)
+    } catch {
+      toast.error('Gagal mengubah status periode')
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
+  const formatDate = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: '2-digit', month: 'short', year: 'numeric'
+    })
   }
 
   return (
@@ -100,9 +125,9 @@ const KelolaProgram = () => {
       {/* ── Page Header ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Kelola Program</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Kelola Periode Magang</h1>
           <p className="mt-0.5 text-sm text-neutral-muted">
-            Atur posisi magang yang tersedia untuk pendaftar
+            Atur periode pendaftaran magang beserta kuotanya
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -119,75 +144,79 @@ const KelolaProgram = () => {
             className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-card transition hover:bg-primary-dark"
           >
             <Plus size={16} />
-            Tambah Posisi
+            Tambah Periode
           </button>
         </div>
       </div>
 
-      {/* ── Empty State & Table ── */}
-      <div className="rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-neutral-border bg-neutral-bg text-xs text-neutral-muted">
-                <th className="px-6 py-4 text-left font-semibold">Nama Posisi</th>
-                <th className="px-6 py-4 text-left font-semibold">Status</th>
-                <th className="px-6 py-4 text-left font-semibold">Tgl Dibuat</th>
-                <th className="px-6 py-4 text-right font-semibold">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={4} className="py-16 text-center">
-                    <RefreshCw size={30} className="mx-auto animate-spin text-primary" />
-                    <p className="mt-3 text-sm text-neutral-muted">Memuat data posisi...</p>
-                  </td>
+      {/* ── Content Area ── */}
+      {loading ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-neutral-border bg-neutral-card py-24 shadow-card">
+          <RefreshCw size={40} className="mb-4 animate-spin text-primary" />
+          <p className="text-sm font-semibold text-neutral-muted">Memuat data periode...</p>
+        </div>
+      ) : periods.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-primary/20 bg-primary/5 px-6 py-24 text-center">
+          <div className="mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-white shadow-xl shadow-primary/10">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+              <CalendarDays size={32} />
+            </div>
+          </div>
+          <h3 className="mb-2 text-2xl font-extrabold text-neutral-text">Belum ada periode magang</h3>
+          <p className="mx-auto mb-8 max-w-md text-sm text-neutral-muted leading-relaxed">
+            Anda belum menambahkan periode pendaftaran magang apa pun. Segera buat periode pertama agar calon pendaftar dapat mulai memilih jadwal magang mereka.
+          </p>
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-primary/30 transition hover:-translate-y-0.5 hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/40 active:translate-y-0"
+          >
+            <Plus size={18} />
+            Buat Periode Baru
+          </button>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-neutral-border bg-neutral-bg text-xs text-neutral-muted">
+                  <th className="px-6 py-4 text-left font-semibold">Periode (Tanggal)</th>
+                  <th className="px-6 py-4 text-left font-semibold">Kuota Total</th>
+                  <th className="px-6 py-4 text-left font-semibold">Status</th>
+                  <th className="px-6 py-4 text-right font-semibold">Aksi</th>
                 </tr>
-              ) : positions.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="py-16 text-center">
-                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-neutral-bg">
-                      <BriefcaseBusiness size={24} className="text-neutral-subtle" />
-                    </div>
-                    <p className="text-sm font-bold text-neutral-text">Belum ada posisi magang</p>
-                    <p className="mb-4 mt-1 text-xs text-neutral-muted">
-                      Tambahkan posisi magang agar pendaftar dapat memilihnya di form.
-                    </p>
-                    <button
-                      onClick={handleOpenAdd}
-                      className="inline-flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2 text-xs font-bold text-primary hover:bg-primary/20"
-                    >
-                      <Plus size={14} /> Tambah Posisi Pertama
-                    </button>
-                  </td>
-                </tr>
-              ) : (
-                positions.map((p, i) => (
+              </thead>
+              <tbody>
+                {periods.map((p, i) => (
                   <tr
                     key={p.id}
-                    className={`transition-colors hover:bg-neutral-bg ${i !== positions.length - 1 ? 'border-b border-neutral-border' : ''}`}
+                    className={`transition-colors hover:bg-neutral-bg ${i !== periods.length - 1 ? 'border-b border-neutral-border' : ''}`}
                   >
                     <td className="px-6 py-4 font-extrabold text-neutral-text">
-                      {p.position_name}
+                      {formatDate(p.start_date)} - {formatDate(p.end_date)}
+                    </td>
+                    <td className="px-6 py-4 font-mono font-medium text-neutral-text">
+                      {p.quota} Orang
                     </td>
                     <td className="px-6 py-4">
-                      {p.status === 'active' ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-1 text-xs font-bold text-green-700">
-                          <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                          Aktif
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-xs font-bold text-neutral-600">
-                          <span className="h-1.5 w-1.5 rounded-full bg-neutral-400" />
-                          Tidak Aktif
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-xs text-neutral-subtle font-mono">
-                      {new Date(p.created_at).toLocaleDateString('id-ID', {
-                        day: '2-digit', month: 'short', year: 'numeric'
-                      })}
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(p)}
+                        disabled={togglingId === p.id}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-bold transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-50 ${
+                          p.status === 'active'
+                            ? 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                            : 'border-neutral-200 bg-neutral-50 text-neutral-600 hover:bg-neutral-200'
+                        }`}
+                        title="Klik untuk mengubah status"
+                      >
+                        {togglingId === p.id ? (
+                          <RefreshCw size={10} className="animate-spin" />
+                        ) : (
+                          <span className={`h-1.5 w-1.5 rounded-full ${p.status === 'active' ? 'bg-green-500' : 'bg-neutral-400'}`} />
+                        )}
+                        {p.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
+                      </button>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -209,32 +238,30 @@ const KelolaProgram = () => {
                       </div>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        
-        {positions.length > 0 && (
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
           <div className="flex items-start gap-2 border-t border-neutral-border bg-neutral-bg px-6 py-3">
             <AlertCircle size={16} className="mt-0.5 shrink-0 text-primary" />
             <p className="text-xs text-neutral-subtle">
-              Posisi dengan status <span className="font-bold">Aktif</span> akan langsung muncul sebagai opsi di form pendaftaran publik. 
-              Posisi <span className="font-bold">Tidak Aktif</span> akan disembunyikan tanpa perlu menghapus datanya.
+              Periode dengan status <span className="font-bold">Aktif</span> akan langsung muncul sebagai opsi di form pendaftaran publik. 
+              Periode <span className="font-bold">Tidak Aktif</span> atau kuotanya penuh tidak akan bisa dipilih.
             </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      <PositionModal
+      <PeriodModal
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onSubmit={handleSubmit}
-        initialData={editingPosition || undefined}
+        initialData={editingPeriod || undefined}
         isSubmitting={isSubmitting}
       />
     </div>
   )
 }
 
-export default KelolaProgram
+export default KelolaProgramPage

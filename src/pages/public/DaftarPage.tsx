@@ -1,13 +1,14 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipboardCheck, ChevronRight } from 'lucide-react'
-import PublicFooter from '../../components/common/PublicFooter'
-import PublicHeroLayout from '../../components/common/PublicHeroLayout'
-import PersyaratanBox from '../../components/public/daftar/PersyaratanBox'
+import Footer from './components/layout/Footer'
+import HeroLayout from './components/layout/HeroLayout'
+import PersyaratanBox from './components/forms/PersyaratanBox'
 import {
   getPersyaratanMagang,
   getPersyaratanPenelitian,
 } from '../../services/daftarService'
+import daftarHeroImage from '../../assets/03.webp'
 
 type TabType = 'magang' | 'penelitian'
 
@@ -24,7 +25,12 @@ const DaftarPage = () => {
   }
 
   return (
-    <PublicHeroLayout>
+    <HeroLayout
+      image={daftarHeroImage}
+      title="Pendaftaran Program"
+      subtitle="Pilih jenis program, baca persyaratan, lalu isi form pendaftaran."
+      badge="Requirement & Registration"
+    >
       <main className="bg-neutral-card">
         <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
 
@@ -114,8 +120,8 @@ const DaftarPage = () => {
         </div>
       </main>
 
-      <PublicFooter />
-    </PublicHeroLayout>
+      <Footer />
+    </HeroLayout>
   )
 }
 

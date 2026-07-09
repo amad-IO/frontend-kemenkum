@@ -2,9 +2,12 @@ import api from './api'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-export interface Posisi {
+export interface Periode {
   id: number
-  position_name: string
+  start_date: string
+  end_date: string
+  quota: number
+  remaining_quota: number
   status: 'active' | 'inactive'
 }
 
@@ -36,7 +39,7 @@ export interface JudulPenelitian {
 
 export interface SubmitMagangPayload {
   type: 'magang'
-  position_id: number
+  period_id: number
   institution: string
   study_program: string
   letter_number: string
@@ -74,7 +77,7 @@ export const getPersyaratanMagang = (): KategoriPersyaratan[] => [
     items: [
       { teks: 'Asal Instansi Pendidikan (Sekolah / Universitas)' },
       { teks: 'Program Studi / Jurusan' },
-      { teks: 'Posisi Magang yang diinginkan' },
+      { teks: 'Periode Magang yang diinginkan' },
       { teks: 'Periode Magang (Tanggal Mulai s.d. Tanggal Selesai)' },
       { teks: 'Jenis Pendaftaran (Individu / Kelompok – maksimal 3 orang)' },
       { teks: 'Data Ketua Kelompok / Pendaftar Individu (Nama Lengkap & NIM / NISN)' },
@@ -142,11 +145,11 @@ export const getJudulPenelitian = (): JudulPenelitian[] => [
 // ─── Real API Calls ───────────────────────────────────────────────────────────
 
 /**
- * Ambil daftar posisi magang aktif dari backend
- * GET /api/positions
+ * Ambil daftar periode magang aktif dari backend
+ * GET /api/periods
  */
-export const getPosisiMagang = (): Promise<Posisi[]> =>
-  api.get<ApiListResponse<Posisi[]>>('/positions').then((res) => res.data.data)
+export const getPeriodeMagang = (): Promise<Periode[]> =>
+  api.get<ApiListResponse<Periode[]>>('/periods').then((res) => res.data.data)
 
 /**
  * Submit form pendaftaran (Magang & Penelitian)

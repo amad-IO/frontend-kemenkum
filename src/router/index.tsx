@@ -5,20 +5,17 @@ import useAuthStore from '../store/authStore'
 // Public Pages
 import LandingPage from '../pages/public/LandingPage'
 import DaftarPage from '../pages/public/DaftarPage'
-import DetailProgram from '../pages/public/DetailProgram'
-import FormMagang from '../pages/public/FormMagang'
-import FormPenelitian from '../pages/public/FormPenelitian'
-import Konfirmasi from '../pages/public/Konfirmasi'
+import FormMagangPage from '../pages/public/FormMagangPage'
+import FormPenelitianPage from '../pages/public/FormPenelitianPage'
 
 // Admin Pages
 import Login from '../pages/admin/Login'
 import Dashboard from '../pages/admin/Dashboard'
-import KelolaProgram from '../pages/admin/KelolaProgram'
-import ListPendaftar from '../pages/admin/ListPendaftar'
-import SettingForm from '../pages/admin/SettingForm'
+import KelolaProgramPage from '../pages/admin/KelolaProgram'
+import ListPendaftarPage from '../pages/admin/ListPendaftar'
 
 // Layout
-import AdminLayout from '../components/admin/AdminLayout'
+import AdminLayout from '../pages/admin/components/AdminLayout'
 
 // Guard route admin
 type ProtectedRouteProps = {
@@ -41,20 +38,12 @@ const router = createBrowserRouter([
     element: <DaftarPage />,
   },
   {
-    path: '/program/:id',
-    element: <DetailProgram />,
-  },
-  {
     path: '/daftar/magang/:id',
-    element: <FormMagang />,
+    element: <FormMagangPage />,
   },
   {
     path: '/daftar/penelitian/:id',
-    element: <FormPenelitian />,
-  },
-  {
-    path: '/konfirmasi',
-    element: <Konfirmasi />,
+    element: <FormPenelitianPage />,
   },
 
   // ─── Admin Routes ────────────────────────────────
@@ -72,9 +61,8 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
       { path: 'dashboard', element: <Dashboard /> },
-      { path: 'program', element: <KelolaProgram /> },
-      { path: 'pendaftar', element: <ListPendaftar /> },
-      { path: 'setting-form', element: <SettingForm /> },
+      { path: 'program', element: <KelolaProgramPage /> },
+      { path: 'pendaftar', element: <ListPendaftarPage /> },
     ],
   },
 ])

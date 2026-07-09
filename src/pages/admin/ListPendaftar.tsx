@@ -2,8 +2,8 @@ import { useState, useEffect, useMemo } from 'react'
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'react-toastify'
 import api from '../../services/api'
-import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
-import SubmissionTable from '../../components/admin/SubmissionTable' // <-- Import Komponen Tabel Baru
+import DetailPendaftarModal from './components/DetailPendaftarModal'
+import SubmissionTable from './components/SubmissionTable'
 
 export interface Submission {
   id: number
@@ -20,10 +20,9 @@ export interface Submission {
   phone_number: string
   status: 'pending' | 'approved' | 'rejected'
   created_at: string
-  position?: { position_name: string }
 }
 
-const ListPendaftar = () => {
+const ListPendaftarPage = () => {
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -288,4 +287,4 @@ const ListPendaftar = () => {
   )
 }
 
-export default ListPendaftar
+export default ListPendaftarPage

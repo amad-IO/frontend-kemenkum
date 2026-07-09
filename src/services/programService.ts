@@ -1,24 +1,15 @@
 import api from './api'
 
-type ProgramPayload = Record<string, unknown>
-type ProgramId = string | number
+type PeriodPayload = Record<string, unknown>
+type PeriodId = string | number
 
-// Ambil semua program (magang & penelitian)
-export const getAllProgram = () => api.get('/programs')
+export const getAllPeriod = () => api.get('/admin/periods')
 
-// Ambil program berdasarkan kategori
-export const getProgramByKategori = (kategori: string) =>
-  api.get(`/programs?kategori=${kategori}`)
+export const getPeriodById = (id: PeriodId) => api.get(`/admin/periods/${id}`)
 
-// Ambil detail satu program
-export const getProgramById = (id: ProgramId) => api.get(`/programs/${id}`)
+export const createPeriod = (data: PeriodPayload) => api.post('/admin/periods', data)
 
-// Admin: tambah program baru
-export const createProgram = (data: ProgramPayload) => api.post('/programs', data)
+export const updatePeriod = (id: PeriodId, data: PeriodPayload) =>
+  api.patch(`/admin/periods/${id}`, data)
 
-// Admin: update program
-export const updateProgram = (id: ProgramId, data: ProgramPayload) =>
-  api.put(`/programs/${id}`, data)
-
-// Admin: hapus program
-export const deleteProgram = (id: ProgramId) => api.delete(`/programs/${id}`)
+export const deletePeriod = (id: PeriodId) => api.delete(`/admin/periods/${id}`)
