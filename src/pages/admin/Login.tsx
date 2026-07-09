@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -34,9 +35,11 @@ const Login = () => {
 
   const onSubmit = async (values: LoginForm) => {
     try {
-      // Ambil CSRF Cookie (Vite proxy meneruskan ke http://localhost:8000/sanctum/csrf-cookie)
-      await api.get('/sanctum/csrf-cookie', { baseURL: '/' })
+      // Step 1: Ambil CSRF Cookie melalui Vite proxy
+      // Axios raw dipakai agar baseURL tidak tercampur dengan instance /api
+      await axios.get('/sanctum/csrf-cookie', { withCredentials: true })
 
+      // Step 2: Login - lewat proxy ke http://localhost:8000/api/admin/login
       const res = await api.post('/admin/login', values)
       const { user } = res.data.data
       setAuth(user)
@@ -44,7 +47,7 @@ const Login = () => {
       navigate('/admin/dashboard', { replace: true })
     } catch (err: any) {
       console.error('Login error:', err)
-      const msg = err.response?.data?.message || err.message || 'Username atau password salah.'
+      const msg = err.response?.data?.message || err.message || 'Terjadi kesalahan.'
       toast.error('Error: ' + msg)
     }
   }
