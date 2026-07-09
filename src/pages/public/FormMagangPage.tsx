@@ -28,7 +28,7 @@ const magangSchema = z
     jenis_peserta: z.enum(['individu', 'kelompok']),
     nama_ketua: z.string().min(2, 'Nama minimal 2 karakter'),
     nim_ketua: z.string().min(3, 'NIM/NISN tidak valid'),
-    whatsapp: z.string().min(9, 'Nomor WhatsApp tidak valid'),
+    whatsapp: z.string().min(9).refine((v) => /^\+?[1-9]\d{7,14}$/.test(v.replace(/[\s\-()]/g, '')), { message: "Nomor telepon tidak valid."}),
     email: z.string().email('Email tidak valid'),
     anggota: z.array(anggotaSchema).max(2),
     letter_number: z.string().min(3, 'Nomor surat tidak valid'),
@@ -88,6 +88,23 @@ const FormMagangPage = () => {
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
 
+  function normalizePhone(raw: string) {
+    if (!raw) return raw
+
+    let num = raw.replace(/[^\d+]/g, '')
+
+    if (/^0\d+/.test(num)) {
+      num = '+62' + num.replace(/^0+/, '')
+    }
+
+    if (!num.startsWith('+')) {
+      num = '+' + num
+    }
+
+    if (!/^\+?[1-9]\d{7,14}$/.test(num)) throw new Error('Nomor telepon tidak valid')
+    return num
+  }
+
   const onSubmit = (values: MagangFormValues) => {
     if (!selectedPeriod) {
       toast.error('Periode magang tidak valid')
@@ -102,7 +119,7 @@ const FormMagangPage = () => {
     formData.append('start_date', selectedPeriod.start_date)
     formData.append('end_date', selectedPeriod.end_date)
     formData.append('letter_number', values.letter_number)
-    formData.append('phone_number', values.whatsapp)
+    formData.append('phone_number', normalizePhone(values.whatsapp))
     formData.append('member_1', `${values.nama_ketua}|${values.nim_ketua}|${values.email}`)
 
     if (values.jenis_peserta === 'kelompok') {
@@ -318,9 +335,9 @@ const FormMagangPage = () => {
 
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
-                    Nomor WhatsApp <span className="text-red-500">*</span>
+                    Nomor WhatsApp <span className="text-red-500">(Awali dengan +62)*</span>
                   </label>
-                  <input {...register('whatsapp')} placeholder="08xxxxxxxxxx" type="tel" className="input-field" />
+                  <input {...register('whatsapp')} placeholder="+62xxxxxxxxxxx" type="tel" inputMode="tel" className="input-field" />
                   {errors.whatsapp && <p className="text-xs text-red-500">{errors.whatsapp.message}</p>}
                 </div>
 
