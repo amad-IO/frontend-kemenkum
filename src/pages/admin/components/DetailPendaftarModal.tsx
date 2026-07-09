@@ -1,10 +1,13 @@
-import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2 } from 'lucide-react'
 import type { Submission } from '../ListPendaftarPage'
+import DateRangePickerField from '../../public/components/forms/DateRangePickerField'
 
 interface Props {
   submission: Submission | null
   onClose: () => void
   onStatusChange: (id: number, status: 'approved' | 'rejected') => void
+  onDatesChange: (id: number, start_date: string, end_date: string) => void
   onDownload: (id: number, e: React.MouseEvent) => void
   isUpdating: boolean
   isDownloading: boolean
@@ -14,10 +17,21 @@ const DetailPendaftarModal = ({
   submission,
   onClose,
   onStatusChange,
+  onDatesChange,
   onDownload,
   isUpdating,
   isDownloading,
 }: Props) => {
+  const [editStart, setEditStart] = useState('')
+  const [editEnd, setEditEnd] = useState('')
+
+  useEffect(() => {
+    if (submission) {
+      setEditStart(submission.start_date.split('T')[0])
+      setEditEnd(submission.end_date.split('T')[0])
+    }
+  }, [submission])
+
   if (!submission) return null
 
   const parseMember = (memberStr: string | null) => {
@@ -92,9 +106,28 @@ const DetailPendaftarModal = ({
                     </div>
                   )}
 
-                  <div className="flex items-center gap-2 text-sm text-neutral-subtle">
-                    <Calendar size={15} className="shrink-0" />
-                    <span>{formatDate(submission.start_date)} - {formatDate(submission.end_date)}</span>
+                  <div className="flex items-start gap-2 text-sm text-neutral-subtle">
+                    <Calendar size={15} className="mt-0.5 shrink-0" />
+                    <div className="w-full">
+                      <DateRangePickerField
+                        label=""
+                        startDate={editStart}
+                        endDate={editEnd}
+                        onStartChange={setEditStart}
+                        onEndChange={setEditEnd}
+                        onConfirm={(start, end) => onDatesChange(submission.id, start, end)}
+                        renderTrigger={(openPicker) => (
+                          <div className="flex w-full flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <button onClick={openPicker} className="text-left text-neutral-text transition hover:text-primary font-medium">
+                              {formatDate(submission.start_date)} - {formatDate(submission.end_date)}
+                            </button>
+                            <button onClick={openPicker} title="Edit Tanggal Kegiatan" className="mt-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-neutral-bg text-primary transition hover:bg-primary/10 sm:mt-0">
+                              <Edit2 size={14} />
+                            </button>
+                          </div>
+                        )}
+                      />
+                    </div>
                   </div>
                 </div>
               </section>

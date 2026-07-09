@@ -40,8 +40,7 @@ const SubmissionTable = ({ data, onOpenDetail }: SubmissionTableProps) => {
             data.map((s, i) => (
               <tr
                 key={s.id}
-                onClick={() => onOpenDetail(s)}
-                className={`cursor-pointer transition-colors hover:bg-primary/5 ${
+                className={`transition-colors ${
                   i !== data.length - 1 ? 'border-b border-neutral-border' : ''
                 }`}
               >

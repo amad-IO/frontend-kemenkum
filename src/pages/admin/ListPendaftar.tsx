@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import api from '../../services/api'
 import DetailPendaftarModal from './components/DetailPendaftarModal'
 import SubmissionTable from './components/SubmissionTable'
+import CustomSelect from '../../components/admin/CustomSelect'
 
 export interface Submission {
   id: number
@@ -128,6 +129,25 @@ const ListPendaftarPage = () => {
     }
   }
 
+  const handleDatesChange = async (id: number, start_date: string, end_date: string) => {
+    try {
+      setIsUpdating(true)
+      await api.patch(`/admin/submissions/${id}/dates`, { start_date, end_date })
+      
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, start_date, end_date } : s))
+      
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, start_date, end_date } : null)
+      }
+      
+      toast.success('Tanggal kegiatan berhasil diperbarui')
+    } catch {
+      toast.error('Gagal memperbarui tanggal kegiatan')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
   const handleDownload = async (id: number, e?: React.MouseEvent) => {
     e?.stopPropagation()
     try {
@@ -201,34 +221,36 @@ const ListPendaftarPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 z-10">
             <Filter size={16} className="text-neutral-muted" />
-            <select
+            <CustomSelect
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="rounded-xl border border-neutral-border bg-white px-3 py-2.5 text-sm font-semibold text-neutral-text outline-none focus:border-primary"
-            >
-              <option value="all">Semua Jenis</option>
-              <option value="magang">Magang</option>
-              <option value="penelitian">Penelitian</option>
-            </select>
+              onChange={setTypeFilter}
+              options={[
+                { value: 'all', label: 'Semua Jenis' },
+                { value: 'magang', label: 'Magang' },
+                { value: 'penelitian', label: 'Penelitian' },
+              ]}
+            />
           </div>
 
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="rounded-xl border border-neutral-border bg-white px-3 py-2.5 text-sm font-semibold text-neutral-text outline-none focus:border-primary"
-          >
-            <option value="all">Semua Status</option>
-            <option value="pending">Menunggu</option>
-            <option value="approved">Diterima</option>
-            <option value="rejected">Ditolak</option>
-          </select>
+          <div className="z-10">
+            <CustomSelect
+              value={statusFilter}
+              onChange={setStatusFilter}
+              options={[
+                { value: 'all', label: 'Semua Status' },
+                { value: 'pending', label: 'Menunggu' },
+                { value: 'approved', label: 'Diterima' },
+                { value: 'rejected', label: 'Ditolak' },
+              ]}
+            />
+          </div>
         </div>
       </div>
 
       {/* ── Data Table ── */}
-      <div className="rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
         {loading ? (
           <div className="py-16 text-center">
             <RefreshCw size={30} className="mx-auto animate-spin text-primary" />
@@ -279,6 +301,7 @@ const ListPendaftarPage = () => {
         submission={selectedSubmission} 
         onClose={() => setSelectedSubmission(null)}
         onStatusChange={handleStatusChange}
+        onDatesChange={handleDatesChange}
         onDownload={handleDownload}
         isUpdating={isUpdating}
         isDownloading={isDownloading}

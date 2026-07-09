@@ -55,7 +55,11 @@ const KelolaProgramPage = () => {
   }
 
   const handleOpenEdit = (period: Period) => {
-    setEditingPeriod(period)
+    setEditingPeriod({
+      ...period,
+      start_date: period.start_date.split('T')[0],
+      end_date: period.end_date.split('T')[0],
+    })
     setModalOpen(true)
   }
 

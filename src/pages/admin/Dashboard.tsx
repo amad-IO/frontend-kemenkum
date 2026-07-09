@@ -11,8 +11,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import api from '../../services/api'
-import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
-import SubmissionTable from '../../components/admin/SubmissionTable'
+import DetailPendaftarModal from './components/DetailPendaftarModal'
+import SubmissionTable from './components/SubmissionTable'
 import type { Submission } from './ListPendaftar'
 
 interface Stats {
@@ -110,6 +110,25 @@ const Dashboard = () => {
       fetchData(true)
     } catch {
       toast.error('Gagal mengubah status permohonan')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleDatesChange = async (id: number, start_date: string, end_date: string) => {
+    try {
+      setIsUpdating(true)
+      await api.patch(`/admin/submissions/${id}/dates`, { start_date, end_date })
+      
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, start_date, end_date } : s))
+      
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, start_date, end_date } : null)
+      }
+      
+      toast.success('Tanggal kegiatan berhasil diperbarui')
+    } catch {
+      toast.error('Gagal memperbarui tanggal kegiatan')
     } finally {
       setIsUpdating(false)
     }
@@ -268,7 +287,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Recent Submissions Table Container ── */}
-      <div className="rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
         <div className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
           <h2 className="text-sm font-bold text-neutral-text">Pendaftaran Terbaru</h2>
           <a href="/admin/pendaftar" className="text-xs font-semibold text-primary hover:underline">Lihat semua →</a>
@@ -283,6 +302,7 @@ const Dashboard = () => {
         submission={selectedSubmission} 
         onClose={() => setSelectedSubmission(null)}
         onStatusChange={handleStatusChange} 
+        onDatesChange={handleDatesChange}
         onDownload={handleDownload}
         isUpdating={isUpdating} 
         isDownloading={isDownloading}

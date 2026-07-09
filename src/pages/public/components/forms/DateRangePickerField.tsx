@@ -9,6 +9,8 @@ interface DateRangePickerFieldProps {
   onEndChange: (value: string) => void
   startError?: string
   endError?: string
+  renderTrigger?: (openPicker: () => void) => React.ReactNode
+  onConfirm?: (start: string, end: string) => void
 }
 
 const toISODate = (date: Date) => {
@@ -70,6 +72,8 @@ const DateRangePickerField = ({
   onEndChange,
   startError,
   endError,
+  renderTrigger,
+  onConfirm,
 }: DateRangePickerFieldProps) => {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<'start' | 'end'>('start')
@@ -121,41 +125,50 @@ const DateRangePickerField = ({
     if (!tempStart || !tempEnd || tempEnd < tempStart) return
     onStartChange(tempStart)
     onEndChange(tempEnd)
+    if (onConfirm) onConfirm(tempStart, tempEnd)
     setOpen(false)
   }
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-semibold text-neutral-text">
-        {label} <span className="text-red-500">*</span>
-      </label>
-
-      <button
-        type="button"
-        onClick={openPicker}
-        className={`flex min-h-14 w-full items-center gap-3 rounded-xl border bg-white px-4 text-left transition hover:border-primary hover:bg-primary/5 ${
-          hasError ? 'border-red-300' : 'border-neutral-border'
-        }`}
-      >
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <CalendarDays size={20} />
-        </span>
-        <span className="min-w-0 flex-1">
-          {startDate && endDate ? (
-            <span className="block truncate text-sm font-bold text-neutral-text">
-              {formatDate(startDate)} sampai {formatDate(endDate)}
-            </span>
-          ) : (
-            <>
-              <span className="block text-sm font-bold text-neutral-text">Pilih periode kegiatan</span>
-              <span className="block text-xs text-neutral-muted">Tanggal mulai dan selesai</span>
-            </>
+      {renderTrigger ? (
+        renderTrigger(openPicker)
+      ) : (
+        <>
+          {label && (
+            <label className="text-sm font-semibold text-neutral-text">
+              {label} <span className="text-red-500">*</span>
+            </label>
           )}
-        </span>
-      </button>
 
-      {startError && <p className="text-xs text-red-500">{startError}</p>}
-      {endError && <p className="text-xs text-red-500">{endError}</p>}
+          <button
+            type="button"
+            onClick={openPicker}
+            className={`flex min-h-14 w-full items-center gap-3 rounded-xl border bg-white px-4 text-left transition hover:border-primary hover:bg-primary/5 ${
+              hasError ? 'border-red-300' : 'border-neutral-border'
+            }`}
+          >
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <CalendarDays size={20} />
+            </span>
+            <span className="min-w-0 flex-1">
+              {startDate && endDate ? (
+                <span className="block truncate text-sm font-bold text-neutral-text">
+                  {formatDate(startDate)} sampai {formatDate(endDate)}
+                </span>
+              ) : (
+                <>
+                  <span className="block text-sm font-bold text-neutral-text">Pilih periode kegiatan</span>
+                  <span className="block text-xs text-neutral-muted">Tanggal mulai dan selesai</span>
+                </>
+              )}
+            </span>
+          </button>
+
+          {startError && <p className="text-xs text-red-500">{startError}</p>}
+          {endError && <p className="text-xs text-red-500">{endError}</p>}
+        </>
+      )}
 
       {open && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-neutral-text/40 px-3 py-4 sm:items-center">
