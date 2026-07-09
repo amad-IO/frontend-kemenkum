@@ -1,8 +1,9 @@
-import axios from 'axios'
+// Base URL Backend Laravel
+// VITE_API_URL = http://localhost:8000 (TANPA /api)
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
-// Base URL backend Laravel
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: `${BASE_URL}/api`,
   withCredentials: true,
   headers: {
     'Content-Type': 'application/json',

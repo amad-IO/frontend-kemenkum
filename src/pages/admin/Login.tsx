@@ -34,18 +34,19 @@ const Login = () => {
 
   const onSubmit = async (values: LoginForm) => {
     try {
-      // Ambil CSRF Cookie terlebih dahulu
-      await api.get('/sanctum/csrf-cookie', {
-        baseURL: (import.meta.env.VITE_API_URL || 'http://localhost:8000/api').replace('/api', ''),
-      })
+      // Ambil CSRF Cookie dari root backend (bukan /api)
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+      await api.get('/sanctum/csrf-cookie', { baseURL: baseUrl })
 
       const res = await api.post('/admin/login', values)
       const { user } = res.data.data
       setAuth(user)
       toast.success('Selamat datang kembali!')
       navigate('/admin/dashboard', { replace: true })
-    } catch {
-      toast.error('Username atau password salah.')
+    } catch (err: any) {
+      console.error('Login error:', err)
+      const msg = err.response?.data?.message || err.message || 'Username atau password salah.'
+      toast.error('Error: ' + msg)
     }
   }
 
