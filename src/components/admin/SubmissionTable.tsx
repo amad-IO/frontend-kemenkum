@@ -1,9 +1,10 @@
-import { Eye } from 'lucide-react'
+import { Eye, MessageCircle } from 'lucide-react'
 import type { Submission } from '../../pages/admin/ListPendaftar'
 
 interface SubmissionTableProps {
   data: Submission[]
   onOpenDetail: (submission: Submission) => void
+  onOpenChat: (submission: Submission) => void
 }
 
 const StatusBadge = ({ status }: { status: Submission['status'] }) => {
@@ -21,68 +22,101 @@ const StatusBadge = ({ status }: { status: Submission['status'] }) => {
 }
 
 const getName = (member1: string) => member1.split('|')[0] ?? '-'
+const getUnreadCount = (submission: Submission) => Number(submission.unread_admin_messages_count ?? 0)
 
-const SubmissionTable = ({ data, onOpenDetail }: SubmissionTableProps) => {
+const SubmissionTable = ({ data, onOpenDetail, onOpenChat }: SubmissionTableProps) => {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm table-fixed min-w-[850px]">
+      <table className="w-full text-sm table-fixed min-w-[940px]">
         <thead>
           <tr className="border-b border-neutral-border bg-neutral-bg text-xs text-neutral-muted">
             <th className="px-5 py-3 text-left font-semibold w-[22%]">Peserta</th>
-            <th className="px-5 py-3 text-left font-semibold w-[28%]">Program & Instansi</th>
+            <th className="px-5 py-3 text-left font-semibold w-[26%]">Program & Instansi</th>
             <th className="px-5 py-3 text-left font-semibold w-[16%]">Tanggal Kegiatan</th>
-            <th className="px-5 py-3 text-left font-semibold w-[14%]">Status</th>
+            <th className="px-5 py-3 text-left font-semibold w-[12%]">Status</th>
+            <th className="px-5 py-3 text-center font-semibold w-[10%]">Chat</th>
             <th className="px-5 py-3 text-right font-semibold w-[10%]">Aksi</th>
           </tr>
         </thead>
         <tbody>
           {Array.isArray(data) && data.length > 0 ? (
-            data.map((s, i) => (
-              <tr
-                key={s.id}
-                className={`transition-colors ${
-                  i !== data.length - 1 ? 'border-b border-neutral-border' : ''
-                }`}
-              >
-                <td className="px-5 py-3 truncate">
-                  <p className="font-extrabold text-neutral-text truncate">{getName(s.member_1)}</p>
-                  <p className="font-mono text-xs text-neutral-muted mt-0.5 truncate">{s.letter_number}</p>
-                </td>
+            data.map((s, i) => {
+              const unreadCount = getUnreadCount(s)
+              const chatIsReady = Boolean(s.discussion_started_at || s.document_downloaded_at)
+              const hasUnread = unreadCount > 0
 
-                <td className="px-5 py-3 truncate">
-                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold mb-1 ${
-                    s.type === 'magang' ? 'bg-primary/10 text-primary' : 'bg-secondary text-neutral-subtle'
-                  }`}>
-                    {s.type === 'magang' ? 'Magang' : 'Penelitian'}
-                  </span>
-                  <p className="text-xs font-semibold text-neutral-subtle truncate">{s.institution}</p>
-                </td>
+              return (
+                <tr
+                  key={s.id}
+                  className={`transition-colors ${
+                    i !== data.length - 1 ? 'border-b border-neutral-border' : ''
+                  }`}
+                >
+                  <td className="px-5 py-3 truncate">
+                    <p className="font-extrabold text-neutral-text truncate">{getName(s.member_1)}</p>
+                    <p className="font-mono text-xs text-neutral-muted mt-0.5 truncate">{s.letter_number}</p>
+                  </td>
 
-                <td className="px-5 py-3 text-xs text-neutral-subtle">
-                  <p>{new Date(s.start_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} -</p>
-                  <p>{new Date(s.end_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-                </td>
+                  <td className="px-5 py-3 truncate">
+                    <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold mb-1 ${
+                      s.type === 'magang' ? 'bg-primary/10 text-primary' : 'bg-secondary text-neutral-subtle'
+                    }`}>
+                      {s.type === 'magang' ? 'Magang' : 'Penelitian'}
+                    </span>
+                    <p className="text-xs font-semibold text-neutral-subtle truncate">{s.institution}</p>
+                  </td>
 
-                <td className="px-5 py-3">
-                  <StatusBadge status={s.status} />
-                </td>
+                  <td className="px-5 py-3 text-xs text-neutral-subtle">
+                    <p>{new Date(s.start_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} -</p>
+                    <p>{new Date(s.end_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                  </td>
 
-                <td className="px-5 py-3 text-right">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onOpenDetail(s)
-                    }}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
-                  >
-                    <Eye size={14} /> Detail
-                  </button>
-                </td>
-              </tr>
-            ))
+                  <td className="px-5 py-3">
+                    <StatusBadge status={s.status} />
+                  </td>
+
+                  <td className="px-5 py-3 text-center">
+                    <button
+                      type="button"
+                      title={hasUnread ? `${unreadCount} pesan belum dibaca` : 'Buka chat diskusi'}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenChat(s)
+                      }}
+                      className={`relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                        hasUnread
+                          ? 'border-primary bg-primary text-white shadow-md shadow-primary/25 hover:bg-primary-dark'
+                          : chatIsReady
+                            ? 'border-primary/20 bg-white text-primary hover:bg-primary hover:text-white'
+                            : 'border-neutral-border bg-neutral-bg text-neutral-muted hover:border-primary/30 hover:text-primary'
+                      }`}
+                    >
+                      <MessageCircle size={16} />
+                      {hasUnread && (
+                        <span className="absolute -right-1.5 -top-1.5 flex min-w-[1.15rem] items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-extrabold leading-4 text-white">
+                          {unreadCount > 99 ? '99+' : unreadCount}
+                        </span>
+                      )}
+                    </button>
+                  </td>
+
+                  <td className="px-5 py-3 text-right">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        onOpenDetail(s)
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
+                    >
+                      <Eye size={14} /> Detail
+                    </button>
+                  </td>
+                </tr>
+              )
+            })
           ) : (
             <tr>
-              <td colSpan={5} className="py-10 text-center text-sm text-neutral-muted">
+              <td colSpan={6} className="py-10 text-center text-sm text-neutral-muted">
                 Belum ada data pendaftaran
               </td>
             </tr>

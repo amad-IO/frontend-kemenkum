@@ -78,7 +78,6 @@ export const getPersyaratanMagang = (): KategoriPersyaratan[] => [
       { teks: 'Asal Instansi Pendidikan (Sekolah / Universitas)' },
       { teks: 'Program Studi / Jurusan' },
       { teks: 'Periode Magang yang diinginkan' },
-      { teks: 'Periode Magang (Tanggal Mulai s.d. Tanggal Selesai)' },
       { teks: 'Jenis Pendaftaran (Individu / Kelompok – maksimal 3 orang)' },
       { teks: 'Data Ketua Kelompok / Pendaftar Individu (Nama Lengkap & NIM / NISN)' },
       { teks: 'Anggota 1 (Nama Lengkap & NIM / NISN)', opsional: true },

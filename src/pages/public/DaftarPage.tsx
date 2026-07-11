@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipboardCheck, ChevronRight } from 'lucide-react'
+import { motion } from 'framer-motion'
 import Footer from '../../components/public/layout/Footer'
 import HeroLayout from '../../components/public/layout/HeroLayout'
 import PersyaratanBox from '../../components/public/forms/PersyaratanBox'
@@ -11,6 +12,20 @@ import {
 import daftarHeroImage from '../../assets/03.webp'
 
 type TabType = 'magang' | 'penelitian'
+
+const programTabs: {
+  id: TabType
+  label: string
+}[] = [
+  {
+    id: 'magang',
+    label: 'Magang',
+  },
+  {
+    id: 'penelitian',
+    label: 'Penelitian',
+  },
+]
 
 const DaftarPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('magang')
@@ -42,20 +57,26 @@ const DaftarPage = () => {
           </nav>
 
           {/* ── Tab Toggle ── */}
-          <div className="mb-8 flex rounded-2xl border border-neutral-border bg-neutral-card p-1.5 shadow-card">
-            {(['magang', 'penelitian'] as TabType[]).map((tab) => (
-              <button
+          <div className="relative mb-8 grid grid-cols-2 rounded-full border border-neutral-border bg-neutral-card p-1.5 shadow-card">
+            {programTabs.map(({ id: tab, label }) => (
+              <motion.button
                 key={tab}
                 id={`tab-${tab}`}
                 onClick={() => handleTabChange(tab)}
-                className={`flex-1 rounded-xl py-3 text-sm font-bold capitalize transition-all duration-200 ${
-                  activeTab === tab
-                    ? 'bg-primary text-white shadow-card'
-                    : 'text-neutral-subtle hover:text-primary'
+                whileTap={{ scale: 0.96 }}
+                className={`relative min-w-0 rounded-full px-4 py-3 text-center text-sm font-extrabold transition-colors duration-200 ${
+                  activeTab === tab ? 'text-white' : 'text-neutral-subtle hover:text-primary'
                 }`}
               >
-                {tab === 'magang' ? 'Magang' : 'Penelitian'}
-              </button>
+                {activeTab === tab && (
+                  <motion.span
+                    layoutId="program-tab-active"
+                    className="absolute inset-0 rounded-full bg-primary shadow-soft"
+                    transition={{ type: 'spring', stiffness: 480, damping: 36 }}
+                  />
+                )}
+                <span className="relative z-10 block truncate">{label}</span>
+              </motion.button>
             ))}
           </div>
 

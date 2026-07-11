@@ -20,6 +20,11 @@ export interface Submission {
   letter_number: string
   phone_number: string
   status: 'pending' | 'approved' | 'rejected'
+  document_downloaded_at: string | null
+  discussion_started_at: string | null
+  permit_file_path: string | null
+  permit_file_name: string | null
+  unread_admin_messages_count?: number
   created_at: string
 }
 
@@ -29,6 +34,8 @@ const ListPendaftarPage = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isUploadingPermit, setIsUploadingPermit] = useState(false)
+  const [isStartingDiscussion, setIsStartingDiscussion] = useState(false)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -41,11 +48,12 @@ const ListPendaftarPage = () => {
 
   // Modal State
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
+  const [chatOpenRequestKey, setChatOpenRequestKey] = useState(0)
 
-  const fetchData = async (isRefresh = false) => {
+  const fetchData = async (isRefresh = false, silent = false) => {
     if (isRefresh) setRefreshing(true)
-    else setLoading(true)
-    
+    else if (!silent) setLoading(true)
+
     try {
       const res = await api.get('/admin/submissions')
       const responseData = res.data?.data
@@ -55,10 +63,10 @@ const ListPendaftarPage = () => {
       
       setSubmissions(data)
     } catch {
-      toast.error('Gagal memuat daftar pendaftar')
+      if (!silent) toast.error('Gagal memuat daftar pendaftar')
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      if (!silent) setLoading(false)
+      if (isRefresh) setRefreshing(false)
     }
   }
 
@@ -122,8 +130,8 @@ const ListPendaftarPage = () => {
       }
       
       toast.success(`Status permohonan berhasil diubah menjadi ${status === 'approved' ? 'Diterima' : 'Ditolak'}`)
-    } catch {
-      toast.error('Gagal mengubah status permohonan')
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengubah status permohonan')
     } finally {
       setIsUpdating(false)
     }
@@ -177,6 +185,13 @@ const ListPendaftarPage = () => {
       link.click()
       link.remove()
       window.URL.revokeObjectURL(url)
+
+      const downloadedAt = new Date().toISOString()
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, document_downloaded_at: s.document_downloaded_at ?? downloadedAt } : s))
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, document_downloaded_at: prev.document_downloaded_at ?? downloadedAt } : null)
+      }
+
       toast.success('Berkas berhasil diunduh')
     } catch (error: unknown) {
       let message = 'Gagal mengunduh berkas ZIP. File mungkin tidak ditemukan.'
@@ -200,6 +215,68 @@ const ListPendaftarPage = () => {
       toast.error(message)
     } finally {
       setIsDownloading(false)
+    }
+  }
+
+  const handleUploadPermit = async (id: number, file: File, replace = false) => {
+    try {
+      setIsUploadingPermit(true)
+      const formData = new FormData()
+      formData.append('permit_file', file)
+      if (replace) formData.append('replace', '1')
+
+      const res = await api.post(`/admin/submissions/${id}/permit`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const updated = res.data?.data as Submission
+
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
+      }
+
+      toast.success('File izin berhasil diunggah')
+      return true
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengunggah file izin')
+      return false
+    } finally {
+      setIsUploadingPermit(false)
+    }
+  }
+
+  const handleStartDiscussion = async (id: number) => {
+    try {
+      setIsStartingDiscussion(true)
+      const res = await api.post(`/admin/submissions/${id}/discussion/start`)
+      const updated = res.data?.data as Submission
+
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
+      }
+
+      toast.success('Forum diskusi berhasil dibuka')
+      return true
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal membuka forum diskusi')
+      return false
+    } finally {
+      setIsStartingDiscussion(false)
+    }
+  }
+
+  const handleOpenChatFromTable = (submission: Submission) => {
+    setSelectedSubmission(submission)
+    setChatOpenRequestKey(prev => prev + 1)
+  }
+
+  const handleMessagesRead = (id: number) => {
+    setSubmissions(prev => prev.map(s => (
+      s.id === id ? { ...s, unread_admin_messages_count: 0 } : s
+    )))
+    if (selectedSubmission?.id === id) {
+      setSelectedSubmission(prev => prev ? { ...prev, unread_admin_messages_count: 0 } : null)
     }
   }
 
@@ -281,7 +358,11 @@ const ListPendaftarPage = () => {
           </div>
         ) : (
           /* Menggunakan komponen tabel reusable */
-          <SubmissionTable data={paginatedData} onOpenDetail={(s) => setSelectedSubmission(s)} />
+          <SubmissionTable
+            data={paginatedData}
+            onOpenDetail={(s) => setSelectedSubmission(s)}
+            onOpenChat={handleOpenChatFromTable}
+          />
         )}
 
         {/* ── Pagination Footer ── */}
@@ -322,8 +403,14 @@ const ListPendaftarPage = () => {
         onStatusChange={handleStatusChange}
         onDatesChange={handleDatesChange}
         onDownload={handleDownload}
+        onUploadPermit={handleUploadPermit}
+        onStartDiscussion={handleStartDiscussion}
+        chatOpenRequestKey={chatOpenRequestKey}
+        onMessagesRead={handleMessagesRead}
         isUpdating={isUpdating}
         isDownloading={isDownloading}
+        isUploadingPermit={isUploadingPermit}
+        isStartingDiscussion={isStartingDiscussion}
       />
     </div>
   )

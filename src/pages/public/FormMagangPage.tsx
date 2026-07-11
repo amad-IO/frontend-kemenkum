@@ -20,6 +20,9 @@ const anggotaSchema = z.object({
   nim: z.string().min(3, 'NIM/NISN tidak valid'),
 })
 
+const phoneRegex = /^(08\d{8,11}|\+628\d{8,11})$/
+const phoneErrorMessage = 'Gunakan format 08xxxxxxxxxx atau +628xxxxxxxxxx tanpa tanda -.'
+
 const magangSchema = z
   .object({
     institution: z.string().min(3, 'Nama instansi tidak valid'),
@@ -28,7 +31,7 @@ const magangSchema = z
     jenis_peserta: z.enum(['individu', 'kelompok']),
     nama_ketua: z.string().min(2, 'Nama minimal 2 karakter'),
     nim_ketua: z.string().min(3, 'NIM/NISN tidak valid'),
-    whatsapp: z.string().min(9).refine((v) => /^\+?[1-9]\d{7,14}$/.test(v.replace(/[\s\-()]/g, '')), { message: "Nomor telepon tidak valid."}),
+    whatsapp: z.string().trim().refine((v) => phoneRegex.test(v), { message: phoneErrorMessage }),
     email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email tidak valid'),
     anggota: z.array(anggotaSchema).max(2),
     letter_number: z.string().min(3, 'Nomor surat tidak valid'),
@@ -39,11 +42,14 @@ const magangSchema = z
   })
 
 type MagangFormValues = z.infer<typeof magangSchema>
+type SuccessAccount = { email: string; nim: string }
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => void
+}
 
 const fieldWrap = 'flex flex-col gap-1.5'
 const sectionClass = 'rounded-xl border border-neutral-border bg-white p-4 sm:p-5'
 const sectionTitleClass = 'mb-4 flex items-center gap-2 text-base font-bold text-neutral-text'
-const successRedirectDelay = 1400
 
 const FormMagangPage = () => {
   const navigate = useNavigate()
@@ -55,8 +61,29 @@ const FormMagangPage = () => {
 
   const [isConfirmOpen, setIsConfirmOpen] = useState(false)
   const [submitData, setSubmitData] = useState<FormData | null>(null)
+  const [successAccount, setSuccessAccount] = useState<SuccessAccount | null>(null)
   const [isModalSubmitting, setIsModalSubmitting] = useState(false)
   const [isModalSuccess, setIsModalSuccess] = useState(false)
+
+  const goToStatusPage = (account: SuccessAccount | null) => {
+    const navigateToStatus = () => {
+      navigate('/status', {
+        state: {
+          fromSuccess: true,
+          email: account?.email,
+          nim: account?.nim,
+        },
+      })
+    }
+
+    const transitionDocument = document as ViewTransitionDocument
+    if (transitionDocument.startViewTransition) {
+      transitionDocument.startViewTransition(navigateToStatus)
+      return
+    }
+
+    navigateToStatus()
+  }
 
   const {
     register,
@@ -91,17 +118,16 @@ const FormMagangPage = () => {
   function normalizePhone(raw: string) {
     if (!raw) return raw
 
-    let num = raw.replace(/[^\d+]/g, '')
+    let num = raw.trim()
 
-    if (/^0\d+/.test(num)) {
-      num = '+62' + num.replace(/^0+/, '')
+    if (!phoneRegex.test(num)) {
+      throw new Error(phoneErrorMessage)
     }
 
-    if (!num.startsWith('+')) {
-      num = '+' + num
+    if (num.startsWith('08')) {
+      num = '+62' + num.slice(1)
     }
 
-    if (!/^\+?[1-9]\d{7,14}$/.test(num)) throw new Error('Nomor telepon tidak valid')
     return num
   }
 
@@ -131,6 +157,7 @@ const FormMagangPage = () => {
     formData.append('document', values.document[0])
 
     setSubmitData(formData)
+    setSuccessAccount({ email: values.email, nim: values.nim_ketua })
     setIsModalSuccess(false)
     setIsConfirmOpen(true)
   }
@@ -143,8 +170,6 @@ const FormMagangPage = () => {
       await submitPendaftaran(submitData)
       setIsModalSubmitting(false)
       setIsModalSuccess(true)
-      await new Promise((resolve) => setTimeout(resolve, successRedirectDelay))
-      navigate('/daftar')
     } catch (error: any) {
       setIsConfirmOpen(false)
       setIsModalSuccess(false)
@@ -335,9 +360,9 @@ const FormMagangPage = () => {
 
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
-                    Nomor WhatsApp <span className="text-red-500">(Awali dengan +62)*</span>
+                    Nomor WhatsApp <span className="text-red-500">(08 atau +62)*</span>
                   </label>
-                  <input {...register('whatsapp')} placeholder="+62xxxxxxxxxxx" type="tel" inputMode="tel" className="input-field" />
+                  <input {...register('whatsapp')} placeholder="08xxxxxxxxxx / +628xxxxxxxxxx" type="tel" inputMode="tel" className="input-field" />
                   {errors.whatsapp && <p className="text-xs text-red-500">{errors.whatsapp.message}</p>}
                 </div>
 
@@ -473,9 +498,17 @@ const FormMagangPage = () => {
               isOpen={isConfirmOpen}
               isSubmitting={isModalSubmitting}
               isSuccess={isModalSuccess}
+              accountEmail={successAccount?.email}
+              accountNim={successAccount?.nim}
               onClose={() => {
+                const shouldGoToStatus = isModalSuccess
+                const account = successAccount
                 setIsConfirmOpen(false)
                 setIsModalSuccess(false)
+                setSuccessAccount(null)
+                if (shouldGoToStatus) {
+                  goToStatusPage(account)
+                }
               }}
               onConfirm={handleConfirmSubmit}
             />

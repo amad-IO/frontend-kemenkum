@@ -62,10 +62,13 @@ const Dashboard = () => {
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isUploadingPermit, setIsUploadingPermit] = useState(false)
+  const [isStartingDiscussion, setIsStartingDiscussion] = useState(false)
+  const [chatOpenRequestKey, setChatOpenRequestKey] = useState(0)
 
-  const fetchData = async (isRefresh = false) => {
+  const fetchData = async (isRefresh = false, silent = false) => {
     if (isRefresh) setRefreshing(true)
-    else setLoading(true)
+    else if (!silent) setLoading(true)
     try {
       const res = await api.get('/admin/submissions')
       const responseData = res.data?.data
@@ -86,13 +89,13 @@ const Dashboard = () => {
       })
     } catch (error) {
       console.error('Dashboard Fetch Error:', error)
-      toast.error('Gagal memuat data Dashboard. Pastikan backend aktif.')
-      
+      if (!silent) toast.error('Gagal memuat data Dashboard. Pastikan backend aktif.')
+
       // Jika API error, paksa state kembali ke array kosong agar tidak melempar undefined
-      setSubmissions([])
+      if (!silent) setSubmissions([])
     } finally {
-      setLoading(false)
-      setRefreshing(false)
+      if (!silent) setLoading(false)
+      if (isRefresh) setRefreshing(false)
     }
   }
 
@@ -108,8 +111,8 @@ const Dashboard = () => {
       
       toast.success(`Status permohonan berhasil diperbarui`)
       fetchData(true)
-    } catch {
-      toast.error('Gagal mengubah status permohonan')
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengubah status permohonan')
     } finally {
       setIsUpdating(false)
     }
@@ -155,6 +158,14 @@ const Dashboard = () => {
       document.body.appendChild(link)
       link.click()
       link.remove()
+      window.URL.revokeObjectURL(url)
+
+      const downloadedAt = new Date().toISOString()
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, document_downloaded_at: s.document_downloaded_at ?? downloadedAt } : s))
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, document_downloaded_at: prev.document_downloaded_at ?? downloadedAt } : null)
+      }
+
       toast.success('Berkas berhasil diunduh')
     } catch {
       toast.error('Gagal mengunduh berkas ZIP.')
@@ -163,8 +174,70 @@ const Dashboard = () => {
     }
   }
 
-  useEffect(() => { 
-    fetchData() 
+  const handleUploadPermit = async (id: number, file: File, replace = false) => {
+    try {
+      setIsUploadingPermit(true)
+      const formData = new FormData()
+      formData.append('permit_file', file)
+      if (replace) formData.append('replace', '1')
+
+      const res = await api.post(`/admin/submissions/${id}/permit`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      const updated = res.data?.data as Submission
+
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
+      }
+
+      toast.success('File izin berhasil diunggah')
+      return true
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal mengunggah file izin')
+      return false
+    } finally {
+      setIsUploadingPermit(false)
+    }
+  }
+
+  const handleStartDiscussion = async (id: number) => {
+    try {
+      setIsStartingDiscussion(true)
+      const res = await api.post(`/admin/submissions/${id}/discussion/start`)
+      const updated = res.data?.data as Submission
+
+      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      if (selectedSubmission?.id === id) {
+        setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
+      }
+
+      toast.success('Forum diskusi berhasil dibuka')
+      return true
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Gagal membuka forum diskusi')
+      return false
+    } finally {
+      setIsStartingDiscussion(false)
+    }
+  }
+
+  const handleOpenChatFromTable = (submission: Submission) => {
+    setSelectedSubmission(submission)
+    setChatOpenRequestKey(prev => prev + 1)
+  }
+
+  const handleMessagesRead = (id: number) => {
+    setSubmissions(prev => prev.map(s => (
+      s.id === id ? { ...s, unread_admin_messages_count: 0 } : s
+    )))
+    if (selectedSubmission?.id === id) {
+      setSelectedSubmission(prev => prev ? { ...prev, unread_admin_messages_count: 0 } : null)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
   }, [])
 
   // Pengaman tambahan: Pastikan submissions divalidasi array sebelum di-slice
@@ -294,18 +367,28 @@ const Dashboard = () => {
         </div>
         
         {/* Memanggil Reusable Table Component */}
-        <SubmissionTable data={recentFive} onOpenDetail={(s) => setSelectedSubmission(s)} />
+        <SubmissionTable
+          data={recentFive}
+          onOpenDetail={(s) => setSelectedSubmission(s)}
+          onOpenChat={handleOpenChatFromTable}
+        />
       </div>
 
       {/* Modal Detail Pendaftar */}
-      <DetailPendaftarModal 
-        submission={selectedSubmission} 
+      <DetailPendaftarModal
+        submission={selectedSubmission}
         onClose={() => setSelectedSubmission(null)}
-        onStatusChange={handleStatusChange} 
+        onStatusChange={handleStatusChange}
         onDatesChange={handleDatesChange}
         onDownload={handleDownload}
-        isUpdating={isUpdating} 
+        onUploadPermit={handleUploadPermit}
+        onStartDiscussion={handleStartDiscussion}
+        chatOpenRequestKey={chatOpenRequestKey}
+        onMessagesRead={handleMessagesRead}
+        isUpdating={isUpdating}
         isDownloading={isDownloading}
+        isUploadingPermit={isUploadingPermit}
+        isStartingDiscussion={isStartingDiscussion}
       />
     </div>
   )
