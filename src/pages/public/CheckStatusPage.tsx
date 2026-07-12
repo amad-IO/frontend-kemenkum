@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { ChevronRight, ClipboardEdit, FileSearch, CheckSquare, MessageCircle, Megaphone, Check, Download, Send, X } from 'lucide-react'
+import { ChevronRight, ClipboardEdit, FileSearch, CheckSquare, MessageCircle, Megaphone, Check, Download, Send, X, RefreshCw } from 'lucide-react'
 import Footer from '../../components/public/layout/Footer'
 import HeroLayout from '../../components/public/layout/HeroLayout'
 import checkStatusImage from '../../assets/05.webp'
@@ -31,22 +31,6 @@ type DiscussionMessage = {
   sender_name: string
   message: string
   created_at: string
-}
-
-type StoredStatusAccount = {
-  email: string
-  nim: string
-}
-
-const statusAccountStorageKey = 'public-check-status-account'
-
-const getStoredStatusAccount = (): StoredStatusAccount | null => {
-  try {
-    const stored = window.localStorage.getItem(statusAccountStorageKey)
-    return stored ? JSON.parse(stored) : null
-  } catch {
-    return null
-  }
 }
 
 const stageStepMap: Record<EffectiveStage, number> = {
@@ -87,10 +71,9 @@ const parseApplicantAccount = (member?: string, fallbackEmail = '', fallbackNim 
 const CheckStatusPage = () => {
   const location = useLocation()
   const routeState = location.state as { fromSuccess?: boolean; email?: string; nim?: string } | null
-  const storedAccount = getStoredStatusAccount()
   const isSuccessRedirect = Boolean(routeState?.fromSuccess)
-  const [emailValue, setEmailValue] = useState(routeState?.email ?? storedAccount?.email ?? '')
-  const [nimValue, setNimValue] = useState(routeState?.nim ?? storedAccount?.nim ?? '')
+  const [emailValue, setEmailValue] = useState(routeState?.email ?? '')
+  const [nimValue, setNimValue] = useState(routeState?.nim ?? '')
   const [isSearching, setIsSearching] = useState(false)
   const [hasResult, setHasResult] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
@@ -107,27 +90,60 @@ const CheckStatusPage = () => {
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
   const [downloadingPermit, setDownloadingPermit] = useState(false)
+  const [isRefreshingStatus, setIsRefreshingStatus] = useState(false)
+  const [timelineLineHeight, setTimelineLineHeight] = useState(0)
+  const [progressHeight, setProgressHeight] = useState(0)
+  const [timelineAnimationKey, setTimelineAnimationKey] = useState(0)
   const messageListRef = useRef<HTMLDivElement>(null)
+  const timelineStepRefs = useRef<Record<number, HTMLDivElement | null>>({})
   const statusLabel = getStatusLabel(effectiveStage, finalStatus)
   const statusColorClass = finalStatus === 'rejected' && effectiveStage === 'announcement'
     ? 'text-red-500'
     : 'text-primary'
-  const stepGap = 72
-  const progressHeight = hasResult ? (currentStep - 1) * stepGap : 0
   const discussionIsAvailable = effectiveStage === 'discussion' || Boolean(discussionStartedAt)
 
-  const runStatusSearch = async ({ silent = false } = {}) => {
+  useLayoutEffect(() => {
+    const updateTimelineLines = () => {
+      const lastStep = timelineStepRefs.current[steps[steps.length - 1].id]
+      const activeStep = timelineStepRefs.current[currentStep]
+      if (!lastStep) return
+
+      const lineTopOffset = 48
+      const iconCenterOffset = 20
+      const iconBottomOffset = 40
+      const nextLineHeight = Math.max(0, lastStep.offsetTop + iconBottomOffset - lineTopOffset)
+      const nextProgressHeight = activeStep
+        ? Math.max(0, activeStep.offsetTop + iconCenterOffset - lineTopOffset)
+        : 0
+
+      setTimelineLineHeight(nextLineHeight)
+      setProgressHeight(hasResult ? nextProgressHeight : 0)
+    }
+
+    updateTimelineLines()
+    const frame = window.requestAnimationFrame(updateTimelineLines)
+    window.addEventListener('resize', updateTimelineLines)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      window.removeEventListener('resize', updateTimelineLines)
+    }
+  }, [hasResult, currentStep, statusMessage, effectiveStage, finalStatus, permitFileName])
+
+  const runStatusSearch = async ({ silent = false, keepResult = false } = {}) => {
     if (!emailValue.trim() || !nimValue.trim()) {
       if (!silent) toast.error('Email dan NIM wajib diisi')
       return
     }
 
     setIsSearching(true)
-    setHasResult(false)
-    setApplicantAccount(null)
-    setDiscussionStartedAt(null)
-    setChatOpen(false)
-    setMessages([])
+    if (!keepResult) {
+      setHasResult(false)
+      setApplicantAccount(null)
+      setDiscussionStartedAt(null)
+      setChatOpen(false)
+      setMessages([])
+    }
     
     try {
       const response = await api.get('/check-status', {
@@ -147,10 +163,7 @@ const CheckStatusPage = () => {
       setPermitFileName(data?.permit_file_name ?? null)
       setDiscussionStartedAt(data?.discussion_started_at ?? null)
       setHasResult(true)
-      window.localStorage.setItem(statusAccountStorageKey, JSON.stringify({
-        email: emailValue,
-        nim: nimValue,
-      }))
+      setTimelineAnimationKey(prev => prev + 1)
     } catch (error: any) {
       if (!silent) {
         toast.error(error.response?.data?.message || 'Pendaftaran tidak ditemukan atau terjadi kesalahan server.')
@@ -160,15 +173,18 @@ const CheckStatusPage = () => {
     }
   }
 
-  useEffect(() => {
-    if (!emailValue || !nimValue) return
-
-    runStatusSearch({ silent: true })
-  }, [])
-
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
     await runStatusSearch()
+  }
+
+  const handleRefreshStatus = async () => {
+    try {
+      setIsRefreshingStatus(true)
+      await runStatusSearch({ silent: true, keepResult: true })
+    } finally {
+      setIsRefreshingStatus(false)
+    }
   }
 
   const loadMessages = async (silent = false) => {
@@ -290,9 +306,20 @@ const CheckStatusPage = () => {
                         <p>dengan email {applicantAccount?.email} dan NIM {applicantAccount?.nim}.</p>
                       </div>
                     </div>
-                    <span className="inline-flex w-fit shrink-0 whitespace-nowrap rounded-full border border-primary/15 bg-white px-4 py-1.5 text-xs font-bold text-primary shadow-sm">
-                      {statusLabel}
-                    </span>
+                    <div className="flex w-fit shrink-0 items-center gap-2">
+                      <span className="inline-flex whitespace-nowrap rounded-full border border-primary/15 bg-white px-4 py-1.5 text-xs font-bold text-primary shadow-sm">
+                        {statusLabel}
+                      </span>
+                      <button
+                        type="button"
+                        aria-label="Refresh status pendaftaran"
+                        onClick={handleRefreshStatus}
+                        disabled={isSearching || isRefreshingStatus}
+                        className="grid h-8 w-8 place-items-center rounded-full border border-primary/15 bg-white text-primary shadow-sm transition hover:-translate-y-0.5 hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <RefreshCw size={14} className={isRefreshingStatus ? 'animate-spin' : ''} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -306,10 +333,13 @@ const CheckStatusPage = () => {
               )}
 
               <div className="relative px-6 py-7 sm:px-8">
-                <div className="absolute bottom-7 left-[2.75rem] top-12 w-0.5 -translate-x-1/2 bg-secondary sm:left-[3.25rem]" />
+                <div
+                  className="absolute left-[calc(2.75rem-1px)] top-12 w-0.5 bg-secondary sm:left-[calc(3.25rem-1px)]"
+                  style={{ height: timelineLineHeight }}
+                />
                 {hasResult && (
                   <div
-                    className="status-line-progress absolute left-[2.75rem] top-12 w-0.5 -translate-x-1/2 bg-primary sm:left-[3.25rem]"
+                    className="status-line-progress absolute left-[calc(2.75rem-1px)] top-12 w-0.5 bg-primary sm:left-[calc(3.25rem-1px)]"
                     style={{ height: progressHeight }}
                   />
                 )}
@@ -318,22 +348,29 @@ const CheckStatusPage = () => {
                   {steps.map((step) => {
                     const isActive = hasResult && step.id === currentStep
                     const isCompleted = hasResult && step.id < currentStep
+                    const isDiscussionStep = step.id === 4
+                    const canOpenDiscussion = isDiscussionStep && discussionIsAvailable
                     const Icon = step.icon
 
                     return (
                       <div
-                        key={step.id}
+                        key={`${timelineAnimationKey}-${step.id}`}
+                        ref={(element) => {
+                          timelineStepRefs.current[step.id] = element
+                        }}
                         style={hasResult ? { animationDelay: `${step.id * 110}ms` } : undefined}
                         className={`relative z-10 flex gap-4 rounded-2xl transition-all duration-300 sm:gap-6 ${
                           hasResult ? 'status-step-animate' : ''
                         }`}
                       >
-                        <div className={`relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-300 ${
-                          isActive ? 'border-primary bg-primary text-white shadow-lg shadow-primary/25 ring-4 ring-primary/10 scale-105' :
-                          isCompleted ? 'border-primary bg-primary text-white shadow-md shadow-primary/20' :
-                          'border-neutral-border bg-white text-neutral-muted'
-                        }`}>
-                          <Icon size={18} strokeWidth={isCompleted || isActive ? 2.5 : 2} />
+                        <div className="relative h-10 w-10 shrink-0">
+                          <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 ${
+                            isActive ? 'border-primary bg-primary text-white shadow-lg shadow-primary/25 ring-4 ring-primary/10 scale-105' :
+                            isCompleted ? 'border-primary bg-primary text-white shadow-md shadow-primary/20' :
+                            'border-neutral-border bg-white text-neutral-muted'
+                          }`}>
+                            <Icon size={18} strokeWidth={isCompleted || isActive ? 2.5 : 2} />
+                          </div>
                           {isCompleted && (
                             <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full border-2 border-white bg-primary text-white shadow-sm">
                               <Check size={10} strokeWidth={3} />
@@ -354,31 +391,23 @@ const CheckStatusPage = () => {
                           }`}>
                             {step.description}
                           </p>
+                          {canOpenDiscussion && (
+                            <button
+                              type="button"
+                              aria-label="Buka chat forum diskusi"
+                              onClick={handleOpenDiscussion}
+                              className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-primary/15"
+                            >
+                              <MessageCircle size={14} />
+                              Buka Chat
+                            </button>
+                          )}
 
                           {isActive && (
                             <>
                               <div className="mt-3 rounded-2xl border border-secondary bg-white p-4 text-xs shadow-sm sm:text-sm text-neutral-text">
                                 <span className="font-semibold text-primary">Informasi:</span> {statusMessage}
                               </div>
-
-                              {effectiveStage === 'discussion' && (
-                                <button
-                                  type="button"
-                                  onClick={handleOpenDiscussion}
-                                  className="mt-3 flex w-full items-center gap-3 rounded-2xl border border-secondary bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary/20"
-                                >
-                                  <div className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-primary text-white shadow-md shadow-primary/20">
-                                    <MessageCircle size={20} />
-                                  </div>
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-bold text-neutral-text">Chat diskusi aktif</p>
-                                    <p className="text-xs text-neutral-muted">Tekan bagian ini atau ikon chat di kanan bawah untuk membuka pesan.</p>
-                                  </div>
-                                  <span className="hidden rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white sm:inline-flex">
-                                    Buka Chat
-                                  </span>
-                                </button>
-                              )}
 
                               {effectiveStage === 'announcement' && finalStatus === 'approved' && permitFileName && (
                                 <button
@@ -452,17 +481,6 @@ const CheckStatusPage = () => {
 
         </div>
       </main>
-
-      {hasResult && discussionIsAvailable && !chatOpen && (
-        <button
-          type="button"
-          aria-label="Buka chat diskusi"
-          onClick={handleOpenDiscussion}
-          className="fixed bottom-5 right-5 z-40 inline-flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-[0_18px_35px_rgba(110,71,59,0.28)] transition hover:-translate-y-0.5 hover:bg-primary-dark sm:bottom-7 sm:right-7"
-        >
-          <MessageCircle size={24} />
-        </button>
-      )}
 
       {chatOpen && (
         <div className="fixed inset-0 z-50">

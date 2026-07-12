@@ -14,6 +14,7 @@ import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
 import SubmissionTable from '../../components/admin/SubmissionTable'
 import type { Submission } from './ListPendaftar'
+import { useAdminChat } from '../../contexts/AdminChatContext'
 
 interface Stats {
   total: number
@@ -54,6 +55,7 @@ const StatCard = ({
 // ─── Main Dashboard Component ─────────────────────────────────────────────────
 
 const Dashboard = () => {
+  const { openAdminChat, readReceipt } = useAdminChat()
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, approved: 0, rejected: 0, magang: 0, penelitian: 0 })
   const [loading, setLoading] = useState(true)
@@ -64,7 +66,6 @@ const Dashboard = () => {
   const [isDownloading, setIsDownloading] = useState(false)
   const [isUploadingPermit, setIsUploadingPermit] = useState(false)
   const [isStartingDiscussion, setIsStartingDiscussion] = useState(false)
-  const [chatOpenRequestKey, setChatOpenRequestKey] = useState(0)
 
   const fetchData = async (isRefresh = false, silent = false) => {
     if (isRefresh) setRefreshing(true)
@@ -167,6 +168,7 @@ const Dashboard = () => {
       }
 
       toast.success('Berkas berhasil diunduh')
+      fetchData(true)
     } catch {
       toast.error('Gagal mengunduh berkas ZIP.')
     } finally {
@@ -223,8 +225,15 @@ const Dashboard = () => {
   }
 
   const handleOpenChatFromTable = (submission: Submission) => {
+    openAdminChat(submission)
+  }
+
+  const handleOpenDetail = (submission: Submission) => {
     setSelectedSubmission(submission)
-    setChatOpenRequestKey(prev => prev + 1)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedSubmission(null)
   }
 
   const handleMessagesRead = (id: number) => {
@@ -239,6 +248,21 @@ const Dashboard = () => {
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      fetchData(false, true)
+    }, 10000)
+
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!readReceipt) return
+    setSubmissions(prev => prev.map(s => (
+      s.id === readReceipt.id ? { ...s, unread_admin_messages_count: 0 } : s
+    )))
+  }, [readReceipt])
 
   // Pengaman tambahan: Pastikan submissions divalidasi array sebelum di-slice
   const recentFive = Array.isArray(submissions) ? submissions.slice(0, 5) : []
@@ -369,7 +393,7 @@ const Dashboard = () => {
         {/* Memanggil Reusable Table Component */}
         <SubmissionTable
           data={recentFive}
-          onOpenDetail={(s) => setSelectedSubmission(s)}
+          onOpenDetail={handleOpenDetail}
           onOpenChat={handleOpenChatFromTable}
         />
       </div>
@@ -377,13 +401,12 @@ const Dashboard = () => {
       {/* Modal Detail Pendaftar */}
       <DetailPendaftarModal
         submission={selectedSubmission}
-        onClose={() => setSelectedSubmission(null)}
+        onClose={handleCloseModal}
         onStatusChange={handleStatusChange}
         onDatesChange={handleDatesChange}
         onDownload={handleDownload}
         onUploadPermit={handleUploadPermit}
         onStartDiscussion={handleStartDiscussion}
-        chatOpenRequestKey={chatOpenRequestKey}
         onMessagesRead={handleMessagesRead}
         isUpdating={isUpdating}
         isDownloading={isDownloading}

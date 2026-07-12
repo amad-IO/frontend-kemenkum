@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2, Upload, MessageCircle, Send } from 'lucide-react'
+import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2, Upload, MessageCircle, Send, Minus } from 'lucide-react'
 import { toast } from 'react-toastify'
 import type { Submission } from '../../pages/admin/ListPendaftar'
 import DateRangePickerField from '../public/forms/DateRangePickerField'
@@ -11,6 +11,23 @@ type DiscussionMessage = {
   sender_name: string
   message: string
   created_at: string
+  status?: 'sending' | 'failed'
+}
+
+const SEEN_MESSAGE_STORAGE_KEY = 'admin_chat_seen_applicant_message_ids'
+
+const readSeenMessageIds = () => {
+  try {
+    return JSON.parse(localStorage.getItem(SEEN_MESSAGE_STORAGE_KEY) || '{}') as Record<string, number>
+  } catch {
+    return {}
+  }
+}
+
+const writeSeenMessageId = (submissionId: number, messageId: number) => {
+  const seen = readSeenMessageIds()
+  seen[String(submissionId)] = Math.max(Number(seen[String(submissionId)] ?? 0), messageId)
+  localStorage.setItem(SEEN_MESSAGE_STORAGE_KEY, JSON.stringify(seen))
 }
 
 interface Props {
@@ -22,6 +39,8 @@ interface Props {
   onUploadPermit: (id: number, file: File, replace?: boolean) => Promise<boolean>
   onStartDiscussion: (id: number) => Promise<boolean>
   chatOpenRequestKey?: number
+  chatOnly?: boolean
+  chatStackIndex?: number
   onMessagesRead?: (id: number) => void
   isUpdating: boolean
   isDownloading: boolean
@@ -38,6 +57,8 @@ const DetailPendaftarModal = ({
   onUploadPermit,
   onStartDiscussion,
   chatOpenRequestKey,
+  chatOnly = false,
+  chatStackIndex = 0,
   onMessagesRead,
   isUpdating,
   isDownloading,
@@ -51,8 +72,17 @@ const DetailPendaftarModal = ({
   const [chatMessage, setChatMessage] = useState('')
   const [loadingMessages, setLoadingMessages] = useState(false)
   const [sendingMessage, setSendingMessage] = useState(false)
+  const [chatPosition, setChatPosition] = useState<{ x: number; y: number } | null>(null)
+  const [isDraggingChat, setIsDraggingChat] = useState(false)
+  const [chatMinimized, setChatMinimized] = useState(false)
+  const [clientUnreadCount, setClientUnreadCount] = useState(0)
+  const [latestApplicantMessageId, setLatestApplicantMessageId] = useState(0)
   const permitInputRef = useRef<HTMLInputElement>(null)
   const messageListRef = useRef<HTMLDivElement>(null)
+  const chatPanelRef = useRef<HTMLElement>(null)
+  const chatDragOffsetRef = useRef({ x: 0, y: 0 })
+  const chatDragMovedRef = useRef(false)
+  const chatSuppressClickRef = useRef(false)
 
   useEffect(() => {
     if (!submission) return
@@ -65,7 +95,47 @@ const DetailPendaftarModal = ({
     setChatOpen(false)
     setMessages([])
     setChatMessage('')
+    setChatPosition(null)
+    setIsDraggingChat(false)
+    setChatMinimized(false)
+    setClientUnreadCount(0)
+    setLatestApplicantMessageId(0)
   }, [submission?.id])
+
+  useEffect(() => {
+    if (!isDraggingChat || !chatOnly) return
+
+    const handleMouseMove = (event: MouseEvent) => {
+      const panel = chatPanelRef.current
+      if (!panel) return
+
+      const rect = panel.getBoundingClientRect()
+      const margin = 12
+      const maxX = window.innerWidth - rect.width - margin
+      const maxY = window.innerHeight - rect.height - margin
+      const nextX = Math.min(Math.max(event.clientX - chatDragOffsetRef.current.x, margin), Math.max(maxX, margin))
+      const nextY = Math.min(Math.max(event.clientY - chatDragOffsetRef.current.y, margin), Math.max(maxY, margin))
+
+      chatDragMovedRef.current = true
+      setChatPosition({ x: nextX, y: nextY })
+    }
+
+    const handleMouseUp = () => {
+      chatSuppressClickRef.current = chatDragMovedRef.current
+      setIsDraggingChat(false)
+      document.body.style.userSelect = ''
+    }
+
+    document.body.style.userSelect = 'none'
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.body.style.userSelect = ''
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isDraggingChat, chatOnly])
 
   const parseMember = (memberStr: string | null) => {
     if (!memberStr) return null
@@ -80,18 +150,59 @@ const DetailPendaftarModal = ({
   const chatCanStart = Boolean(submission?.document_downloaded_at)
   const chatIsActive = Boolean(submission?.discussion_started_at)
   const chatBadgeLabel = chatIsActive ? 'Aktif' : chatCanStart ? 'Siap' : 'Terkunci'
+  const latestMessageFallbackCount = submission?.latest_message?.sender_type === 'applicant'
+    && Number(submission.latest_message.id) > Number(readSeenMessageIds()[String(submission.id)] ?? 0)
+    ? 1
+    : 0
+  const unreadCount = Math.max(
+    Number(submission?.unread_admin_messages_count ?? 0),
+    clientUnreadCount,
+    latestMessageFallbackCount
+  )
+  const hasUnread = unreadCount > 0
+  const panelStackOffset = chatStackIndex * 18
+  const bubbleStackOffset = chatStackIndex * 72
+  const defaultPanelStyle = chatOnly && !chatPosition
+    ? {
+        right: 24 + panelStackOffset,
+        bottom: 24 + panelStackOffset,
+      }
+    : undefined
+  const defaultBubbleStyle = chatOnly && !chatPosition
+    ? {
+        right: 24 + bubbleStackOffset,
+        bottom: 24,
+      }
+    : undefined
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
 
-  const loadMessages = async (silent = false) => {
+  const loadMessages = async (silent = false, markRead = true) => {
     if (!submission) return
 
     try {
       if (!silent) setLoadingMessages(true)
-      const res = await api.get(`/admin/submissions/${submission.id}/messages`)
-      setMessages(res.data?.data ?? [])
-      onMessagesRead?.(submission.id)
+      const res = await api.get(`/admin/submissions/${submission.id}/messages`, {
+        params: { mark_read: markRead ? 1 : 0 },
+      })
+      const nextMessages = (res.data?.data ?? []) as DiscussionMessage[]
+      const applicantMessages = nextMessages.filter(message => message.sender_type === 'applicant')
+      const latestId = applicantMessages.reduce((max, message) => Math.max(max, Number(message.id)), 0)
+
+      setMessages(prev => {
+        const localMessages = prev.filter(message => message.status === 'sending' || message.status === 'failed')
+        return [...nextMessages, ...localMessages]
+      })
+      setLatestApplicantMessageId(latestId)
+      if (markRead) {
+        if (latestId > 0) writeSeenMessageId(submission.id, latestId)
+        setClientUnreadCount(0)
+        onMessagesRead?.(submission.id)
+      } else {
+        const seenId = Number(readSeenMessageIds()[String(submission.id)] ?? 0)
+        setClientUnreadCount(applicantMessages.filter(message => Number(message.id) > seenId).length)
+      }
     } catch {
       if (!silent) toast.error('Gagal memuat pesan diskusi')
     } finally {
@@ -101,11 +212,20 @@ const DetailPendaftarModal = ({
 
   useEffect(() => {
     if (!chatOpen || !submission) return
+    if (chatOnly && chatMinimized) return
 
     loadMessages()
     const timer = window.setInterval(() => loadMessages(true), 3000)
     return () => window.clearInterval(timer)
-  }, [chatOpen, submission?.id])
+  }, [chatOpen, submission?.id, chatOnly, chatMinimized])
+
+  useEffect(() => {
+    if (!chatOpen || !submission || !chatOnly || !chatMinimized) return
+
+    loadMessages(true, false)
+    const timer = window.setInterval(() => loadMessages(true, false), 10000)
+    return () => window.clearInterval(timer)
+  }, [chatOpen, submission?.id, chatOnly, chatMinimized])
 
   useEffect(() => {
     if (!chatOpen) return
@@ -132,39 +252,137 @@ const DetailPendaftarModal = ({
   }
 
   const handleOpenChat = async () => {
-    if (!submission) return
+    if (!submission) return false
 
     if (submission.discussion_started_at) {
       setChatOpen(true)
-      return
+      setChatMinimized(false)
+      return true
     }
 
     const ok = await onStartDiscussion(submission.id)
-    if (ok) setChatOpen(true)
+    if (ok) {
+      setChatOpen(true)
+      setChatMinimized(false)
+    }
+    return ok
   }
 
   useEffect(() => {
     if (!chatOpenRequestKey || !submission) return
 
-    void handleOpenChat()
-  }, [chatOpenRequestKey, submission?.id])
+    const openRequestedChat = async () => {
+      const opened = await handleOpenChat()
+      if (chatOnly && !opened) onClose()
+    }
+
+    void openRequestedChat()
+  }, [chatOpenRequestKey, submission?.id, chatOnly])
 
   const handleSendMessage = async () => {
     if (!submission) return
 
     const message = chatMessage.trim()
     if (!message) return
+    if (sendingMessage) return
+
+    const tempId = -Date.now()
+    const optimisticMessage: DiscussionMessage = {
+      id: tempId,
+      sender_type: 'admin',
+      sender_name: 'Admin Kementerian Hukum',
+      message,
+      created_at: new Date().toISOString(),
+      status: 'sending',
+    }
+
+    setMessages(prev => [...prev, optimisticMessage])
+    setChatMessage('')
 
     try {
       setSendingMessage(true)
       const res = await api.post(`/admin/submissions/${submission.id}/messages`, { message })
-      setMessages(prev => [...prev, res.data?.data])
-      setChatMessage('')
+      setMessages(prev => prev.map(item => (
+        item.id === tempId ? res.data?.data : item
+      )))
     } catch (error: any) {
+      setMessages(prev => prev.map(item => (
+        item.id === tempId ? { ...item, status: 'failed' } : item
+      )))
       toast.error(error.response?.data?.message || 'Gagal mengirim pesan')
     } finally {
       setSendingMessage(false)
     }
+  }
+
+  const handleChatDragStart = (event: React.MouseEvent<HTMLElement>) => {
+    if (!chatOnly || event.button !== 0) return
+
+    const panel = chatPanelRef.current
+    if (!panel) return
+
+    const rect = panel.getBoundingClientRect()
+    chatDragOffsetRef.current = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    }
+    chatDragMovedRef.current = false
+    chatSuppressClickRef.current = false
+    setChatPosition({ x: rect.left, y: rect.top })
+    setIsDraggingChat(true)
+    event.preventDefault()
+  }
+
+  const handleMinimizeChat = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation()
+    const panel = chatPanelRef.current
+    if (panel) {
+      const rect = panel.getBoundingClientRect()
+      const bubbleSize = 56
+      const margin = 12
+      const maxX = window.innerWidth - bubbleSize - margin
+      const maxY = window.innerHeight - bubbleSize - margin
+      const x = chatPosition
+        ? rect.right - bubbleSize
+        : window.innerWidth - bubbleSize - 24 - bubbleStackOffset
+      const y = chatPosition
+        ? rect.bottom - bubbleSize
+        : window.innerHeight - bubbleSize - 24
+      setChatPosition({
+        x: Math.min(Math.max(x, margin), Math.max(maxX, margin)),
+        y: Math.min(Math.max(y, margin), Math.max(maxY, margin)),
+      })
+    }
+    setChatMinimized(true)
+  }
+
+  const handleRestoreChat = () => {
+    if (chatSuppressClickRef.current) {
+      chatSuppressClickRef.current = false
+      return
+    }
+
+    if (chatPosition) {
+      const margin = 12
+      const panelWidth = Math.min(448, window.innerWidth - (margin * 2))
+      const panelHeight = Math.min(560, window.innerHeight - (margin * 2))
+      const maxX = window.innerWidth - panelWidth - margin
+      const maxY = window.innerHeight - panelHeight - margin
+      setChatPosition({
+        x: Math.min(Math.max(chatPosition.x, margin), Math.max(maxX, margin)),
+        y: Math.min(Math.max(chatPosition.y, margin), Math.max(maxY, margin)),
+      })
+    }
+
+    const latestSeenId = latestApplicantMessageId
+      || (submission?.latest_message?.sender_type === 'applicant' ? Number(submission.latest_message.id) : 0)
+
+    if (submission && latestSeenId > 0) {
+      writeSeenMessageId(submission.id, latestSeenId)
+      setClientUnreadCount(0)
+    }
+
+    setChatMinimized(false)
   }
 
   if (!submission) return null
@@ -184,9 +402,18 @@ const DetailPendaftarModal = ({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={chatOpen ? undefined : onClose} />
+    <div
+      className={
+        chatOnly
+          ? 'pointer-events-none fixed inset-0 z-50'
+          : 'fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6'
+      }
+    >
+      {!chatOnly && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={chatOpen ? undefined : onClose} />
+      )}
 
+      {!chatOnly && (
       <div className="relative flex max-h-[90vh] w-full max-w-3xl flex-col rounded-2xl bg-white shadow-2xl">
         <div className="flex items-center justify-between border-b border-neutral-border px-6 py-5">
           <div className="flex items-center gap-3">
@@ -425,12 +652,53 @@ const DetailPendaftarModal = ({
           )}
         </div>
       </div>
+      )}
+
+      {chatOnly && !chatOpen && (
+        <div className="pointer-events-auto fixed bottom-4 right-4 rounded-2xl border border-neutral-border bg-white px-5 py-4 text-sm font-bold text-neutral-text shadow-2xl sm:bottom-6 sm:right-6">
+          Membuka forum diskusi...
+        </div>
+      )}
 
       {chatOpen && (
-        <div className="fixed inset-0 z-[60]">
-          <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" />
-          <section className="absolute bottom-4 right-4 flex h-[min(560px,calc(100vh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl sm:bottom-6 sm:right-6">
-            <div className="flex items-center justify-between border-b border-neutral-border bg-primary px-4 py-4 text-white">
+        <div className={chatOnly ? 'pointer-events-none fixed inset-0 z-[60]' : 'fixed inset-0 z-[60]'}>
+          {!chatOnly && <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" />}
+          {chatOnly && chatMinimized ? (
+            <button
+              ref={(node) => {
+                chatPanelRef.current = node
+              }}
+              type="button"
+              aria-label="Buka kembali chat"
+              onMouseDown={handleChatDragStart}
+              onClick={handleRestoreChat}
+              title={`${ketua?.nama || 'Pendaftar'} - ${submission.letter_number}`}
+              style={chatPosition ? { left: chatPosition.x, top: chatPosition.y } : defaultBubbleStyle}
+              className={`pointer-events-auto grid h-14 w-14 place-items-center rounded-full bg-primary text-white shadow-2xl ring-4 ring-primary/10 transition hover:bg-primary-dark ${
+                chatPosition || defaultBubbleStyle ? 'absolute' : 'absolute bottom-4 right-4 sm:bottom-6 sm:right-6'
+              } ${isDraggingChat ? 'cursor-grabbing' : 'cursor-grab'}`}
+            >
+              <MessageCircle size={24} />
+              {hasUnread && (
+                <span className="absolute -right-2 -top-2 flex h-6 min-w-6 items-center justify-center rounded-full border-2 border-white bg-amber-400 px-1.5 text-xs font-extrabold leading-none text-primary shadow-md shadow-primary/25">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+          ) : (
+            <section
+              ref={chatPanelRef}
+              style={chatOnly && chatPosition ? { left: chatPosition.x, top: chatPosition.y } : defaultPanelStyle}
+              className={`pointer-events-auto flex h-[min(560px,calc(100vh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl ${
+                chatOnly && (chatPosition || defaultPanelStyle) ? 'absolute' : 'absolute bottom-4 right-4 sm:bottom-6 sm:right-6'
+              }`}
+            >
+              <div
+                onMouseDown={handleChatDragStart}
+                className={`flex items-center justify-between border-b border-neutral-border bg-primary px-4 py-4 text-white ${
+                  chatOnly ? 'cursor-grab active:cursor-grabbing' : ''
+                }`}
+              >
               <div className="flex items-center gap-3">
                 <div className="grid h-10 w-10 place-items-center rounded-full bg-white/15">
                   <MessageCircle size={20} />
@@ -438,16 +706,36 @@ const DetailPendaftarModal = ({
                 <div>
                   <p className="text-sm font-extrabold">Forum Diskusi</p>
                   <p className="text-xs font-semibold text-white/75">{ketua?.nama || 'Pendaftar'}</p>
+                  <p className="mt-0.5 max-w-[220px] truncate text-[11px] font-bold text-white/85">
+                    {submission.letter_number}
+                  </p>
                 </div>
               </div>
-              <button
-                type="button"
-                aria-label="Tutup chat"
-                onClick={() => setChatOpen(false)}
-                className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/15"
-              >
-                <X size={20} />
-              </button>
+              <div className="flex items-center gap-1">
+                {chatOnly && (
+                  <button
+                    type="button"
+                    aria-label="Minimize chat"
+                    onMouseDown={(event) => event.stopPropagation()}
+                    onClick={handleMinimizeChat}
+                    className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/15"
+                  >
+                    <Minus size={20} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  aria-label="Tutup chat"
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={() => {
+                    setChatOpen(false)
+                    if (chatOnly) onClose()
+                  }}
+                  className="grid h-9 w-9 place-items-center rounded-full text-white transition hover:bg-white/15"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
             <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-bg p-4">
@@ -475,6 +763,15 @@ const DetailPendaftarModal = ({
                         {message.sender_name}
                       </p>
                       <p className="leading-relaxed">{message.message}</p>
+                      {message.status && (
+                        <p className={`mt-1 text-[10px] font-bold ${
+                          message.status === 'failed'
+                            ? message.sender_type === 'admin' ? 'text-red-100' : 'text-red-500'
+                            : message.sender_type === 'admin' ? 'text-white/65' : 'text-neutral-muted'
+                        }`}>
+                          {message.status === 'failed' ? 'Gagal terkirim' : 'Mengirim...'}
+                        </p>
+                      )}
                     </div>
                   </div>
                 ))
@@ -487,7 +784,10 @@ const DetailPendaftarModal = ({
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSendMessage()
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSendMessage()
+                    }
                   }}
                   placeholder="Tulis balasan..."
                   className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-neutral-text outline-none placeholder:text-neutral-muted"
@@ -502,7 +802,8 @@ const DetailPendaftarModal = ({
                 </button>
               </div>
             </div>
-          </section>
+            </section>
+          )}
         </div>
       )}
     </div>

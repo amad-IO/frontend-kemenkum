@@ -5,6 +5,7 @@ import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
 import SubmissionTable from '../../components/admin/SubmissionTable'
 import CustomSelect from '../../components/admin/CustomSelect'
+import { useAdminChat } from '../../contexts/AdminChatContext'
 
 export interface Submission {
   id: number
@@ -25,10 +26,16 @@ export interface Submission {
   permit_file_path: string | null
   permit_file_name: string | null
   unread_admin_messages_count?: number
+  latest_message?: {
+    id: number
+    sender_type: 'admin' | 'applicant'
+    created_at: string
+  } | null
   created_at: string
 }
 
 const ListPendaftarPage = () => {
+  const { openAdminChat, readReceipt } = useAdminChat()
   const [submissions, setSubmissions] = useState<Submission[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
@@ -48,7 +55,6 @@ const ListPendaftarPage = () => {
 
   // Modal State
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
-  const [chatOpenRequestKey, setChatOpenRequestKey] = useState(0)
 
   const fetchData = async (isRefresh = false, silent = false) => {
     if (isRefresh) setRefreshing(true)
@@ -73,6 +79,21 @@ const ListPendaftarPage = () => {
   useEffect(() => {
     fetchData()
   }, [])
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      fetchData(false, true)
+    }, 10000)
+
+    return () => window.clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    if (!readReceipt) return
+    setSubmissions(prev => prev.map(s => (
+      s.id === readReceipt.id ? { ...s, unread_admin_messages_count: 0 } : s
+    )))
+  }, [readReceipt])
 
   // Derived data
   const filteredData = useMemo(() => {
@@ -193,6 +214,7 @@ const ListPendaftarPage = () => {
       }
 
       toast.success('Berkas berhasil diunduh')
+      fetchData(true)
     } catch (error: unknown) {
       let message = 'Gagal mengunduh berkas ZIP. File mungkin tidak ditemukan.'
 
@@ -267,8 +289,15 @@ const ListPendaftarPage = () => {
   }
 
   const handleOpenChatFromTable = (submission: Submission) => {
+    openAdminChat(submission)
+  }
+
+  const handleOpenDetail = (submission: Submission) => {
     setSelectedSubmission(submission)
-    setChatOpenRequestKey(prev => prev + 1)
+  }
+
+  const handleCloseModal = () => {
+    setSelectedSubmission(null)
   }
 
   const handleMessagesRead = (id: number) => {
@@ -360,7 +389,7 @@ const ListPendaftarPage = () => {
           /* Menggunakan komponen tabel reusable */
           <SubmissionTable
             data={paginatedData}
-            onOpenDetail={(s) => setSelectedSubmission(s)}
+            onOpenDetail={handleOpenDetail}
             onOpenChat={handleOpenChatFromTable}
           />
         )}
@@ -397,15 +426,14 @@ const ListPendaftarPage = () => {
       </div>
 
       {/* Modal Detail */}
-      <DetailPendaftarModal 
-        submission={selectedSubmission} 
-        onClose={() => setSelectedSubmission(null)}
+      <DetailPendaftarModal
+        submission={selectedSubmission}
+        onClose={handleCloseModal}
         onStatusChange={handleStatusChange}
         onDatesChange={handleDatesChange}
         onDownload={handleDownload}
         onUploadPermit={handleUploadPermit}
         onStartDiscussion={handleStartDiscussion}
-        chatOpenRequestKey={chatOpenRequestKey}
         onMessagesRead={handleMessagesRead}
         isUpdating={isUpdating}
         isDownloading={isDownloading}
