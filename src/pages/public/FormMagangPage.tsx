@@ -22,6 +22,8 @@ const anggotaSchema = z.object({
 
 const phoneRegex = /^(08\d{8,11}|\+628\d{8,11})$/
 const phoneErrorMessage = 'Gunakan format 08xxxxxxxxxx atau +628xxxxxxxxxx tanpa tanda -.'
+const emialRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const emailErrorMessage = 'Email tidak valid'
 
 const magangSchema = z
   .object({
@@ -32,7 +34,7 @@ const magangSchema = z
     nama_ketua: z.string().min(2, 'Nama minimal 2 karakter'),
     nim_ketua: z.string().min(3, 'NIM/NISN tidak valid'),
     whatsapp: z.string().trim().refine((v) => phoneRegex.test(v), { message: phoneErrorMessage }),
-    email: z.string().regex(/^[^\s@]+@[^\s@]+\.[^\s@]+$/, 'Email tidak valid'),
+    email: z.string().regex(emialRegex, {message: emailErrorMessage}),
     anggota: z.array(anggotaSchema).max(2),
     letter_number: z.string().min(3, 'Nomor surat tidak valid'),
     document: z
@@ -360,7 +362,7 @@ const FormMagangPage = () => {
 
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
-                    Nomor WhatsApp <span className="text-red-500">(08 atau +62)*</span>
+                    Nomor WhatsApp <span className="text-xs text-red-500">(08 atau +62)*</span>
                   </label>
                   <input {...register('whatsapp')} placeholder="08xxxxxxxxxx / +628xxxxxxxxxx" type="tel" inputMode="tel" className="input-field" />
                   {errors.whatsapp && <p className="text-xs text-red-500">{errors.whatsapp.message}</p>}
