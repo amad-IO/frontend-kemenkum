@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Users,
-  Settings,
   LogOut,
   X,
   ChevronRight,
@@ -17,7 +16,6 @@ const navItems = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'List Pendaftar', to: '/admin/pendaftar', icon: Users },
   { label: 'Kelola Program', to: '/admin/program', icon: Briefcase },
-  { label: 'Setting Form', to: '/admin/setting-form', icon: Settings },
 ]
 
 interface SidebarProps {

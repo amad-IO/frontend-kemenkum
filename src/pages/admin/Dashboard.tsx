@@ -56,12 +56,9 @@ const StatCard = ({
 // ─── Main Dashboard Component ─────────────────────────────────────────────────
 
 const Dashboard = () => {
-  const { openAdminChat, readReceipt } = useAdminChat()
+  const { openAdminChat } = useAdminChat()
   const queryClient = useQueryClient()
 
-  // ── Data Fetching (TanStack Query — shared key dengan ListPendaftar) ──────
-  // Menggunakan key yang sama ('admin-submissions') agar data di-cache bersama
-  // Jika user baru dari ListPendaftar, data langsung tersedia tanpa fetch ulang
   const {
     data: rawSubmissions = [],
     isLoading: loading,
@@ -80,7 +77,6 @@ const Dashboard = () => {
     throwOnError: false,
   })
 
-  // Local patches untuk optimistic updates
   const [localPatches, setLocalPatches] = useState<Record<number, Partial<Submission>>>({})
 
   const patchSubmission = (id: number, patch: Partial<Submission>) => {
@@ -89,7 +85,6 @@ const Dashboard = () => {
 
   const submissions: Submission[] = rawSubmissions.map(s => ({ ...s, ...(localPatches[s.id] ?? {}) }))
 
-  // Stats dihitung dari data yang sudah di-patch
   const stats: Stats = {
     total: submissions.length,
     pending: submissions.filter(s => s.status === 'pending').length,
@@ -109,12 +104,10 @@ const Dashboard = () => {
     try {
       setIsUpdating(true)
       await api.patch(`/admin/submissions/${id}/status`, { status })
-
       patchSubmission(id, { status })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, status } : null)
       }
-
       toast.success(`Status permohonan berhasil diperbarui`)
       queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
     } catch (error: any) {
@@ -128,12 +121,10 @@ const Dashboard = () => {
     try {
       setIsUpdating(true)
       await api.patch(`/admin/submissions/${id}/dates`, { start_date, end_date })
-      
       patchSubmission(id, { start_date, end_date })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, start_date, end_date } : null)
       }
-      
       toast.success('Tanggal kegiatan berhasil diperbarui')
     } catch {
       toast.error('Gagal memperbarui tanggal kegiatan')
@@ -149,13 +140,11 @@ const Dashboard = () => {
       const res = await api.get(`/admin/submissions/${id}/download`, { responseType: 'blob' })
       const submission = submissions.find(s => s.id === id)
       let filename = `permohonan-${id}.zip`
-      
       if (submission) {
         const ketua = submission.member_1.split('|')[0] || 'ketua'
         const kampus = submission.institution || 'kampus'
         filename = `permohonan_${ketua.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${kampus.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.zip`
       }
-      
       const url = window.URL.createObjectURL(new Blob([res.data]))
       const link = document.createElement('a')
       link.href = url
@@ -170,7 +159,6 @@ const Dashboard = () => {
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, document_downloaded_at: prev.document_downloaded_at ?? downloadedAt } : null)
       }
-
       toast.success('Berkas berhasil diunduh')
       queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
     } catch {
@@ -186,17 +174,14 @@ const Dashboard = () => {
       const formData = new FormData()
       formData.append('permit_file', file)
       if (replace) formData.append('replace', '1')
-
       const res = await api.post(`/admin/submissions/${id}/permit`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
       const updated = res.data?.data as Submission
-
       patchSubmission(id, { permit_file_path: updated.permit_file_path, permit_file_name: updated.permit_file_name })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
       }
-
       toast.success('File izin berhasil diunggah')
       return true
     } catch (error: any) {
@@ -212,12 +197,10 @@ const Dashboard = () => {
       setIsStartingDiscussion(true)
       const res = await api.post(`/admin/submissions/${id}/discussion/start`)
       const updated = res.data?.data as Submission
-
       patchSubmission(id, { discussion_started_at: updated.discussion_started_at })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
       }
-
       toast.success('Forum diskusi berhasil dibuka')
       return true
     } catch (error: any) {
@@ -250,7 +233,6 @@ const Dashboard = () => {
     }
   }
 
-  // 5 pendaftaran terbaru untuk tabel ringkasan
   const recentFive = submissions.slice(0, 5)
 
   if (loading) {
@@ -268,7 +250,7 @@ const Dashboard = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Dashboard</h1>
-          <p className="mt-0.5 text-sm text-neutral-muted">Ringkasan pendaftaran Magang & Penelitian</p>
+          <p className="mt-0.5 text-sm text-neutral-muted">Ringkasan pendaftaran Magang &amp; Penelitian</p>
         </div>
         <button
           onClick={() => refetch()}
@@ -289,6 +271,7 @@ const Dashboard = () => {
 
       {/* ── Split Cards Row ── */}
       <div className="grid gap-4 lg:grid-cols-3">
+
         {/* Jenis Program Card */}
         <div className="rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card">
           <div className="mb-4 flex items-center justify-between">
@@ -335,7 +318,11 @@ const Dashboard = () => {
             <Users size={16} className="text-primary" />
           </div>
           <div className="flex flex-col gap-3">
-            {[{ label: 'Menunggu', val: stats.pending, color: 'bg-yellow-400' }, { label: 'Diterima', val: stats.approved, color: 'bg-green-500' }, { label: 'Ditolak', val: stats.rejected, color: 'bg-red-400' }].map(({ label, val, color }) => (
+            {[
+              { label: 'Menunggu', val: stats.pending, color: 'bg-yellow-400' },
+              { label: 'Diterima', val: stats.approved, color: 'bg-green-500' },
+              { label: 'Ditolak', val: stats.rejected, color: 'bg-red-400' },
+            ].map(({ label, val, color }) => (
               <div key={label} className="flex items-center gap-3">
                 <div className={`h-2.5 w-2.5 shrink-0 rounded-full ${color}`} />
                 <span className="flex-1 text-xs font-semibold text-neutral-subtle">{label}</span>
@@ -362,8 +349,8 @@ const Dashboard = () => {
             <a href="/admin/pendaftar?status=pending" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
               <Clock size={15} /> Review Pending ({stats.pending})
             </a>
-            <a href="/admin/setting-form" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
-              <Download size={15} /> Setting Form
+            <a href="/admin/program" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
+              <Download size={15} /> Kelola Periode Magang
             </a>
           </div>
         </div>
@@ -375,7 +362,7 @@ const Dashboard = () => {
           <h2 className="text-sm font-bold text-neutral-text">Pendaftaran Terbaru</h2>
           <a href="/admin/pendaftar" className="text-xs font-semibold text-primary hover:underline">Lihat semua →</a>
         </div>
-        
+
         {/* Memanggil Reusable Table Component */}
         <SubmissionTable
           data={recentFive}

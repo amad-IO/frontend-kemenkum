@@ -50,8 +50,8 @@ type ViewTransitionDocument = Document & {
 }
 
 const fieldWrap = 'flex flex-col gap-1.5'
-const sectionClass = 'rounded-xl border border-neutral-border bg-white p-4 sm:p-5'
-const sectionTitleClass = 'mb-4 flex items-center gap-2 text-base font-bold text-neutral-text'
+const sectionClass = 'relative rounded-2xl border border-neutral-200/60 bg-white/80 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl sm:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-primary/20'
+const sectionTitleClass = 'mb-5 flex items-center gap-2.5 text-lg font-extrabold text-neutral-text'
 
 const FormMagangPage = () => {
   const navigate = useNavigate()
@@ -230,7 +230,7 @@ const FormMagangPage = () => {
               </div>
             </section>
 
-            <section className={sectionClass}>
+            <section className={`${sectionClass} relative z-10`}>
               <h2 className={sectionTitleClass}>
                 <CalendarDays size={18} className="text-primary" />
                 Periode Magang
@@ -245,11 +245,11 @@ const FormMagangPage = () => {
                   type="button"
                   disabled={loadingPeriode}
                   onClick={() => setPeriodOpen((open) => !open)}
-                  className={`flex min-h-14 w-full items-center gap-3 rounded-xl border bg-white px-4 text-left transition hover:border-primary hover:bg-primary/5 disabled:cursor-not-allowed disabled:bg-neutral-soft disabled:text-neutral-muted ${
-                    errors.period_id ? 'border-red-300' : periodOpen ? 'border-primary ring-2 ring-primary/15' : 'border-neutral-border'
+                  className={`group flex min-h-14 w-full items-center gap-3 rounded-xl border-2 bg-white px-4 text-left transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:shadow-md disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-muted ${
+                    errors.period_id ? 'border-red-300' : periodOpen ? 'border-primary ring-4 ring-primary/20 shadow-sm' : 'border-neutral-200'
                   }`}
                 >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
                     <CalendarDays size={19} />
                   </span>
                   <span className={`min-w-0 flex-1 truncate text-sm font-bold ${selectedPeriod ? 'text-neutral-text' : 'text-neutral-muted'}`}>
@@ -267,8 +267,8 @@ const FormMagangPage = () => {
                 </button>
 
                 {periodOpen && (
-                  <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-xl border border-neutral-border bg-white shadow-lg">
-                    <div className="max-h-64 overflow-y-auto p-2">
+                  <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-neutral-100 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-all">
+                    <div className="flex max-h-64 flex-col gap-1 overflow-y-auto p-2">
                       {periodeList.length === 0 ? (
                         <div className="px-3 py-3 text-sm font-semibold text-neutral-muted">
                           Tidak ada periode aktif
@@ -289,12 +289,12 @@ const FormMagangPage = () => {
                                   setPeriodOpen(false)
                                 }
                               }}
-                              className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-lg px-3 text-left text-sm font-semibold transition ${
+                              className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 text-left text-sm font-semibold transition-all duration-200 ${
                                 isFull
-                                  ? 'opacity-50 cursor-not-allowed bg-neutral-soft text-neutral-muted'
+                                  ? 'opacity-50 cursor-not-allowed bg-neutral-50 text-neutral-muted'
                                   : active
-                                    ? 'bg-primary text-white'
-                                    : 'text-neutral-text hover:bg-neutral-soft hover:text-primary'
+                                    ? 'bg-primary text-white shadow-md'
+                                    : 'text-neutral-text hover:bg-primary/10 hover:text-primary'
                               }`}
                             >
                               <span className="min-w-0 truncate">
@@ -329,10 +329,10 @@ const FormMagangPage = () => {
                   {(['individu', 'kelompok'] as const).map((val) => (
                     <label
                       key={val}
-                      className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border px-4 text-sm font-semibold transition-all duration-200 ${
+                      className={`group flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 px-4 text-sm font-bold transition-all duration-300 ${
                         jenisPeserta === val
-                          ? 'border-primary bg-primary text-white shadow-card'
-                          : 'border-neutral-border bg-neutral-soft text-neutral-text hover:border-primary'
+                          ? 'border-primary bg-primary text-white shadow-lg shadow-primary/30 scale-[1.02]'
+                          : 'border-neutral-200 bg-white text-neutral-600 hover:border-primary/50 hover:bg-primary/5'
                       }`}
                     >
                       <input type="radio" value={val} {...register('jenis_peserta')} className="hidden" />
@@ -415,9 +415,9 @@ const FormMagangPage = () => {
                     <button
                       type="button"
                       onClick={() => append({ nama: '', nim: '' })}
-                      className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 text-sm font-semibold text-primary transition hover:border-primary hover:bg-primary/5"
+                      className="group flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 text-sm font-bold text-primary transition-all duration-300 hover:border-primary hover:bg-primary/10 hover:shadow-inner"
                     >
-                      <Plus size={16} />
+                      <Plus size={16} className="transition-transform group-hover:rotate-90" />
                       Tambah Anggota
                     </button>
                   )}
@@ -444,8 +444,8 @@ const FormMagangPage = () => {
                     Unggah Berkas (.zip) <span className="text-red-500">*</span>
                   </label>
                   <label
-                    className={`flex min-h-36 cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-5 text-center transition-all duration-200 ${
-                      dragOver ? 'border-primary bg-primary/5' : 'border-neutral-border bg-neutral-soft hover:border-primary/60'
+                    className={`group flex min-h-36 cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-6 text-center transition-all duration-300 ${
+                      dragOver ? 'border-primary bg-primary/10 scale-[1.02] shadow-inner' : 'border-neutral-300 bg-neutral-50 hover:border-primary hover:bg-primary/5'
                     }`}
                     onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
                     onDragLeave={() => setDragOver(false)}
@@ -459,8 +459,8 @@ const FormMagangPage = () => {
                       }
                     }}
                   >
-                    <Upload size={24} className="text-primary" />
-                    <span className="text-sm font-semibold text-neutral-text">
+                    <Upload size={28} className="text-primary transition-transform duration-300 group-hover:-translate-y-1" />
+                    <span className="text-sm font-bold text-neutral-text">
                       {fileName || 'Klik atau drag file ZIP ke sini'}
                     </span>
                     <span className="text-xs text-neutral-muted">Format .zip, maksimal 10MB</span>
@@ -484,8 +484,11 @@ const FormMagangPage = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-base font-bold text-white shadow-lg transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-60"
+              className="group relative overflow-hidden flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-primary-dark px-6 text-base font-bold text-white shadow-[0_8px_20px_rgb(0,0,0,0.15)] shadow-primary/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_25px_rgb(0,0,0,0.2)] hover:shadow-primary/40 disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
             >
+              <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-150%)] group-hover:duration-1000 group-hover:[transform:skew(-12deg)_translateX(150%)]">
+                <div className="relative h-full w-8 bg-white/20" />
+              </div>
               {isSubmitting ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
