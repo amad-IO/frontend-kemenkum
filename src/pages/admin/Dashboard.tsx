@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { 
   Users, 
   ClipboardList, 
@@ -10,6 +10,7 @@ import {
   RefreshCw 
 } from 'lucide-react'
 import { toast } from 'react-toastify'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
 import SubmissionTable from '../../components/admin/SubmissionTable'
@@ -56,62 +57,66 @@ const StatCard = ({
 
 const Dashboard = () => {
   const { openAdminChat, readReceipt } = useAdminChat()
-  const [submissions, setSubmissions] = useState<Submission[]>([])
-  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, approved: 0, rejected: 0, magang: 0, penelitian: 0 })
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  
+  const queryClient = useQueryClient()
+
+  // ── Data Fetching (TanStack Query — shared key dengan ListPendaftar) ──────
+  // Menggunakan key yang sama ('admin-submissions') agar data di-cache bersama
+  // Jika user baru dari ListPendaftar, data langsung tersedia tanpa fetch ulang
+  const {
+    data: rawSubmissions = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch,
+  } = useQuery({
+    queryKey: ['admin-submissions'],
+    queryFn: async () => {
+      const res = await api.get('/admin/submissions')
+      const responseData = res.data?.data
+      return (Array.isArray(responseData) ? responseData : (responseData?.data ?? [])) as Submission[]
+    },
+    staleTime: 8_000,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
+    throwOnError: false,
+  })
+
+  // Local patches untuk optimistic updates
+  const [localPatches, setLocalPatches] = useState<Record<number, Partial<Submission>>>({})
+
+  const patchSubmission = (id: number, patch: Partial<Submission>) => {
+    setLocalPatches(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
+  }
+
+  const submissions: Submission[] = rawSubmissions.map(s => ({ ...s, ...(localPatches[s.id] ?? {}) }))
+
+  // Stats dihitung dari data yang sudah di-patch
+  const stats: Stats = {
+    total: submissions.length,
+    pending: submissions.filter(s => s.status === 'pending').length,
+    approved: submissions.filter(s => s.status === 'approved').length,
+    rejected: submissions.filter(s => s.status === 'rejected').length,
+    magang: submissions.filter(s => s.type === 'magang').length,
+    penelitian: submissions.filter(s => s.type === 'penelitian').length,
+  }
+
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [isUploadingPermit, setIsUploadingPermit] = useState(false)
   const [isStartingDiscussion, setIsStartingDiscussion] = useState(false)
 
-  const fetchData = async (isRefresh = false, silent = false) => {
-    if (isRefresh) setRefreshing(true)
-    else if (!silent) setLoading(true)
-    try {
-      const res = await api.get('/admin/submissions')
-      const responseData = res.data?.data
-      
-      // Pengaman: Pastikan data selalu berbentuk array sebelum dimasukkan ke state
-      const data: Submission[] = Array.isArray(responseData) 
-        ? responseData 
-        : (responseData?.data ?? [])
-      
-      setSubmissions(data)
-      setStats({
-        total: data.length,
-        pending: data.filter((s) => s.status === 'pending').length,
-        approved: data.filter((s) => s.status === 'approved').length,
-        rejected: data.filter((s) => s.status === 'rejected').length,
-        magang: data.filter((s) => s.type === 'magang').length,
-        penelitian: data.filter((s) => s.type === 'penelitian').length,
-      })
-    } catch (error) {
-      console.error('Dashboard Fetch Error:', error)
-      if (!silent) toast.error('Gagal memuat data Dashboard. Pastikan backend aktif.')
-
-      // Jika API error, paksa state kembali ke array kosong agar tidak melempar undefined
-      if (!silent) setSubmissions([])
-    } finally {
-      if (!silent) setLoading(false)
-      if (isRefresh) setRefreshing(false)
-    }
-  }
-
   const handleStatusChange = async (id: number, status: 'approved' | 'rejected') => {
     try {
       setIsUpdating(true)
       await api.patch(`/admin/submissions/${id}/status`, { status })
-      
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status } : s))
+
+      patchSubmission(id, { status })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, status } : null)
       }
-      
+
       toast.success(`Status permohonan berhasil diperbarui`)
-      fetchData(true)
+      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Gagal mengubah status permohonan')
     } finally {
@@ -124,8 +129,7 @@ const Dashboard = () => {
       setIsUpdating(true)
       await api.patch(`/admin/submissions/${id}/dates`, { start_date, end_date })
       
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, start_date, end_date } : s))
-      
+      patchSubmission(id, { start_date, end_date })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, start_date, end_date } : null)
       }
@@ -162,13 +166,13 @@ const Dashboard = () => {
       window.URL.revokeObjectURL(url)
 
       const downloadedAt = new Date().toISOString()
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, document_downloaded_at: s.document_downloaded_at ?? downloadedAt } : s))
+      patchSubmission(id, { document_downloaded_at: downloadedAt })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, document_downloaded_at: prev.document_downloaded_at ?? downloadedAt } : null)
       }
 
       toast.success('Berkas berhasil diunduh')
-      fetchData(true)
+      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
     } catch {
       toast.error('Gagal mengunduh berkas ZIP.')
     } finally {
@@ -188,7 +192,7 @@ const Dashboard = () => {
       })
       const updated = res.data?.data as Submission
 
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      patchSubmission(id, { permit_file_path: updated.permit_file_path, permit_file_name: updated.permit_file_name })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
       }
@@ -209,7 +213,7 @@ const Dashboard = () => {
       const res = await api.post(`/admin/submissions/${id}/discussion/start`)
       const updated = res.data?.data as Submission
 
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      patchSubmission(id, { discussion_started_at: updated.discussion_started_at })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
       }
@@ -237,35 +241,17 @@ const Dashboard = () => {
   }
 
   const handleMessagesRead = (id: number) => {
-    setSubmissions(prev => prev.map(s => (
-      s.id === id ? { ...s, unread_admin_messages_count: 0 } : s
-    )))
+    queryClient.setQueryData(['admin-submissions'], (old: Submission[]) => {
+      if (!old) return old
+      return old.map(s => (s.id === id ? { ...s, unread_admin_messages_count: 0 } : s))
+    })
     if (selectedSubmission?.id === id) {
       setSelectedSubmission(prev => prev ? { ...prev, unread_admin_messages_count: 0 } : null)
     }
   }
 
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      fetchData(false, true)
-    }, 10000)
-
-    return () => window.clearInterval(timer)
-  }, [])
-
-  useEffect(() => {
-    if (!readReceipt) return
-    setSubmissions(prev => prev.map(s => (
-      s.id === readReceipt.id ? { ...s, unread_admin_messages_count: 0 } : s
-    )))
-  }, [readReceipt])
-
-  // Pengaman tambahan: Pastikan submissions divalidasi array sebelum di-slice
-  const recentFive = Array.isArray(submissions) ? submissions.slice(0, 5) : []
+  // 5 pendaftaran terbaru untuk tabel ringkasan
+  const recentFive = submissions.slice(0, 5)
 
   if (loading) {
     return (
@@ -277,17 +263,17 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      
+
       {/* ── Page Header ── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Dashboard</h1>
           <p className="mt-0.5 text-sm text-neutral-muted">Ringkasan pendaftaran Magang & Penelitian</p>
         </div>
-        <button 
-          onClick={() => fetchData(true)} 
-          disabled={refreshing} 
-          className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
+        <button
+          onClick={() => refetch()}
+          disabled={refreshing}
+          className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2.5 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
         >
           <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} /> Refresh
         </button>

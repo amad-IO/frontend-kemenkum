@@ -1,21 +1,33 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 import useAuthStore from '../store/authStore'
 
-// Public Pages
-import LandingPage from '../pages/public/LandingPage'
-import DaftarPage from '../pages/public/DaftarPage'
-import FormMagangPage from '../pages/public/FormMagangPage'
-import FormPenelitianPage from '../pages/public/FormPenelitianPage'
-import CheckStatusPage from '../pages/public/CheckStatusPage'
+// Public Pages — lazy loaded (tidak di-download sampai halaman dikunjungi)
+const LandingPage        = lazy(() => import('../pages/public/LandingPage'))
+const DaftarPage         = lazy(() => import('../pages/public/DaftarPage'))
+const FormMagangPage     = lazy(() => import('../pages/public/FormMagangPage'))
+const FormPenelitianPage = lazy(() => import('../pages/public/FormPenelitianPage'))
+const CheckStatusPage    = lazy(() => import('../pages/public/CheckStatusPage'))
 
-// Admin Pages
-import Login from '../pages/admin/Login'
-import Dashboard from '../pages/admin/Dashboard'
-import KelolaProgramPage from '../pages/admin/KelolaProgram'
-import ListPendaftarPage from '../pages/admin/ListPendaftar'
+// Admin Pages — lazy loaded (tidak di-download oleh pengunjung publik)
+const Login              = lazy(() => import('../pages/admin/Login'))
+const Dashboard          = lazy(() => import('../pages/admin/Dashboard'))
+const KelolaProgramPage  = lazy(() => import('../pages/admin/KelolaProgram'))
+const ListPendaftarPage  = lazy(() => import('../pages/admin/ListPendaftar'))
 
 import AdminLayout from '../components/admin/AdminLayout'
+
+// Fallback loading spinner saat chunk sedang di-download
+const PageLoader = () => (
+  <div className="flex min-h-screen items-center justify-center bg-neutral-bg">
+    <div className="h-9 w-9 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
+)
+
+const withSuspense = (element: ReactNode) => (
+  <Suspense fallback={<PageLoader />}>{element}</Suspense>
+)
 
 // Guard route admin
 type ProtectedRouteProps = {
@@ -31,29 +43,29 @@ const router = createBrowserRouter([
   // ─── Public Routes ───────────────────────────────
   {
     path: '/',
-    element: <LandingPage />,
+    element: withSuspense(<LandingPage />),
   },
   {
     path: '/daftar',
-    element: <DaftarPage />,
+    element: withSuspense(<DaftarPage />),
   },
   {
     path: '/status',
-    element: <CheckStatusPage />,
+    element: withSuspense(<CheckStatusPage />),
   },
   {
     path: '/daftar/magang/:id',
-    element: <FormMagangPage />,
+    element: withSuspense(<FormMagangPage />),
   },
   {
     path: '/daftar/penelitian/:id',
-    element: <FormPenelitianPage />,
+    element: withSuspense(<FormPenelitianPage />),
   },
 
   // ─── Admin Routes ────────────────────────────────
   {
     path: '/admin/login',
-    element: <Login />,
+    element: withSuspense(<Login />),
   },
   {
     path: '/admin',
@@ -64,9 +76,9 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
-      { path: 'dashboard', element: <Dashboard /> },
-      { path: 'program', element: <KelolaProgramPage /> },
-      { path: 'pendaftar', element: <ListPendaftarPage /> },
+      { path: 'dashboard', element: withSuspense(<Dashboard />) },
+      { path: 'program', element: withSuspense(<KelolaProgramPage />) },
+      { path: 'pendaftar', element: withSuspense(<ListPendaftarPage />) },
     ],
   },
 ])

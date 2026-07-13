@@ -30,6 +30,9 @@ const writeSeenMessageId = (submissionId: number, messageId: number) => {
   localStorage.setItem(SEEN_MESSAGE_STORAGE_KEY, JSON.stringify(seen))
 }
 
+const formatTime = (dateStr: string) =>
+  new Date(dateStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+
 interface Props {
   submission: Submission | null
   onClose: () => void
@@ -83,6 +86,9 @@ const DetailPendaftarModal = ({
   const chatDragOffsetRef = useRef({ x: 0, y: 0 })
   const chatDragMovedRef = useRef(false)
   const chatSuppressClickRef = useRef(false)
+  const lastMessageIdRef = useRef<number>(0)      // untuk delta polling ?since=id
+  const isSendingRef = useRef<boolean>(false)      // hard lock cegah double-send
+  const messagesLoadedRef = useRef<boolean>(false) // track apakah sudah initial load
 
   useEffect(() => {
     if (!submission) return
@@ -100,6 +106,10 @@ const DetailPendaftarModal = ({
     setChatMinimized(false)
     setClientUnreadCount(0)
     setLatestApplicantMessageId(0)
+    // Reset refs saat submission berubah
+    lastMessageIdRef.current = 0
+    isSendingRef.current = false
+    messagesLoadedRef.current = false
   }, [submission?.id])
 
   useEffect(() => {
@@ -178,53 +188,107 @@ const DetailPendaftarModal = ({
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
 
-  const loadMessages = async (silent = false, markRead = true) => {
+  // ── Initial load semua pesan (hanya sekali saat chat pertama dibuka) ──────
+  const loadMessages = async (markRead = true) => {
     if (!submission) return
+    if (messagesLoadedRef.current) return  // skip jika sudah loaded
 
     try {
-      if (!silent) setLoadingMessages(true)
+      setLoadingMessages(true)
       const res = await api.get(`/admin/submissions/${submission.id}/messages`, {
         params: { mark_read: markRead ? 1 : 0 },
       })
-      const nextMessages = (res.data?.data ?? []) as DiscussionMessage[]
-      const applicantMessages = nextMessages.filter(message => message.sender_type === 'applicant')
-      const latestId = applicantMessages.reduce((max, message) => Math.max(max, Number(message.id)), 0)
+      const allMessages = (res.data?.data ?? []) as DiscussionMessage[]
+      const applicantMessages = allMessages.filter(m => m.sender_type === 'applicant')
+      const latestId = applicantMessages.reduce((max, m) => Math.max(max, Number(m.id)), 0)
 
-      setMessages(prev => {
-        const localMessages = prev.filter(message => message.status === 'sending' || message.status === 'failed')
-        return [...nextMessages, ...localMessages]
-      })
+      setMessages(allMessages)
+      messagesLoadedRef.current = true
+      if (allMessages.length > 0) lastMessageIdRef.current = allMessages[allMessages.length - 1].id
       setLatestApplicantMessageId(latestId)
+
       if (markRead) {
         if (latestId > 0) writeSeenMessageId(submission.id, latestId)
         setClientUnreadCount(0)
         onMessagesRead?.(submission.id)
       } else {
         const seenId = Number(readSeenMessageIds()[String(submission.id)] ?? 0)
-        setClientUnreadCount(applicantMessages.filter(message => Number(message.id) > seenId).length)
+        setClientUnreadCount(applicantMessages.filter(m => Number(m.id) > seenId).length)
       }
     } catch {
-      if (!silent) toast.error('Gagal memuat pesan diskusi')
+      toast.error('Gagal memuat pesan diskusi')
     } finally {
-      if (!silent) setLoadingMessages(false)
+      setLoadingMessages(false)
     }
   }
 
-  useEffect(() => {
-    if (!chatOpen || !submission) return
-    if (chatOnly && chatMinimized) return
+  // ── Delta polling: hanya ambil pesan baru sejak lastMessageIdRef ───────────
+  const pollNewMessages = async (markRead = true) => {
+    if (!submission || !messagesLoadedRef.current) return
 
-    loadMessages()
-    const timer = window.setInterval(() => loadMessages(true), 3000)
-    return () => window.clearInterval(timer)
+    try {
+      const params: Record<string, unknown> = { mark_read: markRead ? 1 : 0 }
+      if (lastMessageIdRef.current > 0) params.since = lastMessageIdRef.current
+
+      const res = await api.get(`/admin/submissions/${submission.id}/messages`, { params })
+      const newMsgs = (res.data?.data ?? []) as DiscussionMessage[]
+
+      if (newMsgs.length > 0) {
+        setMessages(prev => {
+          // Dedup: hanya tambah pesan yang belum ada (cegah duplikasi)
+          const existingIds = new Set(prev.filter(m => m.id > 0).map(m => m.id))
+          const withoutOptimistic = prev.filter(m => m.id > 0) // hapus optimistik (id < 0)
+          const trulyNew = newMsgs.filter(m => !existingIds.has(m.id))
+          return trulyNew.length > 0 ? [...withoutOptimistic, ...trulyNew] : prev
+        })
+        lastMessageIdRef.current = newMsgs[newMsgs.length - 1].id
+
+        // Update unread tracking dari pesan baru
+        const newApplicant = newMsgs.filter(m => m.sender_type === 'applicant')
+        if (newApplicant.length > 0) {
+          const latestId = newApplicant[newApplicant.length - 1].id
+          setLatestApplicantMessageId(latestId)
+          if (markRead) {
+            writeSeenMessageId(submission.id, latestId)
+            setClientUnreadCount(0)
+            onMessagesRead?.(submission.id)
+          } else {
+            setClientUnreadCount(prev => prev + newApplicant.length)
+          }
+        }
+      }
+    } catch {
+      // Silent — jangan ganggu UX saat polling gagal
+    }
+  }
+
+  // ── Ref stabil agar interval tidak restart saat messages berubah ───────────
+  const pollRef = useRef(pollNewMessages)
+  useEffect(() => { pollRef.current = pollNewMessages })
+
+  // ── Polling saat chat terbuka (aktif) — setiap 2 detik ───────────────────
+  useEffect(() => {
+    if (!chatOpen || !submission || (chatOnly && chatMinimized)) return
+
+    loadMessages()  // initial load (di-skip jika sudah loaded)
+    const immediate = window.setTimeout(() => pollRef.current(true), 600)
+    const interval = window.setInterval(() => pollRef.current(true), 2000)
+    const handleVisibility = () => { if (!document.hidden) pollRef.current(true) }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.clearTimeout(immediate)
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
   }, [chatOpen, submission?.id, chatOnly, chatMinimized])
 
+  // ── Polling saat minimize — setiap 8 detik, tidak mark read ─────────────
   useEffect(() => {
     if (!chatOpen || !submission || !chatOnly || !chatMinimized) return
 
-    loadMessages(true, false)
-    const timer = window.setInterval(() => loadMessages(true, false), 10000)
-    return () => window.clearInterval(timer)
+    const interval = window.setInterval(() => pollRef.current(false), 8000)
+    return () => window.clearInterval(interval)
   }, [chatOpen, submission?.id, chatOnly, chatMinimized])
 
   useEffect(() => {
@@ -281,10 +345,12 @@ const DetailPendaftarModal = ({
 
   const handleSendMessage = async () => {
     if (!submission) return
-
     const message = chatMessage.trim()
     if (!message) return
-    if (sendingMessage) return
+
+    // Hard lock: cegah double-send dari Enter + onClick bersamaan
+    if (isSendingRef.current) return
+    isSendingRef.current = true
 
     const tempId = -Date.now()
     const optimisticMessage: DiscussionMessage = {
@@ -302,16 +368,22 @@ const DetailPendaftarModal = ({
     try {
       setSendingMessage(true)
       const res = await api.post(`/admin/submissions/${submission.id}/messages`, { message })
-      setMessages(prev => prev.map(item => (
-        item.id === tempId ? res.data?.data : item
-      )))
+      const serverMsg = res.data?.data as DiscussionMessage
+      // Ganti optimistic dengan data server, atau buang jika polling sudah ambil
+      setMessages(prev => {
+        const hasTemp = prev.some(m => m.id === tempId)
+        const alreadyAdded = prev.some(m => m.id === serverMsg?.id)
+        if (hasTemp) return prev.map(m => m.id === tempId ? serverMsg : m)
+        if (!alreadyAdded && serverMsg?.id) return [...prev.filter(m => m.id !== tempId), serverMsg]
+        return prev.filter(m => m.id !== tempId)
+      })
+      if (serverMsg?.id) lastMessageIdRef.current = Math.max(lastMessageIdRef.current, serverMsg.id)
     } catch (error: any) {
-      setMessages(prev => prev.map(item => (
-        item.id === tempId ? { ...item, status: 'failed' } : item
-      )))
+      setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'failed' } : m))
       toast.error(error.response?.data?.message || 'Gagal mengirim pesan')
     } finally {
       setSendingMessage(false)
+      isSendingRef.current = false
     }
   }
 
@@ -763,13 +835,19 @@ const DetailPendaftarModal = ({
                         {message.sender_name}
                       </p>
                       <p className="leading-relaxed">{message.message}</p>
-                      {message.status && (
+                      {message.status ? (
                         <p className={`mt-1 text-[10px] font-bold ${
                           message.status === 'failed'
                             ? message.sender_type === 'admin' ? 'text-red-100' : 'text-red-500'
                             : message.sender_type === 'admin' ? 'text-white/65' : 'text-neutral-muted'
                         }`}>
-                          {message.status === 'failed' ? 'Gagal terkirim' : 'Mengirim...'}
+                          {message.status === 'failed' ? '✕ Gagal terkirim' : '⏳ Mengirim...'}
+                        </p>
+                      ) : (
+                        <p className={`mt-1 text-[10px] ${
+                          message.sender_type === 'admin' ? 'text-right text-white/50' : 'text-neutral-muted'
+                        }`}>
+                          {formatTime(message.created_at)}
                         </p>
                       )}
                     </div>
@@ -784,7 +862,7 @@ const DetailPendaftarModal = ({
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === 'Enter' && !e.shiftKey) {
                       e.preventDefault()
                       handleSendMessage()
                     }

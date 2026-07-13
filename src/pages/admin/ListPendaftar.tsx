@@ -1,6 +1,7 @@
-import { useState, useEffect, useMemo } from 'react'
+﻿import { useState, useEffect, useMemo } from 'react'
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { toast } from 'react-toastify'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
 import SubmissionTable from '../../components/admin/SubmissionTable'
@@ -36,9 +37,49 @@ export interface Submission {
 
 const ListPendaftarPage = () => {
   const { openAdminChat, readReceipt } = useAdminChat()
-  const [submissions, setSubmissions] = useState<Submission[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
+  const queryClient = useQueryClient()
+
+  // ── Data Fetching (TanStack Query) ───────────────────────────────────────
+  const {
+    data: rawSubmissions = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch,
+  } = useQuery({
+    queryKey: ['admin-submissions'],
+    queryFn: async () => {
+      const res = await api.get('/admin/submissions')
+      const responseData = res.data?.data
+      return (Array.isArray(responseData) ? responseData : (responseData?.data ?? [])) as Submission[]
+    },
+    staleTime: 8_000,         // data dianggap segar 8 detik
+    refetchInterval: 10_000,  // auto-refresh tiap 10 detik (ganti setInterval manual)
+    refetchIntervalInBackground: false, // hemat resource — berhenti saat tab hidden
+    throwOnError: false,
+  })
+
+  // Terapkan patch lokal dari readReceipt (unread count) ke cache TanStack Query
+  const [localPatches, setLocalPatches] = useState<Record<number, Partial<Submission>>>({})
+
+  useEffect(() => {
+    if (!readReceipt) return
+    setLocalPatches(prev => ({
+      ...prev,
+      [readReceipt.id]: { ...prev[readReceipt.id], unread_admin_messages_count: 0 },
+    }))
+  }, [readReceipt])
+
+  // Gabungkan data server dengan local patches
+  const submissions: Submission[] = useMemo(
+    () => rawSubmissions.map(s => ({ ...s, ...(localPatches[s.id] ?? {}) })),
+    [rawSubmissions, localPatches]
+  )
+
+  // Helper: update submission di local patches (untuk hasil mutation)
+  const patchSubmission = (id: number, patch: Partial<Submission>) => {
+    setLocalPatches(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
+  }
+
   const [isUpdating, setIsUpdating] = useState(false)
   const [isDownloading, setIsDownloading] = useState(false)
   const [isUploadingPermit, setIsUploadingPermit] = useState(false)
@@ -55,45 +96,6 @@ const ListPendaftarPage = () => {
 
   // Modal State
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
-
-  const fetchData = async (isRefresh = false, silent = false) => {
-    if (isRefresh) setRefreshing(true)
-    else if (!silent) setLoading(true)
-
-    try {
-      const res = await api.get('/admin/submissions')
-      const responseData = res.data?.data
-      const data: Submission[] = Array.isArray(responseData) 
-        ? responseData 
-        : (responseData?.data ?? [])
-      
-      setSubmissions(data)
-    } catch {
-      if (!silent) toast.error('Gagal memuat daftar pendaftar')
-    } finally {
-      if (!silent) setLoading(false)
-      if (isRefresh) setRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      fetchData(false, true)
-    }, 10000)
-
-    return () => window.clearInterval(timer)
-  }, [])
-
-  useEffect(() => {
-    if (!readReceipt) return
-    setSubmissions(prev => prev.map(s => (
-      s.id === readReceipt.id ? { ...s, unread_admin_messages_count: 0 } : s
-    )))
-  }, [readReceipt])
 
   // Derived data
   const filteredData = useMemo(() => {
@@ -141,15 +143,12 @@ const ListPendaftarPage = () => {
     try {
       setIsUpdating(true)
       await api.patch(`/admin/submissions/${id}/status`, { status })
-      
-      // Update local state
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, status } : s))
-      
-      // Update modal state if open
+
+      patchSubmission(id, { status })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, status } : null)
       }
-      
+
       toast.success(`Status permohonan berhasil diubah menjadi ${status === 'approved' ? 'Diterima' : 'Ditolak'}`)
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Gagal mengubah status permohonan')
@@ -162,13 +161,12 @@ const ListPendaftarPage = () => {
     try {
       setIsUpdating(true)
       await api.patch(`/admin/submissions/${id}/dates`, { start_date, end_date })
-      
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, start_date, end_date } : s))
-      
+
+      patchSubmission(id, { start_date, end_date })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, start_date, end_date } : null)
       }
-      
+
       toast.success('Tanggal kegiatan berhasil diperbarui')
     } catch {
       toast.error('Gagal memperbarui tanggal kegiatan')
@@ -208,13 +206,13 @@ const ListPendaftarPage = () => {
       window.URL.revokeObjectURL(url)
 
       const downloadedAt = new Date().toISOString()
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, document_downloaded_at: s.document_downloaded_at ?? downloadedAt } : s))
+      patchSubmission(id, { document_downloaded_at: downloadedAt })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, document_downloaded_at: prev.document_downloaded_at ?? downloadedAt } : null)
       }
 
       toast.success('Berkas berhasil diunduh')
-      fetchData(true)
+      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
     } catch (error: unknown) {
       let message = 'Gagal mengunduh berkas ZIP. File mungkin tidak ditemukan.'
 
@@ -252,7 +250,7 @@ const ListPendaftarPage = () => {
       })
       const updated = res.data?.data as Submission
 
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      patchSubmission(id, { permit_file_path: updated.permit_file_path, permit_file_name: updated.permit_file_name })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
       }
@@ -273,7 +271,7 @@ const ListPendaftarPage = () => {
       const res = await api.post(`/admin/submissions/${id}/discussion/start`)
       const updated = res.data?.data as Submission
 
-      setSubmissions(prev => prev.map(s => s.id === id ? { ...s, ...updated } : s))
+      patchSubmission(id, { discussion_started_at: updated.discussion_started_at })
       if (selectedSubmission?.id === id) {
         setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
       }
@@ -301,9 +299,7 @@ const ListPendaftarPage = () => {
   }
 
   const handleMessagesRead = (id: number) => {
-    setSubmissions(prev => prev.map(s => (
-      s.id === id ? { ...s, unread_admin_messages_count: 0 } : s
-    )))
+    patchSubmission(id, { unread_admin_messages_count: 0 })
     if (selectedSubmission?.id === id) {
       setSelectedSubmission(prev => prev ? { ...prev, unread_admin_messages_count: 0 } : null)
     }
@@ -311,7 +307,7 @@ const ListPendaftarPage = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      
+
       {/* ── Page Header ── */}
       <div className="flex items-center justify-between">
         <div>
@@ -321,7 +317,7 @@ const ListPendaftarPage = () => {
           </p>
         </div>
         <button
-          onClick={() => fetchData(true)}
+          onClick={() => refetch()}
           disabled={refreshing}
           className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
         >
@@ -358,7 +354,6 @@ const ListPendaftarPage = () => {
               ]}
             />
           </div>
-
           <div className="z-10">
             <CustomSelect
               value={statusFilter}
@@ -386,7 +381,6 @@ const ListPendaftarPage = () => {
             <p className="text-sm font-semibold text-neutral-muted">Tidak ada data pendaftar yang ditemukan.</p>
           </div>
         ) : (
-          /* Menggunakan komponen tabel reusable */
           <SubmissionTable
             data={paginatedData}
             onOpenDetail={handleOpenDetail}
@@ -408,11 +402,9 @@ const ListPendaftarPage = () => {
               >
                 <ChevronLeft size={16} />
               </button>
-              
               <div className="flex h-8 min-w-8 items-center justify-center rounded-lg bg-primary text-xs font-bold text-white px-2">
                 {currentPage}
               </div>
-
               <button
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}

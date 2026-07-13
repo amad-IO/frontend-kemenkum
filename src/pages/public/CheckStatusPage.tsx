@@ -31,7 +31,11 @@ type DiscussionMessage = {
   sender_name: string
   message: string
   created_at: string
+  status?: 'sending' | 'failed'
 }
+
+const formatTime = (dateStr: string) =>
+  new Date(dateStr).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
 
 const stageStepMap: Record<EffectiveStage, number> = {
   submitted: 1,
@@ -96,6 +100,10 @@ const CheckStatusPage = () => {
   const [timelineAnimationKey, setTimelineAnimationKey] = useState(0)
   const messageListRef = useRef<HTMLDivElement>(null)
   const timelineStepRefs = useRef<Record<number, HTMLDivElement | null>>({})
+  const lastMessageIdRef = useRef<number>(0)
+  const lastSentRef = useRef<number>(0)
+  const isSendingRef = useRef<boolean>(false)    // hard lock: cegah double-send
+  const messagesLoadedRef = useRef<boolean>(false) // track apakah pesan sudah pernah di-load
   const statusLabel = getStatusLabel(effectiveStage, finalStatus)
   const statusColorClass = finalStatus === 'rejected' && effectiveStage === 'announcement'
     ? 'text-red-500'
@@ -143,6 +151,8 @@ const CheckStatusPage = () => {
       setDiscussionStartedAt(null)
       setChatOpen(false)
       setMessages([])
+      messagesLoadedRef.current = false  // reset agar bisa load ulang saat cari status baru
+      lastMessageIdRef.current = 0
     }
     
     try {
@@ -187,44 +197,88 @@ const CheckStatusPage = () => {
     }
   }
 
-  const loadMessages = async (silent = false) => {
+  // Load SEMUA pesan — hanya sekali saat pertama buka chat
+  const loadMessages = async (force = false) => {
     if (!submissionId) return
-
+    // Pakai ref (bukan state) agar guard selalu up-to-date walau closure stale
+    if (!force && messagesLoadedRef.current) return
     try {
-      if (!silent) setLoadingMessages(true)
+      setLoadingMessages(true)
       const res = await api.get(`/submissions/${submissionId}/messages`, {
         params: { email: emailValue, nim: nimValue },
       })
-      setMessages(res.data?.data ?? [])
+      const msgs: DiscussionMessage[] = res.data?.data ?? []
+      setMessages(msgs)
+      messagesLoadedRef.current = true
+      if (msgs.length > 0) lastMessageIdRef.current = msgs[msgs.length - 1].id
     } catch (error: any) {
-      if (!silent) {
-        toast.error(error.response?.data?.message || 'Gagal memuat pesan diskusi')
-      }
+      toast.error(error.response?.data?.message || 'Gagal memuat pesan diskusi')
     } finally {
-      if (!silent) setLoadingMessages(false)
+      setLoadingMessages(false)
     }
   }
+
+  // Poll HANYA PESAN BARU — efisien, tidak kirim ulang semua pesan
+  const pollNewMessages = async () => {
+    if (!submissionId) return
+    try {
+      const params: Record<string, unknown> = { email: emailValue, nim: nimValue }
+      if (lastMessageIdRef.current > 0) params.since = lastMessageIdRef.current
+      const res = await api.get(`/submissions/${submissionId}/messages`, { params })
+      const newMsgs: DiscussionMessage[] = res.data?.data ?? []
+      if (newMsgs.length > 0) {
+        setMessages(prev => {
+          // Set ID yang sudah ada (hanya pesan real dari server, id > 0)
+          const existingIds = new Set(prev.filter(m => m.id > 0).map(m => m.id))
+          // Hapus optimistik (id < 0), tambah HANYA pesan yang belum ada
+          const withoutOptimistic = prev.filter(m => m.id > 0)
+          const trulyNew = newMsgs.filter(m => !existingIds.has(m.id))
+          return trulyNew.length > 0 ? [...withoutOptimistic, ...trulyNew] : prev
+        })
+        lastMessageIdRef.current = newMsgs[newMsgs.length - 1].id
+      }
+    } catch {
+      // Silent — jangan ganggu UX jika polling gagal
+    }
+  }
+
+  // ─── Polling pesan baru setiap 2 detik ───────────────────────────────────
+  // Pakai ref agar interval tidak restart saat messages/state berubah
+  const pollRef = useRef(pollNewMessages)
+  useEffect(() => { pollRef.current = pollNewMessages })  // selalu update ke versi terbaru
 
   useEffect(() => {
     if (!chatOpen || !submissionId) return
 
-    const timer = window.setInterval(() => {
-      loadMessages(true)
-    }, 3000)
+    // Jalankan segera saat chat dibuka (setelah loadMessages selesai)
+    const immediateTimer = window.setTimeout(() => pollRef.current(), 500)
 
-    return () => window.clearInterval(timer)
-  }, [chatOpen, submissionId, emailValue, nimValue])
+    // Polling rutin setiap 2 detik
+    const interval = window.setInterval(() => pollRef.current(), 2000)
+
+    // Fetch ulang segera saat tab aktif kembali
+    const handleVisibility = () => {
+      if (!document.hidden) pollRef.current()
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      window.clearTimeout(immediateTimer)
+      window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [chatOpen, submissionId])  // hanya restart jika chat dibuka/ditutup atau submissionId berubah
 
   useEffect(() => {
     if (!chatOpen) return
     const list = messageListRef.current
     if (!list) return
-
     list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' })
   }, [chatOpen, messages])
 
   const handleOpenDiscussion = async () => {
     setChatOpen(true)
+    // Hanya load jika belum ada pesan — polling akan handle update berikutnya
     await loadMessages()
   }
 
@@ -233,6 +287,31 @@ const CheckStatusPage = () => {
     const message = chatMessage.trim()
     if (!message) return
 
+    // Hard lock: cegah double-send dari onKeyDown + onClick yang keduanya terpanggil saat Enter
+    if (isSendingRef.current) return
+    isSendingRef.current = true
+
+    // Debounce: cegah spam klik < 1 detik
+    const now = Date.now()
+    if (now - lastSentRef.current < 1000) {
+      isSendingRef.current = false
+      return
+    }
+    lastSentRef.current = now
+
+    // Buat pesan optimistik — tampil seketika tanpa tunggu server
+    const tempId = -Date.now()
+    const optimisticMsg: DiscussionMessage = {
+      id: tempId,
+      sender_type: 'applicant',
+      sender_name: applicantAccount?.name ?? 'Pendaftar',
+      message,
+      created_at: new Date().toISOString(),
+      status: 'sending',
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+    setChatMessage('') // kosongkan input seketika
+
     try {
       setSendingMessage(true)
       const res = await api.post(`/submissions/${submissionId}/messages`, {
@@ -240,12 +319,29 @@ const CheckStatusPage = () => {
         nim: nimValue,
         message,
       })
-      setMessages(prev => [...prev, res.data?.data])
-      setChatMessage('')
+      // Ganti pesan temp dengan data real dari server
+      // Jika polling sudah ambil pesan ini lebih dulu, map tidak mengubah apapun (aman)
+      const serverMsg = res.data?.data as DiscussionMessage
+      setMessages(prev => {
+        const hasTemp = prev.some(m => m.id === tempId)
+        const alreadyAdded = prev.some(m => m.id === serverMsg?.id)
+        if (hasTemp) {
+          // Normal case: ganti optimistic dengan data server
+          return prev.map(m => (m.id === tempId ? serverMsg : m))
+        } else if (!alreadyAdded && serverMsg?.id) {
+          // Polling belum ambil, tambah manual (buang optimistic jika masih ada)
+          return [...prev.filter(m => m.id !== tempId), serverMsg]
+        }
+        return prev.filter(m => m.id !== tempId) // buang optimistic yang tersisa
+      })
+      if (serverMsg?.id) lastMessageIdRef.current = Math.max(lastMessageIdRef.current, serverMsg.id)
     } catch (error: any) {
+      // Tandai gagal — jangan hapus pesannya
+      setMessages(prev => prev.map(m => (m.id === tempId ? { ...m, status: 'failed' } : m)))
       toast.error(error.response?.data?.message || 'Gagal mengirim pesan')
     } finally {
       setSendingMessage(false)
+      isSendingRef.current = false  // lepas lock setelah selesai
     }
   }
 
@@ -507,8 +603,12 @@ const CheckStatusPage = () => {
             </div>
 
             <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-bg p-4">
+              {/* Loading awal: hanya tampil kalau belum ada pesan sama sekali */}
               {loadingMessages && messages.length === 0 ? (
-                <p className="text-center text-xs font-semibold text-neutral-muted">Memuat pesan...</p>
+                <div className="flex flex-col items-center justify-center h-full gap-2 py-10">
+                  <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  <p className="text-xs font-semibold text-neutral-muted">Memuat pesan...</p>
+                </div>
               ) : messages.length === 0 ? (
                 <div className="rounded-2xl bg-white p-4 text-center text-xs font-semibold text-neutral-muted shadow-sm">
                   Belum ada pesan diskusi.
@@ -523,6 +623,8 @@ const CheckStatusPage = () => {
                       message.sender_type === 'applicant'
                         ? 'rounded-br-md bg-primary text-white'
                         : 'rounded-bl-md bg-white text-neutral-text'
+                    } ${
+                      message.status === 'sending' ? 'opacity-70' : ''
                     }`}
                     >
                       <p className={`mb-1 text-xs font-extrabold ${
@@ -531,6 +633,23 @@ const CheckStatusPage = () => {
                         {message.sender_name}
                       </p>
                       <p className="leading-relaxed">{message.message}</p>
+                      <div className={`mt-1 flex items-center gap-1 ${
+                        message.sender_type === 'applicant' ? 'justify-end' : 'justify-start'
+                      }`}>
+                        {message.status === 'sending' && (
+                          <p className="text-[10px] text-white/65">⏳ Mengirim...</p>
+                        )}
+                        {message.status === 'failed' && (
+                          <p className="text-[10px] font-bold text-red-300">✕ Gagal terkirim</p>
+                        )}
+                        {!message.status && (
+                          <p className={`text-[10px] ${
+                            message.sender_type === 'applicant' ? 'text-white/50' : 'text-neutral-muted'
+                          }`}>
+                            {formatTime(message.created_at)}
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
@@ -543,7 +662,10 @@ const CheckStatusPage = () => {
                   value={chatMessage}
                   onChange={(e) => setChatMessage(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSendMessage()
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()  // cegah form submit / event bubble ke button
+                      handleSendMessage()
+                    }
                   }}
                   placeholder="Tulis pesan..."
                   className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-neutral-text outline-none placeholder:text-neutral-muted"

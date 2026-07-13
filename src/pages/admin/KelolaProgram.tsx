@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Plus, Edit2, Trash2, RefreshCw, CalendarDays, AlertCircle } from 'lucide-react'
 import { toast } from 'react-toastify'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAllPeriod, createPeriod, updatePeriod, deletePeriod } from '../../services/programService'
 import PeriodModal, { PeriodFormValues } from '../../components/admin/PeriodModal'
 
@@ -14,10 +15,24 @@ interface Period {
 }
 
 const KelolaProgramPage = () => {
-  const [periods, setPeriods] = useState<Period[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  
+  const queryClient = useQueryClient()
+
+  // ── Data Fetching (TanStack Query) ────────────────────────────────────────
+  const {
+    data: periods = [],
+    isLoading: loading,
+    isFetching: refreshing,
+    refetch,
+  } = useQuery({
+    queryKey: ['admin-periods'],
+    queryFn: async () => {
+      const res = await getAllPeriod()
+      return (res.data?.data || []) as Period[]
+    },
+    staleTime: 30_000, // periode jarang berubah, segar 30 detik
+    throwOnError: false,
+  })
+
   // Modal state
   const [modalOpen, setModalOpen] = useState(false)
   const [editingPeriod, setEditingPeriod] = useState<Period | null>(null)
@@ -25,29 +40,9 @@ const KelolaProgramPage = () => {
 
   // Delete state
   const [deletingId, setDeletingId] = useState<number | null>(null)
-  
+
   // Toggle status state
   const [togglingId, setTogglingId] = useState<number | null>(null)
-
-  const fetchData = async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true)
-    else setLoading(true)
-    
-    try {
-      const res = await getAllPeriod()
-      const data = res.data?.data || []
-      setPeriods(data)
-    } catch {
-      toast.error('Gagal memuat daftar periode magang')
-    } finally {
-      setLoading(false)
-      setRefreshing(false)
-    }
-  }
-
-  useEffect(() => {
-    fetchData()
-  }, [])
 
   const handleOpenAdd = () => {
     setEditingPeriod(null)
@@ -67,19 +62,15 @@ const KelolaProgramPage = () => {
     setIsSubmitting(true)
     try {
       if (editingPeriod) {
-        // Edit
-        const res = await updatePeriod(editingPeriod.id, data)
-        const updated = res.data.data
-        setPeriods((prev) => prev.map((p) => (p.id === updated.id ? updated : p)))
+        await updatePeriod(editingPeriod.id, data)
         toast.success('Periode berhasil diperbarui')
       } else {
-        // Create
-        const res = await createPeriod(data)
-        const created = res.data.data
-        setPeriods((prev) => [created, ...prev])
+        await createPeriod(data)
         toast.success('Periode baru berhasil ditambahkan')
       }
       setModalOpen(false)
+      // Invalidate cache agar data ter-refresh dari server
+      queryClient.invalidateQueries({ queryKey: ['admin-periods'] })
     } catch (err: any) {
       toast.error(err.response?.data?.message || 'Gagal menyimpan periode')
     } finally {
@@ -89,12 +80,12 @@ const KelolaProgramPage = () => {
 
   const handleDelete = async (id: number) => {
     if (!window.confirm('Apakah Anda yakin ingin menghapus periode ini? Tindakan ini tidak dapat dibatalkan.')) return
-    
+
     setDeletingId(id)
     try {
       await deletePeriod(id)
-      setPeriods((prev) => prev.filter((p) => p.id !== id))
       toast.success('Periode berhasil dihapus')
+      queryClient.invalidateQueries({ queryKey: ['admin-periods'] })
     } catch {
       toast.error('Gagal menghapus periode')
     } finally {
@@ -106,10 +97,9 @@ const KelolaProgramPage = () => {
     setTogglingId(period.id)
     const newStatus = period.status === 'active' ? 'inactive' : 'active'
     try {
-      const res = await updatePeriod(period.id, { status: newStatus })
-      const updated = res.data.data
-      setPeriods((prev) => prev.map((p) => (p.id === period.id ? updated : p)))
+      await updatePeriod(period.id, { status: newStatus })
       toast.success(`Status berhasil diubah menjadi ${newStatus === 'active' ? 'Aktif' : 'Tidak Aktif'}`)
+      queryClient.invalidateQueries({ queryKey: ['admin-periods'] })
     } catch {
       toast.error('Gagal mengubah status periode')
     } finally {
@@ -136,7 +126,7 @@ const KelolaProgramPage = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={() => fetchData(true)}
+            onClick={() => refetch()}
             disabled={refreshing}
             className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
           >
