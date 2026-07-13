@@ -10,6 +10,349 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Admin login uses stable CSS classes because Tailwind's file watcher can miss
+   newly introduced utilities when the project is served from a mounted drive. */
+.admin-login-page {
+  height: 100vh;
+  min-height: 100vh;
+  padding: 0;
+  overflow: hidden;
+  background: #fff;
+}
+
+.admin-login-shell {
+  display: grid;
+  grid-template-columns: 68% 32%;
+  width: 100%;
+  max-width: none;
+  height: 100vh;
+  min-height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: none;
+}
+
+.admin-login-visual {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  height: 100vh;
+  padding: 54px 64px 42px;
+  color: #fff;
+  background: linear-gradient(145deg, #4f332b 0%, #6e473b 48%, #9a7769 100%);
+}
+
+.login-dino-game {
+  width: calc(100% + 128px);
+  height: 170px;
+  min-height: 170px;
+  margin-right: -64px;
+  margin-left: -64px;
+}
+
+.login-dino-track {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.login-dino-ground {
+  position: absolute;
+  right: 0;
+  bottom: 42px;
+  left: 0;
+  height: 2px;
+  background-image: repeating-linear-gradient(to right, rgba(246, 241, 236, .82) 0 18px, transparent 18px 28px);
+}
+
+.login-dino-ground::before,
+.login-dino-ground::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  width: 54px;
+  height: 8px;
+  border-top: 2px solid rgba(246, 241, 236, .82);
+  border-radius: 999px 999px 0 0;
+}
+
+.login-dino-ground::before {
+  right: 170px;
+}
+
+.login-dino-ground::after {
+  right: 92px;
+  width: 32px;
+}
+
+.login-dino {
+  position: absolute;
+  bottom: 44px;
+  left: 92px;
+  width: 84px;
+  height: 84px;
+  background: transparent;
+  image-rendering: pixelated;
+}
+
+.login-dino::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  background: #f6f1ec;
+  box-shadow:
+    48px 0 #f6f1ec, 54px 0 #f6f1ec, 60px 0 #f6f1ec, 66px 0 #f6f1ec,
+    48px 6px #f6f1ec, 54px 6px #f6f1ec, 60px 6px #f6f1ec, 66px 6px #f6f1ec, 72px 6px #f6f1ec,
+    48px 12px #f6f1ec, 54px 12px #f6f1ec, 60px 12px #f6f1ec, 66px 12px #f6f1ec, 72px 12px #f6f1ec,
+    48px 18px #f6f1ec, 54px 18px #f6f1ec, 60px 18px #f6f1ec, 66px 18px #f6f1ec, 72px 18px #f6f1ec,
+    48px 24px #f6f1ec, 54px 24px #f6f1ec, 60px 24px #f6f1ec,
+    42px 30px #f6f1ec, 48px 30px #f6f1ec, 54px 30px #f6f1ec, 60px 30px #f6f1ec, 66px 30px #f6f1ec, 72px 30px #f6f1ec,
+    36px 36px #f6f1ec, 42px 36px #f6f1ec, 48px 36px #f6f1ec, 54px 36px #f6f1ec,
+    12px 36px #f6f1ec, 18px 36px #f6f1ec, 24px 36px #f6f1ec, 30px 36px #f6f1ec,
+    30px 42px #f6f1ec, 36px 42px #f6f1ec, 42px 42px #f6f1ec, 48px 42px #f6f1ec, 54px 42px #f6f1ec,
+    6px 42px #f6f1ec, 12px 42px #f6f1ec, 18px 42px #f6f1ec, 24px 42px #f6f1ec,
+    24px 48px #f6f1ec, 30px 48px #f6f1ec, 36px 48px #f6f1ec, 42px 48px #f6f1ec, 48px 48px #f6f1ec, 54px 48px #f6f1ec,
+    0 48px #f6f1ec, 6px 48px #f6f1ec, 12px 48px #f6f1ec, 18px 48px #f6f1ec,
+    18px 54px #f6f1ec, 24px 54px #f6f1ec, 30px 54px #f6f1ec, 36px 54px #f6f1ec, 42px 54px #f6f1ec, 48px 54px #f6f1ec,
+    24px 60px #f6f1ec, 30px 60px #f6f1ec, 36px 60px #f6f1ec, 42px 60px #f6f1ec,
+    30px 66px #f6f1ec, 36px 66px #f6f1ec, 48px 66px #f6f1ec,
+    30px 72px #f6f1ec, 48px 72px #f6f1ec, 54px 72px #f6f1ec;
+}
+
+.login-dino::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  left: 58px;
+  width: 6px;
+  height: 6px;
+  background: #6e473b;
+}
+
+.login-dino-eye {
+  display: none;
+}
+
+.login-dino-leg {
+  display: none;
+}
+
+.login-dino-jump {
+  animation: login-dino-jump .62s ease-out;
+}
+
+.login-dino-obstacle {
+  position: absolute;
+  right: -60px;
+  bottom: 44px;
+  width: 44px;
+  height: 46px;
+  background: #f6f1ec;
+  image-rendering: pixelated;
+  clip-path: polygon(42% 0, 60% 0, 60% 34%, 78% 34%, 78% 18%, 92% 18%, 92% 50%, 60% 50%, 60% 100%, 42% 100%, 42% 62%, 18% 62%, 18% 38%, 32% 38%, 32% 48%, 42% 48%);
+  animation: login-dino-obstacle 2.05s linear infinite;
+}
+
+.login-dino-game-over .login-dino-obstacle,
+.login-dino-game-over .login-dino-cloud {
+  animation-play-state: paused;
+}
+
+.login-dino-game-over .login-dino {
+  animation: none;
+}
+
+.login-dino-game-over-panel {
+  position: absolute;
+  top: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.login-dino-game-over-text {
+  color: rgba(246, 241, 236, .9);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.login-dino-restart {
+  display: flex;
+  width: 34px;
+  height: 34px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(246, 241, 236, .86);
+  border-radius: 8px;
+  color: rgba(246, 241, 236, .95);
+  background: transparent;
+  font-size: 23px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.login-dino-restart:hover {
+  background: rgba(246, 241, 236, .12);
+}
+
+.login-dino-cloud {
+  position: absolute;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(246, 241, 236, .58);
+}
+
+.login-dino-cloud::before,
+.login-dino-cloud::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  border-radius: 999px;
+  background: inherit;
+}
+
+.login-dino-cloud::before {
+  left: 20px;
+  width: 28px;
+  height: 12px;
+  border-top: 2px solid rgba(246, 241, 236, .58);
+  background: transparent;
+}
+
+.login-dino-cloud::after {
+  right: 10px;
+  width: 18px;
+  height: 8px;
+  border-top: 2px solid rgba(246, 241, 236, .58);
+  background: transparent;
+}
+
+.login-dino-cloud-one {
+  top: 44px;
+  left: 42%;
+  width: 96px;
+  animation: login-dino-cloud 12s linear infinite;
+}
+
+.login-dino-cloud-two {
+  top: 82px;
+  left: 72%;
+  width: 72px;
+  opacity: .65;
+  animation: login-dino-cloud 16s linear infinite;
+}
+
+@keyframes login-dino-jump {
+  0%, 100% { transform: translateY(0); }
+  45% { transform: translateY(-72px); }
+}
+
+@keyframes login-dino-obstacle {
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-1 * (100vw + 120px))); }
+}
+
+@keyframes login-dino-cloud {
+  from { transform: translateX(0); }
+  to { transform: translateX(-520px); }
+}
+
+.admin-login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  overflow: hidden;
+  padding: 48px 40px;
+  background: #faf8f4;
+}
+
+.admin-login-form-wrap {
+  width: 100%;
+  max-width: 360px;
+}
+
+.admin-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.admin-login-input {
+  display: block;
+  width: 100%;
+  height: 64px;
+  padding: 0 24px;
+  border: 1px solid transparent;
+  border-radius: 16px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: #25201e;
+  background: #f3eee7;
+  outline: none;
+  transition: border-color .2s, background .2s, box-shadow .2s;
+}
+
+.admin-login-input::placeholder {
+  color: #9b9996;
+  font-size: 16px;
+}
+
+.admin-login-input:focus {
+  border-color: #8a6a5e;
+  background: #fffdf9;
+  box-shadow: 0 0 0 4px rgba(110, 71, 59, .14);
+}
+
+.admin-login-submit {
+  display: flex;
+  width: 100%;
+  height: 62px;
+  margin-top: 16px;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 16px;
+  color: #fff;
+  background: #6e473b;
+  box-shadow: 0 14px 30px rgba(110, 71, 59, .24);
+  cursor: pointer;
+}
+
+.admin-login-submit:hover {
+  background: #4f332b;
+  box-shadow: 0 18px 36px rgba(110, 71, 59, .3);
+}
+.admin-login-submit:disabled { cursor: not-allowed; opacity: .6; }
+
+@media (max-width: 1023px) {
+  .admin-login-page { height: auto; min-height: 100vh; overflow: auto; padding: 0; }
+  .admin-login-shell {
+    display: block;
+    height: auto;
+    min-height: 100vh;
+  }
+  .admin-login-visual { display: none; }
+  .admin-login-form-panel { height: auto; min-height: 100vh; overflow: visible; padding: 48px 28px; }
+}
+
+@media (max-width: 520px) {
+  .admin-login-page { padding: 0; }
+  .admin-login-shell { min-height: 100vh; border-radius: 0; }
+  .admin-login-form-panel { min-height: 100vh; padding: 36px 22px; }
+}
+
 @keyframes hero-image-slide-in {
   from {
     opacity: 0.72;
@@ -78,35 +421,7 @@
   }
 }
 
-@keyframes photo-card-bounce-upright {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1) rotate(8deg);
-  }
 
-  18% {
-    transform: translate3d(0, -7px, 0) scale(1.026) rotate(8deg);
-  }
-
-  34% {
-    transform: translate3d(0, -11px, 0) scale(1.04) rotate(7.2deg);
-  }
-
-  54% {
-    transform: translate3d(0, -10px, 0) scale(1.026) rotate(2.4deg);
-  }
-
-  72% {
-    transform: translate3d(0, -8px, 0) scale(1.012) rotate(-0.7deg);
-  }
-
-  88% {
-    transform: translate3d(0, -8px, 0) scale(1.004) rotate(0.28deg);
-  }
-
-  100% {
-    transform: translate3d(0, -8px, 0) scale(1) rotate(0deg);
-  }
-}
 
 @keyframes modal-backdrop-in {
   from {
@@ -391,12 +706,12 @@
   }
 
   .photo-card-bounce-upright {
-    transition: filter 300ms ease;
+    transition: transform 600ms cubic-bezier(0.34, 1.56, 0.64, 1), filter 300ms ease;
     will-change: transform;
   }
 
   .photo-card-bounce-upright:hover {
-    animation: photo-card-bounce-upright 980ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    transform: translate3d(0, -12px, 0) scale(1.04) rotate(0deg);
   }
 
   /* Tombol utama */
