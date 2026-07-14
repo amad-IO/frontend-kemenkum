@@ -6,7 +6,6 @@ import { getSettings, updateSettings, SettingsData } from '../../services/settin
 const Settings = () => {
   const [settings, setSettings] = useState<SettingsData>({
     pejabat_name: '',
-    pejabat_position: '',
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -35,8 +34,7 @@ const Settings = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
-    if (!settings.pejabat_name.trim() || !settings.pejabat_position.trim()) {
+    if (!settings.pejabat_name.trim()) {
       toast.error('Semua kolom wajib diisi')
       return
     }
@@ -93,22 +91,6 @@ const Settings = () => {
                 value={settings.pejabat_name}
                 onChange={handleChange}
                 placeholder="Misal: R. Prasetyo Wibowo"
-                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20"
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-neutral-text flex items-center gap-2">
-                <Briefcase size={16} className="text-primary" />
-                Jabatan
-              </label>
-              <input
-                type="text"
-                name="pejabat_position"
-                value={settings.pejabat_position}
-                onChange={handleChange}
-                placeholder="Misal: Kepala Bagian Tata Usaha dan Umum"
                 className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20"
                 required
               />
