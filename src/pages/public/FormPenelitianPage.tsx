@@ -354,7 +354,6 @@ const FormPenelitianPage = () => {
                   <label className="text-sm font-semibold text-neutral-text">
                     {jenisPeserta === 'kelompok' ? 'No. Identitas Ketua' : 'No. Identitas'} <span className="text-red-500">*</span>
                   </label>
-                  <p className="text-xs text-neutral-400 mt-[-2px] mb-1">(Bisa diisi NIM, NISN, NIP, NIK, dll)</p>
                   <input {...register('nim_ketua')} placeholder="Isi dengan nomer NIM, NISN, NIP, NIK, dll" className="input-field" />
                   {errors.nim_ketua && <p className="text-xs text-red-500">{errors.nim_ketua.message}</p>}
                 </div>
@@ -401,7 +400,6 @@ const FormPenelitianPage = () => {
                         </div>
                         <div className="flex-1 space-y-1">
                           <label className="text-xs font-semibold text-neutral-subtle">No. Identitas</label>
-                          <p className="text-[10px] text-neutral-400 leading-tight">(NIM, NISN, NIP, NIK)</p>
                           <input {...register(`anggota.${index}.nim`)} placeholder="Isi dengan nomer NIM, NISN, NIP, NIK, dll" className="input-field text-sm" />
                           {errors.anggota?.[index]?.nim && (
                             <p className="text-xs text-red-500">{errors.anggota[index]?.nim?.message}</p>
