@@ -18,7 +18,7 @@ import SingleDatePickerField from '../../components/public/forms/SingleDatePicke
 
 const anggotaSchema = z.object({
   nama: z.string().min(2, 'Nama minimal 2 karakter'),
-  nim: z.string().min(3, 'NIM/NISN tidak valid'),
+  nim: z.string().min(3, 'No. Identitas tidak valid'),
 })
 
 const phoneRegex = /^(08\d{8,11}|\+628\d{8,11})$/
@@ -37,7 +37,7 @@ const penelitianSchema = z
     end_date: z.string().min(1, 'Tanggal selesai wajib dipilih'),
     jenis_peserta: z.enum(['individu', 'kelompok']),
     nama_ketua: z.string().min(2, 'Nama minimal 2 karakter'),
-    nim_ketua: z.string().min(3, 'NIM/NISN tidak valid'),
+    nim_ketua: z.string().min(3, 'No. Identitas tidak valid'),
     whatsapp: z.string().trim().refine((v) => phoneRegex.test(v), { message: phoneErrorMessage }),
     email: z.string().regex(emialRegex, {message: emailErrorMessage}),
     anggota: z.array(anggotaSchema).max(9),
@@ -352,8 +352,9 @@ const FormPenelitianPage = () => {
 
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
-                    {jenisPeserta === 'kelompok' ? 'NIM/NISN Ketua' : 'NIM/NISN'} <span className="text-red-500">*</span>
+                    {jenisPeserta === 'kelompok' ? 'No. Identitas Ketua' : 'No. Identitas'} <span className="text-red-500">*</span>
                   </label>
+                  <p className="text-xs text-neutral-400 mt-[-2px] mb-1">(Bisa diisi NIM, NISN, NIP, NIK, dll)</p>
                   <input {...register('nim_ketua')} placeholder="NIM atau NISN" className="input-field" />
                   {errors.nim_ketua && <p className="text-xs text-red-500">{errors.nim_ketua.message}</p>}
                 </div>
@@ -398,8 +399,9 @@ const FormPenelitianPage = () => {
                             <p className="text-xs text-red-500">{errors.anggota[index]?.nama?.message}</p>
                           )}
                         </div>
-                        <div className={fieldWrap}>
-                          <label className="text-xs font-semibold text-neutral-subtle">NIM/NISN</label>
+                        <div className="flex-1 space-y-1">
+                          <label className="text-xs font-semibold text-neutral-subtle">No. Identitas</label>
+                          <p className="text-[10px] text-neutral-400 leading-tight">(NIM, NISN, NIP, NIK)</p>
                           <input {...register(`anggota.${index}.nim`)} placeholder="NIM atau NISN" className="input-field text-sm" />
                           {errors.anggota?.[index]?.nim && (
                             <p className="text-xs text-red-500">{errors.anggota[index]?.nim?.message}</p>

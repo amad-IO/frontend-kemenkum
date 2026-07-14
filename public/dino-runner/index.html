@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>Dino Runner</title>
+    <link rel="stylesheet" href="runner.css">
+    <script src="runner.js" defer></script>
+  </head>
+  <body class="offline">
+    <main class="interstitial-wrapper" aria-label="Dino Runner">
+      <div class="icon icon-offline" aria-hidden="true"></div>
+      <div id="offline-resources" aria-hidden="true">
+        <img id="offline-resources-1x" src="assets/offline-sprite-1x.png" alt="">
+        <img id="offline-resources-2x" src="assets/offline-sprite-2x.png" alt="">
+      </div>
+    </main>
+    <script>
+      const keys = { Space: 32, ArrowUp: 38, ArrowDown: 40, Enter: 13 };
+
+      window.addEventListener('message', (event) => {
+        if (event.origin !== window.location.origin || event.data?.source !== 'kemenkum-login') return;
+        const keyCode = keys[event.data.code] || event.data.keyCode;
+        const keyboardEvent = new KeyboardEvent(event.data.type, {
+          code: event.data.code,
+          bubbles: true,
+          cancelable: true,
+        });
+        Object.defineProperties(keyboardEvent, {
+          keyCode: { get: () => keyCode },
+          which: { get: () => keyCode },
+        });
+        document.dispatchEvent(keyboardEvent);
+      });
+    </script>
+  </body>
+</html>

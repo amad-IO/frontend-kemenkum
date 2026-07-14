@@ -33,4 +33,4 @@ export const INDONESIA_REGENCIES = regenciesCsv
 // Alias untuk kompatibilitas dengan modul lama yang masih tersimpan oleh Vite HMR.
 export const INDONESIA_CITIES = INDONESIA_REGENCIES.map((area) => area.name)
 
-export const EDUCATION_LEVELS = ['SMA', 'SMK', 'D3', 'D4', 'S1'] as const
+export const EDUCATION_LEVELS = ['SMA', 'SMK', 'D3', 'D4', 'S1', 'S2', 'S3', 'Umum/Profesional/Dosen'] as const

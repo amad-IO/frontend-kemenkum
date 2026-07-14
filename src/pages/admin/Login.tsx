@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -8,6 +8,7 @@ import { toast } from 'react-toastify'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 import Logo from '../../shared/Logo'
+import DinoRunner from '../../components/admin/DinoRunner'
 
 const loginSchema = z.object({
   username: z
@@ -26,11 +27,6 @@ const Login = () => {
   const navigate = useNavigate()
   const { setAuth } = useAuthStore()
   const [showPass, setShowPass] = useState(false)
-  const [isDinoJumping, setIsDinoJumping] = useState(false)
-  const [isDinoGameOver, setIsDinoGameOver] = useState(false)
-  const [dinoGameRunKey, setDinoGameRunKey] = useState(0)
-  const dinoRef = useRef<HTMLDivElement>(null)
-  const obstacleRef = useRef<HTMLDivElement>(null)
 
   const {
     register,
@@ -56,66 +52,6 @@ const Login = () => {
     }
   }
 
-  const restartDinoGame = () => {
-    setIsDinoJumping(false)
-    setIsDinoGameOver(false)
-    setDinoGameRunKey((key) => key + 1)
-  }
-
-  const jumpDino = () => {
-    if (isDinoGameOver) {
-      restartDinoGame()
-      return
-    }
-    if (isDinoJumping) return
-    setIsDinoJumping(true)
-    window.setTimeout(() => setIsDinoJumping(false), 620)
-  }
-
-  useEffect(() => {
-    const handleSpaceJump = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null
-      const isTyping = target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable
-
-      if (event.code === 'Space' && !isTyping) {
-        event.preventDefault()
-        jumpDino()
-      }
-    }
-
-    window.addEventListener('keydown', handleSpaceJump)
-    return () => window.removeEventListener('keydown', handleSpaceJump)
-  }, [isDinoGameOver, isDinoJumping])
-
-  useEffect(() => {
-    if (isDinoGameOver) return
-
-    let frameId = 0
-    const detectCollision = () => {
-      const dinoBox = dinoRef.current?.getBoundingClientRect()
-      const obstacleBox = obstacleRef.current?.getBoundingClientRect()
-
-      if (dinoBox && obstacleBox) {
-        const hitBoxPadding = 8
-        const isColliding =
-          dinoBox.right - hitBoxPadding > obstacleBox.left &&
-          dinoBox.left + hitBoxPadding < obstacleBox.right &&
-          dinoBox.bottom - hitBoxPadding > obstacleBox.top &&
-          dinoBox.top + hitBoxPadding < obstacleBox.bottom
-
-        if (isColliding) {
-          setIsDinoGameOver(true)
-          return
-        }
-      }
-
-      frameId = window.requestAnimationFrame(detectCollision)
-    }
-
-    frameId = window.requestAnimationFrame(detectCollision)
-    return () => window.cancelAnimationFrame(frameId)
-  }, [isDinoGameOver])
-
   return (
     <main className="admin-login-page font-sans">
       <section className="admin-login-shell">
@@ -133,27 +69,7 @@ const Login = () => {
             </svg>
           </div>
 
-          <div className={isDinoGameOver ? 'login-dino-game login-dino-game-over relative z-10 mt-auto' : 'login-dino-game relative z-10 mt-auto'} role="img" aria-label="Permainan dinosaurus kecil, tekan spasi untuk melompat">
-            <div className="login-dino-cloud login-dino-cloud-one" />
-            <div className="login-dino-cloud login-dino-cloud-two" />
-            <div key={dinoGameRunKey} className="login-dino-track">
-              <div ref={dinoRef} className={isDinoJumping ? 'login-dino login-dino-jump' : 'login-dino'} aria-hidden="true">
-                <span className="login-dino-eye" />
-                <span className="login-dino-leg login-dino-leg-left" />
-                <span className="login-dino-leg login-dino-leg-right" />
-              </div>
-              <div ref={obstacleRef} className="login-dino-obstacle" aria-hidden="true" />
-              <div className="login-dino-ground" />
-            </div>
-            {isDinoGameOver && (
-              <div className="login-dino-game-over-panel">
-                <div className="login-dino-game-over-text">GAME OVER</div>
-                <button type="button" className="login-dino-restart" onClick={restartDinoGame} aria-label="Mulai ulang permainan dinosaurus">
-                  ↻
-                </button>
-              </div>
-            )}
-          </div>
+          <DinoRunner />
         </aside>
 
         <div className="admin-login-form-panel flex items-center justify-center px-6 py-12 sm:px-12 lg:px-14 xl:px-20">

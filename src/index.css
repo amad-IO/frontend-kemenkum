@@ -45,229 +45,30 @@
   background: linear-gradient(145deg, #4f332b 0%, #6e473b 48%, #9a7769 100%);
 }
 
-.login-dino-game {
+.login-dino-runner {
   width: calc(100% + 128px);
-  height: 170px;
-  min-height: 170px;
+  height: 180px;
+  min-height: 180px;
   margin-right: -64px;
   margin-left: -64px;
 }
 
-.login-dino-track {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-}
-
-.login-dino-ground {
-  position: absolute;
-  right: 0;
-  bottom: 42px;
-  left: 0;
-  height: 2px;
-  background-image: repeating-linear-gradient(to right, rgba(246, 241, 236, .82) 0 18px, transparent 18px 28px);
-}
-
-.login-dino-ground::before,
-.login-dino-ground::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  width: 54px;
-  height: 8px;
-  border-top: 2px solid rgba(246, 241, 236, .82);
-  border-radius: 999px 999px 0 0;
-}
-
-.login-dino-ground::before {
-  right: 170px;
-}
-
-.login-dino-ground::after {
-  right: 92px;
-  width: 32px;
-}
-
-.login-dino {
-  position: absolute;
-  bottom: 44px;
-  left: 92px;
-  width: 84px;
-  height: 84px;
-  background: transparent;
-  image-rendering: pixelated;
-}
-
-.login-dino::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 6px;
-  height: 6px;
-  background: #f6f1ec;
-  box-shadow:
-    48px 0 #f6f1ec, 54px 0 #f6f1ec, 60px 0 #f6f1ec, 66px 0 #f6f1ec,
-    48px 6px #f6f1ec, 54px 6px #f6f1ec, 60px 6px #f6f1ec, 66px 6px #f6f1ec, 72px 6px #f6f1ec,
-    48px 12px #f6f1ec, 54px 12px #f6f1ec, 60px 12px #f6f1ec, 66px 12px #f6f1ec, 72px 12px #f6f1ec,
-    48px 18px #f6f1ec, 54px 18px #f6f1ec, 60px 18px #f6f1ec, 66px 18px #f6f1ec, 72px 18px #f6f1ec,
-    48px 24px #f6f1ec, 54px 24px #f6f1ec, 60px 24px #f6f1ec,
-    42px 30px #f6f1ec, 48px 30px #f6f1ec, 54px 30px #f6f1ec, 60px 30px #f6f1ec, 66px 30px #f6f1ec, 72px 30px #f6f1ec,
-    36px 36px #f6f1ec, 42px 36px #f6f1ec, 48px 36px #f6f1ec, 54px 36px #f6f1ec,
-    12px 36px #f6f1ec, 18px 36px #f6f1ec, 24px 36px #f6f1ec, 30px 36px #f6f1ec,
-    30px 42px #f6f1ec, 36px 42px #f6f1ec, 42px 42px #f6f1ec, 48px 42px #f6f1ec, 54px 42px #f6f1ec,
-    6px 42px #f6f1ec, 12px 42px #f6f1ec, 18px 42px #f6f1ec, 24px 42px #f6f1ec,
-    24px 48px #f6f1ec, 30px 48px #f6f1ec, 36px 48px #f6f1ec, 42px 48px #f6f1ec, 48px 48px #f6f1ec, 54px 48px #f6f1ec,
-    0 48px #f6f1ec, 6px 48px #f6f1ec, 12px 48px #f6f1ec, 18px 48px #f6f1ec,
-    18px 54px #f6f1ec, 24px 54px #f6f1ec, 30px 54px #f6f1ec, 36px 54px #f6f1ec, 42px 54px #f6f1ec, 48px 54px #f6f1ec,
-    24px 60px #f6f1ec, 30px 60px #f6f1ec, 36px 60px #f6f1ec, 42px 60px #f6f1ec,
-    30px 66px #f6f1ec, 36px 66px #f6f1ec, 48px 66px #f6f1ec,
-    30px 72px #f6f1ec, 48px 72px #f6f1ec, 54px 72px #f6f1ec;
-}
-
-.login-dino::after {
-  content: "";
-  position: absolute;
-  top: 8px;
-  left: 58px;
-  width: 6px;
-  height: 6px;
-  background: #6e473b;
-}
-
-.login-dino-eye {
-  display: none;
-}
-
-.login-dino-leg {
-  display: none;
-}
-
-.login-dino-jump {
-  animation: login-dino-jump .62s ease-out;
-}
-
-.login-dino-obstacle {
-  position: absolute;
-  right: -60px;
-  bottom: 44px;
-  width: 44px;
-  height: 46px;
-  background: #f6f1ec;
-  image-rendering: pixelated;
-  clip-path: polygon(42% 0, 60% 0, 60% 34%, 78% 34%, 78% 18%, 92% 18%, 92% 50%, 60% 50%, 60% 100%, 42% 100%, 42% 62%, 18% 62%, 18% 38%, 32% 38%, 32% 48%, 42% 48%);
-  animation: login-dino-obstacle 2.05s linear infinite;
-}
-
-.login-dino-game-over .login-dino-obstacle,
-.login-dino-game-over .login-dino-cloud {
-  animation-play-state: paused;
-}
-
-.login-dino-game-over .login-dino {
-  animation: none;
-}
-
-.login-dino-game-over-panel {
-  position: absolute;
-  top: 28px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-}
-
-.login-dino-game-over-text {
-  color: rgba(246, 241, 236, .9);
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: 3px;
-}
-
-.login-dino-restart {
-  display: flex;
-  width: 34px;
-  height: 34px;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgba(246, 241, 236, .86);
-  border-radius: 8px;
-  color: rgba(246, 241, 236, .95);
-  background: transparent;
-  font-size: 23px;
-  font-weight: 800;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.login-dino-restart:hover {
-  background: rgba(246, 241, 236, .12);
-}
-
-.login-dino-cloud {
-  position: absolute;
-  height: 2px;
-  border-radius: 999px;
-  background: rgba(246, 241, 236, .58);
-}
-
-.login-dino-cloud::before,
-.login-dino-cloud::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  border-radius: 999px;
-  background: inherit;
-}
-
-.login-dino-cloud::before {
-  left: 20px;
-  width: 28px;
-  height: 12px;
-  border-top: 2px solid rgba(246, 241, 236, .58);
+.login-dino-frame {
+  display: block;
+  width: 100%;
+  height: 150px;
+  border: 0;
   background: transparent;
 }
 
-.login-dino-cloud::after {
-  right: 10px;
-  width: 18px;
-  height: 8px;
-  border-top: 2px solid rgba(246, 241, 236, .58);
-  background: transparent;
+.login-dino-hint {
+  margin: 4px 64px 0;
+  color: rgba(246, 241, 236, .62);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-align: right;
 }
-
-.login-dino-cloud-one {
-  top: 44px;
-  left: 42%;
-  width: 96px;
-  animation: login-dino-cloud 12s linear infinite;
-}
-
-.login-dino-cloud-two {
-  top: 82px;
-  left: 72%;
-  width: 72px;
-  opacity: .65;
-  animation: login-dino-cloud 16s linear infinite;
-}
-
-@keyframes login-dino-jump {
-  0%, 100% { transform: translateY(0); }
-  45% { transform: translateY(-72px); }
-}
-
-@keyframes login-dino-obstacle {
-  from { transform: translateX(0); }
-  to { transform: translateX(calc(-1 * (100vw + 120px))); }
-}
-
-@keyframes login-dino-cloud {
-  from { transform: translateX(0); }
-  to { transform: translateX(-520px); }
-}
-
 .admin-login-form-panel {
   display: flex;
   align-items: center;
