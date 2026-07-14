@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { CalendarDays, ChevronLeft, ChevronRight, X } from 'lucide-react'
 
 interface DateRangePickerFieldProps {
@@ -164,9 +165,9 @@ const DateRangePickerField = ({
         </>
       )}
 
-      {open && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-neutral-text/40 px-3 py-4 sm:items-center">
-          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl">
+      {open && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-neutral-text/40 px-3 py-4 sm:items-center backdrop-blur-sm date-picker-backdrop-enter">
+          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl date-picker-popup-enter">
             <div className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-border bg-neutral-soft text-primary">
@@ -314,7 +315,8 @@ const DateRangePickerField = ({
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   )
