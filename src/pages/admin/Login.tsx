@@ -123,8 +123,10 @@ const Login = () => {
           <div className="pointer-events-none absolute inset-0 opacity-20 [background-image:radial-gradient(rgba(255,255,255,.7)_1px,transparent_1px)] [background-size:9px_9px]" />
           <div className="relative z-10">
             <Logo variant="full" className="h-auto w-[190px]" />
-            <h1 className="mt-16 max-w-[500px] text-5xl font-extrabold leading-[1.18] tracking-[-0.045em] xl:text-[3.25rem]">
-              Sederhanakan pengelolaan melalui dashboard.
+            <h1 className="mt-16 max-w-none text-5xl font-semibold leading-[1.18] tracking-[-0.045em] xl:text-[3.25rem]">
+              Kelola pendaftar<br />
+              dengan lebih mudah,<br />
+              cepat dan terintegrasi.
             </h1>
             <svg className="mt-2 ml-16 h-5 w-64" viewBox="0 0 260 20" fill="none" aria-hidden="true">
               <path d="M3 15C72 2 177 3 257 13" stroke="white" strokeWidth="3" strokeLinecap="round" />
@@ -157,10 +159,6 @@ const Login = () => {
         <div className="admin-login-form-panel flex items-center justify-center px-6 py-12 sm:px-12 lg:px-14 xl:px-20">
           <div className="admin-login-form-wrap w-full">
             <div className="mb-10 text-center">
-              <div className="mx-auto mb-7 flex w-fit items-center gap-3 text-left">
-                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-primary p-2"><Logo variant="mark" className="h-full w-full" /></span>
-                <div><p className="text-base font-extrabold text-[#25201e]">Ruang Magang</p><p className="text-[10px] font-semibold tracking-wide text-neutral-400">KEMENTERIAN HUKUM</p></div>
-              </div>
               <h2 className="text-4xl font-extrabold tracking-[-0.04em] text-[#181513]">Selamat Datang</h2>
               <p className="mt-3 text-sm text-neutral-400">Silakan masuk ke akun administrator Anda</p>
             </div>
