@@ -14,6 +14,10 @@ import HeroLayout from '../../components/public/layout/HeroLayout'
 import Footer from '../../components/public/layout/Footer'
 import ConfirmModal from '../../components/public/forms/ConfirmModal'
 import daftarHeroImage from '../../assets/03.webp'
+import { EDUCATION_LEVELS } from '../../data/indonesiaCities'
+import RegencyCombobox from '../../components/public/forms/RegencyCombobox'
+import EducationLevelSelect from '../../components/public/forms/EducationLevelSelect'
+import SingleDatePickerField from '../../components/public/forms/SingleDatePickerField'
 
 const anggotaSchema = z.object({
   nama: z.string().min(2, 'Nama minimal 2 karakter'),
@@ -29,6 +33,8 @@ const magangSchema = z
   .object({
     institution: z.string().min(3, 'Nama instansi tidak valid'),
     study_program: z.string().min(2, 'Program studi tidak valid'),
+    education_level: z.enum(EDUCATION_LEVELS, { message: 'Pilih jenjang pendidikan' }),
+    campus_city: z.string().min(1, 'Pilih lokasi kampus'),
     period_id: z.string().min(1, 'Pilih periode terlebih dahulu'),
     jenis_peserta: z.enum(['individu', 'kelompok']),
     nama_ketua: z.string().min(2, 'Nama minimal 2 karakter'),
@@ -37,6 +43,7 @@ const magangSchema = z
     email: z.string().regex(emialRegex, {message: emailErrorMessage}),
     anggota: z.array(anggotaSchema).max(2),
     letter_number: z.string().min(3, 'Nomor surat tidak valid'),
+    letter_date: z.string().min(1, 'Tanggal surat permohonan wajib dipilih'),
     document: z
       .instanceof(FileList)
       .refine((f) => f.length > 0, 'File wajib diupload')
@@ -106,6 +113,9 @@ const FormMagangPage = () => {
   const jenisPeserta = watch('jenis_peserta')
   const selectedPeriodId = watch('period_id')
   const selectedPeriod = periodeList.find((p) => String(p.id) === selectedPeriodId)
+  const campusCity = watch('campus_city')
+  const educationLevel = watch('education_level')
+  const letterDate = watch('letter_date')
 
   useEffect(() => {
     getPeriodeMagang()
@@ -144,9 +154,12 @@ const FormMagangPage = () => {
     formData.append('period_id', values.period_id)
     formData.append('institution', values.institution)
     formData.append('study_program', values.study_program)
+    formData.append('education_level', values.education_level)
+    formData.append('campus_city', values.campus_city)
     formData.append('start_date', selectedPeriod.start_date)
     formData.append('end_date', selectedPeriod.end_date)
     formData.append('letter_number', values.letter_number)
+    formData.append('letter_date', values.letter_date)
     formData.append('phone_number', normalizePhone(values.whatsapp))
     formData.append('member_1', `${values.nama_ketua}|${values.nim_ketua}|${values.email}`)
 
@@ -206,7 +219,7 @@ const FormMagangPage = () => {
           </nav>
 
           <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-5">
-            <section className={sectionClass}>
+            <section className={`${sectionClass} z-20`}>
               <h2 className={sectionTitleClass}>
                 <BriefcaseBusiness size={18} className="text-primary" />
                 Data Instansi
@@ -218,6 +231,32 @@ const FormMagangPage = () => {
                   </label>
                   <input {...register('institution')} placeholder="Nama sekolah atau universitas" className="input-field" />
                   {errors.institution && <p className="text-xs text-red-500">{errors.institution.message}</p>}
+                </div>
+
+                <div className={fieldWrap}>
+                  <label className="text-sm font-semibold text-neutral-text">
+                    Lokasi Kampus / Sekolah <span className="text-red-500">*</span>
+                  </label>
+                  <input type="hidden" {...register('campus_city')} />
+                  <RegencyCombobox
+                    value={campusCity}
+                    hasError={Boolean(errors.campus_city)}
+                    onChange={(value) => setValue('campus_city', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                  {errors.campus_city && <p className="text-xs text-red-500">{errors.campus_city.message}</p>}
+                </div>
+
+                <div className={fieldWrap}>
+                  <label className="text-sm font-semibold text-neutral-text">
+                    Jenjang Pendidikan <span className="text-red-500">*</span>
+                  </label>
+                  <input type="hidden" {...register('education_level')} />
+                  <EducationLevelSelect
+                    value={educationLevel}
+                    hasError={Boolean(errors.education_level)}
+                    onChange={(value) => setValue('education_level', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                  {errors.education_level && <p className="text-xs text-red-500">{errors.education_level.message}</p>}
                 </div>
 
                 <div className={fieldWrap}>
@@ -267,8 +306,8 @@ const FormMagangPage = () => {
                 </button>
 
                 {periodOpen && (
-                  <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-neutral-100 bg-white/95 backdrop-blur-xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-all">
-                    <div className="flex max-h-64 flex-col gap-1 overflow-y-auto p-2">
+                  <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl transition-all">
+                    <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
                       {periodeList.length === 0 ? (
                         <div className="px-3 py-3 text-sm font-semibold text-neutral-muted">
                           Tidak ada periode aktif
@@ -289,7 +328,7 @@ const FormMagangPage = () => {
                                   setPeriodOpen(false)
                                 }
                               }}
-                              className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-3 text-left text-sm font-semibold transition-all duration-200 ${
+                              className={`flex min-h-11 w-full items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm font-semibold transition-colors ${
                                 isFull
                                   ? 'opacity-50 cursor-not-allowed bg-neutral-50 text-neutral-muted'
                                   : active
@@ -440,6 +479,19 @@ const FormMagangPage = () => {
                 </div>
 
                 <div className={fieldWrap}>
+                  <label className="text-sm font-semibold text-neutral-text">
+                    Tanggal Surat Permohonan <span className="text-red-500">*</span>
+                  </label>
+                  <input type="hidden" {...register('letter_date')} />
+                  <SingleDatePickerField
+                    value={letterDate}
+                    hasError={Boolean(errors.letter_date)}
+                    onChange={(value) => setValue('letter_date', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                  {errors.letter_date && <p className="text-xs text-red-500">{errors.letter_date.message}</p>}
+                </div>
+
+                <div className={`${fieldWrap} lg:col-span-2`}>
                   <label className="text-sm font-semibold text-neutral-text">
                     Unggah Berkas (.zip) <span className="text-red-500">*</span>
                   </label>

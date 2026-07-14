@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X, Loader2, Save } from 'lucide-react'
+import CustomSelect from './CustomSelect'
 
 const schema = z.object({
   position_name: z.string().min(3, 'Nama posisi minimal 3 karakter').max(100, 'Nama posisi maksimal 100 karakter'),
@@ -24,6 +25,8 @@ const PositionModal = ({ isOpen, onClose, onSubmit, initialData, isSubmitting }:
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<PositionFormValues>({
     resolver: zodResolver(schema),
@@ -32,6 +35,8 @@ const PositionModal = ({ isOpen, onClose, onSubmit, initialData, isSubmitting }:
       status: 'active',
     },
   })
+
+  const status = watch('status')
 
   useEffect(() => {
     if (isOpen) {
@@ -86,13 +91,16 @@ const PositionModal = ({ isOpen, onClose, onSubmit, initialData, isSubmitting }:
             <label className="text-sm font-semibold text-neutral-text">
               Status <span className="text-red-500">*</span>
             </label>
-            <select
-              {...register('status')}
-              className="rounded-xl border border-neutral-border bg-neutral-bg px-4 py-2.5 text-sm font-semibold text-neutral-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            >
-              <option value="active">Aktif</option>
-              <option value="inactive">Tidak Aktif</option>
-            </select>
+            <input type="hidden" {...register('status')} />
+            <CustomSelect
+              fullWidth
+              value={status}
+              onChange={(value) => setValue('status', value as PositionFormValues['status'], { shouldDirty: true, shouldValidate: true })}
+              options={[
+                { value: 'active', label: 'Aktif' },
+                { value: 'inactive', label: 'Tidak Aktif' },
+              ]}
+            />
             {errors.status && (
               <p className="text-xs text-red-500">{errors.status.message}</p>
             )}

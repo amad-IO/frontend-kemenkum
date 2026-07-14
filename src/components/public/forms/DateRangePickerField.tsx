@@ -115,12 +115,6 @@ const DateRangePickerField = ({
     setTempEnd(value)
   }
 
-  const goNext = () => {
-    if (!tempStart) return
-    setStep('end')
-    setViewDate(parseDate(tempEnd || tempStart))
-  }
-
   const confirmRange = () => {
     if (!tempStart || !tempEnd || tempEnd < tempStart) return
     onStartChange(tempStart)
@@ -172,7 +166,7 @@ const DateRangePickerField = ({
 
       {open && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-neutral-text/40 px-3 py-4 sm:items-center">
-          <div className="w-full max-w-3xl overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl">
+          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl">
             <div className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
               <div className="flex min-w-0 items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-border bg-neutral-soft text-primary">
@@ -309,25 +303,14 @@ const DateRangePickerField = ({
                 >
                   Cancel
                 </button>
-                {step === 'start' ? (
-                  <button
-                    type="button"
-                    onClick={goNext}
-                    disabled={!tempStart}
-                    className="min-h-11 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    OK
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={confirmRange}
-                    disabled={!tempStart || !tempEnd || tempEnd < tempStart}
-                    className="min-h-11 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    Konfirmasi
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={confirmRange}
+                  disabled={!tempStart || !tempEnd || tempEnd < tempStart}
+                  className="min-h-11 rounded-xl bg-primary px-7 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  OK
+                </button>
               </div>
             </div>
           </div>

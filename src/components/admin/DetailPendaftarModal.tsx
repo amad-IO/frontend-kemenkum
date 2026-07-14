@@ -80,6 +80,7 @@ const DetailPendaftarModal = ({
     const [chatMinimized, setChatMinimized] = useState(false)
     const [clientUnreadCount, setClientUnreadCount] = useState(0)
     const [latestApplicantMessageId, setLatestApplicantMessageId] = useState(0)
+    const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false)
     const permitInputRef = useRef<HTMLInputElement>(null)
     const messageListRef = useRef<HTMLDivElement>(null)
     const chatPanelRef = useRef<HTMLElement>(null)
@@ -229,6 +230,41 @@ const DetailPendaftarModal = ({
 
     const formatDate = (dateStr: string) =>
         new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
+
+    // ── Generate & download template surat DOCX ──────────────────────────────
+    const handleGenerateTemplate = async () => {
+        if (!submission || isGeneratingTemplate) return
+        setIsGeneratingTemplate(true)
+        try {
+            const res = await api.get(
+                `/admin/submissions/${submission.id}/generate-template`,
+                { responseType: 'blob' }
+            )
+            // Ambil nama file dari header Content-Disposition jika ada
+            const disposition = res.headers['content-disposition'] as string | undefined
+            let fileName = `Surat_Izin_Magang_${submission.id}.docx`
+            if (disposition) {
+                const match = disposition.match(/filename[^;=\n]*=\s*(?:UTF-8''|["']?)([^"';\n]+)/i)
+                if (match?.[1]) fileName = decodeURIComponent(match[1].trim())
+            }
+            // Trigger download ke browser
+            const url = URL.createObjectURL(new Blob([res.data], {
+                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            }))
+            const a = document.createElement('a')
+            a.href = url
+            a.download = fileName
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
+            toast.success('Template surat berhasil diunduh')
+        } catch {
+            toast.error('Gagal mengunduh template surat')
+        } finally {
+            setIsGeneratingTemplate(false)
+        }
+    }
 
     // ── Initial load semua pesan (hanya sekali saat chat pertama dibuka) ──────
     const loadMessages = async (markRead = true) => {
@@ -635,11 +671,13 @@ const DetailPendaftarModal = ({
                                         />
                                         <button
                                             type="button"
-                                            title="Unduh template izin magang"
-                                            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-white px-2 text-[11px] font-bold text-primary shadow-sm transition hover:bg-primary hover:text-white"
+                                            title="Generate dan unduh template surat izin magang"
+                                            onClick={handleGenerateTemplate}
+                                            disabled={isGeneratingTemplate}
+                                            className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-white px-2 text-[11px] font-bold text-primary shadow-sm transition hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                                         >
                                             <Download size={14} />
-                                            Template
+                                            {isGeneratingTemplate ? 'Memproses...' : 'Template'}
                                         </button>
                                         <button
                                             type="button"

@@ -11,6 +11,10 @@ import Footer from '../../components/public/layout/Footer'
 import ConfirmModal from '../../components/public/forms/ConfirmModal'
 import DateRangePickerField from '../../components/public/forms/DateRangePickerField'
 import daftarHeroImage from '../../assets/03.webp'
+import { EDUCATION_LEVELS } from '../../data/indonesiaCities'
+import RegencyCombobox from '../../components/public/forms/RegencyCombobox'
+import EducationLevelSelect from '../../components/public/forms/EducationLevelSelect'
+import SingleDatePickerField from '../../components/public/forms/SingleDatePickerField'
 
 const anggotaSchema = z.object({
   nama: z.string().min(2, 'Nama minimal 2 karakter'),
@@ -26,6 +30,8 @@ const penelitianSchema = z
   .object({
     institution: z.string().min(3, 'Nama instansi tidak valid'),
     study_program: z.string().min(2, 'Program studi tidak valid'),
+    education_level: z.enum(EDUCATION_LEVELS, { message: 'Pilih jenjang pendidikan' }),
+    campus_city: z.string().min(1, 'Pilih lokasi kampus'),
     research_title: z.string().min(8, 'Judul penelitian minimal 8 karakter'),
     start_date: z.string().min(1, 'Tanggal mulai wajib dipilih'),
     end_date: z.string().min(1, 'Tanggal selesai wajib dipilih'),
@@ -36,6 +42,7 @@ const penelitianSchema = z
     email: z.string().regex(emialRegex, {message: emailErrorMessage}),
     anggota: z.array(anggotaSchema).max(9),
     letter_number: z.string().min(3, 'Nomor surat tidak valid'),
+    letter_date: z.string().min(1, 'Tanggal surat permohonan wajib dipilih'),
     document: z
       .instanceof(FileList)
       .refine((f) => f.length > 0, 'File wajib diupload')
@@ -106,6 +113,9 @@ const FormPenelitianPage = () => {
   const jenisPeserta = watch('jenis_peserta')
   const startDate = watch('start_date')
   const endDate = watch('end_date')
+  const campusCity = watch('campus_city')
+  const educationLevel = watch('education_level')
+  const letterDate = watch('letter_date')
 
   function normalizePhone(raw: string) {
     if (!raw) return raw
@@ -128,10 +138,13 @@ const FormPenelitianPage = () => {
     formData.append('type', 'penelitian')
     formData.append('institution', values.institution)
     formData.append('study_program', values.study_program)
+    formData.append('education_level', values.education_level)
+    formData.append('campus_city', values.campus_city)
     formData.append('research_title', values.research_title)
     formData.append('start_date', values.start_date)
     formData.append('end_date', values.end_date)
     formData.append('letter_number', values.letter_number)
+    formData.append('letter_date', values.letter_date)
     formData.append('phone_number', normalizePhone(values.whatsapp))
     formData.append('member_1', `${values.nama_ketua}|${values.nim_ketua}|${values.email}`)
 
@@ -191,7 +204,7 @@ const FormPenelitianPage = () => {
           </nav>
 
           <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-5">
-            <section className={sectionClass}>
+            <section className={`${sectionClass} z-20`}>
               <h2 className={sectionTitleClass}>
                 <BookOpenText size={18} className="text-primary" />
                 Data Penelitian
@@ -203,6 +216,32 @@ const FormPenelitianPage = () => {
                   </label>
                   <input {...register('institution')} placeholder="Nama sekolah atau universitas" className="input-field" />
                   {errors.institution && <p className="text-xs text-red-500">{errors.institution.message}</p>}
+                </div>
+
+                <div className={fieldWrap}>
+                  <label className="text-sm font-semibold text-neutral-text">
+                    Lokasi Kampus / Sekolah <span className="text-red-500">*</span>
+                  </label>
+                  <input type="hidden" {...register('campus_city')} />
+                  <RegencyCombobox
+                    value={campusCity}
+                    hasError={Boolean(errors.campus_city)}
+                    onChange={(value) => setValue('campus_city', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                  {errors.campus_city && <p className="text-xs text-red-500">{errors.campus_city.message}</p>}
+                </div>
+
+                <div className={fieldWrap}>
+                  <label className="text-sm font-semibold text-neutral-text">
+                    Jenjang Pendidikan <span className="text-red-500">*</span>
+                  </label>
+                  <input type="hidden" {...register('education_level')} />
+                  <EducationLevelSelect
+                    value={educationLevel}
+                    hasError={Boolean(errors.education_level)}
+                    onChange={(value) => setValue('education_level', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                  {errors.education_level && <p className="text-xs text-red-500">{errors.education_level.message}</p>}
                 </div>
 
                 <div className={fieldWrap}>
@@ -371,6 +410,19 @@ const FormPenelitianPage = () => {
                 </div>
 
                 <div className={fieldWrap}>
+                  <label className="text-sm font-semibold text-neutral-text">
+                    Tanggal Surat Permohonan <span className="text-red-500">*</span>
+                  </label>
+                  <input type="hidden" {...register('letter_date')} />
+                  <SingleDatePickerField
+                    value={letterDate}
+                    hasError={Boolean(errors.letter_date)}
+                    onChange={(value) => setValue('letter_date', value, { shouldDirty: true, shouldValidate: true })}
+                  />
+                  {errors.letter_date && <p className="text-xs text-red-500">{errors.letter_date.message}</p>}
+                </div>
+
+                <div className={`${fieldWrap} lg:col-span-2`}>
                   <label className="text-sm font-semibold text-neutral-text">
                     Unggah Berkas (.zip) <span className="text-red-500">*</span>
                   </label>
