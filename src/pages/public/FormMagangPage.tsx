@@ -68,7 +68,7 @@ type ViewTransitionDocument = Document & {
 }
 
 const fieldWrap = 'flex flex-col gap-1.5'
-const sectionClass = 'relative rounded-2xl border border-neutral-200/60 bg-white/80 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl sm:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-primary/20'
+const sectionClass = 'relative rounded-2xl border border-neutral-200/60 bg-white/80 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl sm:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-primary/20 hover:z-30 focus-within:z-30'
 const sectionTitleClass = 'mb-5 flex items-center gap-2.5 text-lg font-extrabold text-neutral-text'
 
 const FormMagangPage = () => {
@@ -238,7 +238,7 @@ const FormMagangPage = () => {
           </nav>
 
           <form onSubmit={handleSubmit(onSubmit, onError)} className="flex flex-col gap-5">
-            <section className={`${sectionClass} z-20`}>
+            <section className={sectionClass}>
               <h2 className={sectionTitleClass}>
                 <BriefcaseBusiness size={18} className="text-primary" />
                 Data Instansi
@@ -297,7 +297,7 @@ const FormMagangPage = () => {
               </div>
             </section>
 
-            <section className={`${sectionClass} relative z-10`}>
+            <section className={sectionClass}>
               <h2 className={sectionTitleClass}>
                 <CalendarDays size={18} className="text-primary" />
                 Periode Magang
