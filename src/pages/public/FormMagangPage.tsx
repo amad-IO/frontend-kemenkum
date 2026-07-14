@@ -32,7 +32,7 @@ const emailErrorMessage = 'Email tidak valid'
 const magangSchema = z
   .object({
     institution: z.string().min(3, 'Nama instansi tidak valid'),
-    study_program: z.string().min(2, 'Program studi tidak valid'),
+    study_program: z.string().optional().default(''),
     education_level: z.enum(EDUCATION_LEVELS, { message: 'Pilih jenjang pendidikan' }),
     campus_city: z.string().min(1, 'Pilih lokasi kampus'),
     period_id: z.string().min(1, 'Pilih periode terlebih dahulu'),
@@ -48,6 +48,17 @@ const magangSchema = z
       .instanceof(FileList)
       .refine((f) => f.length > 0, 'File wajib diupload')
       .refine((f) => f[0]?.name.toLowerCase().endsWith('.zip'), 'File harus format .zip'),
+  })
+  .superRefine((data, ctx) => {
+    // Program studi wajib hanya untuk jenjang perkuliahan
+    const isMahasiswa = !['SMA', 'SMK'].includes(data.education_level as string)
+    if (isMahasiswa && (!data.study_program || data.study_program.trim().length < 2)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Program studi minimal 2 karakter',
+        path: ['study_program'],
+      })
+    }
   })
 
 type MagangFormValues = z.infer<typeof magangSchema>
@@ -123,6 +134,14 @@ const FormMagangPage = () => {
       .catch(() => toast.error('Gagal memuat daftar periode'))
       .finally(() => setLoadingPeriode(false))
   }, [])
+
+  // Jika jenjang diganti ke SMA/SMK, kosongkan & disable field program studi
+  const isSiswa = ['SMA', 'SMK'].includes(educationLevel as string)
+  useEffect(() => {
+    if (isSiswa) {
+      setValue('study_program', '', { shouldValidate: false })
+    }
+  }, [isSiswa, setValue])
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -261,10 +280,19 @@ const FormMagangPage = () => {
 
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
-                    Program Studi <span className="text-red-500">*</span>
+                    Program Studi
+                    {!isSiswa && <span className="text-red-500"> *</span>}
                   </label>
-                  <input {...register('study_program')} placeholder="Program studi / jurusan" className="input-field" />
-                  {errors.study_program && <p className="text-xs text-red-500">{errors.study_program.message}</p>}
+                  <input
+                    {...register('study_program')}
+                    disabled={isSiswa}
+                    placeholder={isSiswa ? 'Tidak berlaku untuk SMA / SMK' : 'Program studi / jurusan'}
+                    className={`input-field transition-colors ${isSiswa ? 'cursor-not-allowed bg-neutral-100 text-neutral-400 placeholder:text-neutral-400' : ''}`}
+                  />
+                  {isSiswa && (
+                    <p className="text-xs text-neutral-400">Untuk SMA/SMK, nama sekolah digunakan pada surat</p>
+                  )}
+                  {errors.study_program && !isSiswa && <p className="text-xs text-red-500">{errors.study_program.message}</p>}
                 </div>
               </div>
             </section>
