@@ -32,7 +32,7 @@ const emailErrorMessage = 'Email tidak valid'
 const magangSchema = z
   .object({
     institution: z.string().min(3, 'Nama instansi tidak valid'),
-    study_program: z.string().optional().default(''),
+    study_program: z.string(),
     education_level: z.enum(EDUCATION_LEVELS, { message: 'Pilih jenjang pendidikan' }),
     campus_city: z.string().min(1, 'Pilih lokasi kampus'),
     period_id: z.string().min(1, 'Pilih periode terlebih dahulu'),
@@ -50,9 +50,9 @@ const magangSchema = z
       .refine((f) => f[0]?.name.toLowerCase().endsWith('.zip'), 'File harus format .zip'),
   })
   .superRefine((data, ctx) => {
-    // Program studi wajib hanya untuk jenjang perkuliahan
-    const isMahasiswa = !['SMA', 'SMK'].includes(data.education_level as string)
-    if (isMahasiswa && (!data.study_program || data.study_program.trim().length < 2)) {
+    // Program studi wajib hanya untuk jenjang perkuliahan.
+    const requiresStudyProgram = ['D3', 'D4', 'S1', 'S2', 'S3'].includes(data.education_level as string)
+    if (requiresStudyProgram && (!data.study_program || data.study_program.trim().length < 2)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         message: 'Program studi minimal 2 karakter',
@@ -115,6 +115,7 @@ const FormMagangPage = () => {
   } = useForm<MagangFormValues>({
     resolver: zodResolver(magangSchema),
     defaultValues: {
+      study_program: '',
       jenis_peserta: 'individu',
       anggota: [],
     },
@@ -135,13 +136,7 @@ const FormMagangPage = () => {
       .finally(() => setLoadingPeriode(false))
   }, [])
 
-  // Jika jenjang diganti ke SMA/SMK, kosongkan & disable field program studi
-  const isSiswa = ['SMA', 'SMK'].includes(educationLevel as string)
-  useEffect(() => {
-    if (isSiswa) {
-      setValue('study_program', '', { shouldValidate: false })
-    }
-  }, [isSiswa, setValue])
+  const requiresStudyProgram = ['D3', 'D4', 'S1', 'S2', 'S3'].includes(educationLevel as string)
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' })
@@ -172,7 +167,8 @@ const FormMagangPage = () => {
     formData.append('type', 'magang')
     formData.append('period_id', values.period_id)
     formData.append('institution', values.institution)
-    formData.append('study_program', values.study_program)
+    const studyProgram = values.study_program?.trim()
+    if (studyProgram) formData.append('study_program', studyProgram)
     formData.append('education_level', values.education_level)
     formData.append('campus_city', values.campus_city)
     formData.append('start_date', selectedPeriod.start_date)
@@ -281,18 +277,19 @@ const FormMagangPage = () => {
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
                     Program Studi
-                    {!isSiswa && <span className="text-red-500"> *</span>}
+                    {requiresStudyProgram
+                      ? <span className="text-red-500"> *</span>
+                      : <span className="font-normal text-neutral-400"> (Opsional)</span>}
                   </label>
                   <input
                     {...register('study_program')}
-                    disabled={isSiswa}
-                    placeholder={isSiswa ? 'Tidak berlaku untuk SMA / SMK' : 'Program studi / jurusan'}
-                    className={`input-field transition-colors ${isSiswa ? 'cursor-not-allowed bg-neutral-100 text-neutral-400 placeholder:text-neutral-400' : ''}`}
+                    placeholder="Program studi / jurusan"
+                    className="input-field"
                   />
-                  {isSiswa && (
-                    <p className="text-xs text-neutral-400">Untuk SMA/SMK, nama sekolah digunakan pada surat</p>
+                  {!requiresStudyProgram && (
+                    <p className="text-xs text-neutral-400">Boleh dikosongkan untuk SMA, SMK, atau umum/profesional/dosen</p>
                   )}
-                  {errors.study_program && !isSiswa && <p className="text-xs text-red-500">{errors.study_program.message}</p>}
+                  {errors.study_program && <p className="text-xs text-red-500">{errors.study_program.message}</p>}
                 </div>
               </div>
             </section>

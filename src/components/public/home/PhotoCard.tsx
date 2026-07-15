@@ -19,7 +19,8 @@ const PhotoCard = ({
         rounded-[28px]
         shadow-[0_8px_40px_rgba(0,0,0,0.10)]
         p-3
-        max-w-[340px]
+        max-w-[250px]
+        sm:max-w-[340px]
         w-full
         ${className}
       `}

@@ -10,6 +10,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html,
+  body {
+    overflow-x: clip;
+    width: 100%;
+    position: relative;
+  }
+
+  #root {
+    overflow-x: clip;
+    width: 100%;
+    position: relative;
+  }
+}
+
 /* Admin login uses stable CSS classes because Tailwind's file watcher can miss
    newly introduced utilities when the project is served from a mounted drive. */
 .admin-login-page {
