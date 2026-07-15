@@ -470,7 +470,7 @@ const CheckStatusPage = () => {
                                     <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-primary/70">Panduan Status</p>
                                     <h3 className="text-lg font-bold text-neutral-text">Alur Status Pendaftaran</h3>
                                     <p className="mt-1 text-sm text-neutral-subtle">
-                                        Masukkan email dan NIM ketua kelompok, lalu tekan <strong>Cari Status</strong> untuk melihat posisi pendaftaran Anda.
+                                        Masukkan email dan NIM/ Nomor Identitas Ketua Kelompok, lalu tekan <strong>Cari Status</strong> untuk melihat posisi pendaftaran Anda.
                                     </p>
                                 </div>
                             )}
@@ -579,7 +579,7 @@ const CheckStatusPage = () => {
                             )}
                             <h2 className="mb-2 text-xl font-bold text-neutral-text">Lacak Permohonan</h2>
                             <p className="mb-7 text-sm text-neutral-subtle">
-                                Masukkan <strong>Email</strong> dan <strong>NIM</strong> Ketua Kelompok untuk melihat status pendaftaran Anda saat ini.
+                                Masukkan <strong>Email</strong> dan <strong>NIM/Nomor Identitas</strong> Ketua Kelompok untuk melihat status pendaftaran Anda saat ini.
                             </p>
 
                             <form onSubmit={handleSearch} className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
@@ -596,7 +596,7 @@ const CheckStatusPage = () => {
                                 <div className="relative flex-1">
                                     <input
                                         type="text"
-                                        placeholder="NIM Ketua Kelompok"
+                                        placeholder="NIM/Nomor Identitas"
                                         value={nimValue}
                                         onChange={(e) => setNimValue(e.target.value)}
                                         className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
