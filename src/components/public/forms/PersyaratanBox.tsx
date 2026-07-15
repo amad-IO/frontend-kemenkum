@@ -1,4 +1,4 @@
-import type { KategoriPersyaratan } from '../../../../services/daftarService'
+import type { KategoriPersyaratan, PersyaratanItem } from '../../../services/daftarService'
 import { CheckCircle2, FileText } from 'lucide-react'
 
 interface Props {
@@ -24,7 +24,7 @@ const PersyaratanBox = ({ kategoriList, jenis }: Props) => {
           </div>
 
           <ul className="flex flex-col gap-2">
-            {kategori.items.map((item, i) => (
+            {kategori.items.map((item: PersyaratanItem, i: number) => (
               <li key={i} className="flex items-start gap-2.5">
                 <CheckCircle2
                   size={15}
