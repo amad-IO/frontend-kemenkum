@@ -348,10 +348,10 @@ const FormPenelitianPage = () => {
                 </div>
 
                 <div className={fieldWrap}>
-                  <label className="text-sm font-semibold text-neutral-text">
+                  <label className="text-xs font-semibold text-neutral-text">
                     {jenisPeserta === 'kelompok' ? 'No. Identitas Ketua' : 'No. Identitas'} <span className="text-red-500">*</span>
                   </label>
-                  <input {...register('nim_ketua')} placeholder="Isi dengan nomer NIM, NISN, NIP, NIK, dll" className="input-field" />
+                  <input {...register('nim_ketua')} placeholder="NIM / NISN / NIP / NIK" className="input-field placeholder:text-sm" />
                   {errors.nim_ketua && <p className="text-xs text-red-500">{errors.nim_ketua.message}</p>}
                 </div>
 
