@@ -237,7 +237,7 @@ const DetailPendaftarModal = ({
         setIsGeneratingTemplate(true)
         try {
             const res = await api.get(
-                `/admin/submissions/${submission.id}/generate-template`,
+                `/admin/submissions/${submission.id}/generate-template?_t=${Date.now()}`,
                 { responseType: 'blob' }
             )
             // Ambil nama file dari header Content-Disposition jika ada

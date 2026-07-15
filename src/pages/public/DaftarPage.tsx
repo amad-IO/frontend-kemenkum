@@ -27,6 +27,11 @@ const programTabs: {
   },
 ]
 
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
+}
+
 const DaftarPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('magang')
   const [checked, setChecked] = useState(false)
@@ -47,17 +52,28 @@ const DaftarPage = () => {
       badge="Requirement & Registration"
     >
       <main className="bg-neutral-card">
-        <div className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+        <motion.div 
+          className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: { staggerChildren: 0.1 }
+            }
+          }}
+        >
 
           {/* ── Breadcrumb ── */}
-          <nav className="mb-6 flex items-center gap-1.5 text-xs text-neutral-muted" aria-label="Breadcrumb">
+          <motion.nav variants={itemVariants} className="mb-6 flex items-center gap-1.5 text-xs text-neutral-muted" aria-label="Breadcrumb">
             <Link to="/" className="hover:text-primary transition-colors">Home</Link>
             <ChevronRight size={13} />
             <span className="font-semibold text-primary">Registration</span>
-          </nav>
+          </motion.nav>
 
           {/* ── Tab Toggle ── */}
-          <div className="relative mb-8 grid grid-cols-2 rounded-full border border-neutral-border bg-neutral-card p-1.5 shadow-card">
+          <motion.div variants={itemVariants} className="relative mb-8 grid grid-cols-2 rounded-full border border-neutral-border bg-neutral-card p-1.5 shadow-card">
             {programTabs.map(({ id: tab, label }) => (
               <motion.button
                 key={tab}
@@ -78,18 +94,21 @@ const DaftarPage = () => {
                 <span className="relative z-10 block truncate">{label}</span>
               </motion.button>
             ))}
-          </div>
+          </motion.div>
 
           {/* ── Judul Persyaratan ── */}
-          <h2 className="mb-4 text-xl font-bold text-neutral-text capitalize">
+          <motion.h2 variants={itemVariants} className="mb-4 text-xl font-bold text-neutral-text capitalize">
             Persyaratan {activeTab}
-          </h2>
+          </motion.h2>
 
           {/* ── Kotak Persyaratan ── */}
-          <PersyaratanBox kategoriList={persyaratan} jenis={activeTab} />
+          <motion.div variants={itemVariants}>
+            <PersyaratanBox kategoriList={persyaratan} jenis={activeTab} />
+          </motion.div>
 
           {/* ── Checklist Persetujuan ── */}
-          <label
+          <motion.label
+            variants={itemVariants}
             htmlFor="checklist-syarat"
             className={`mt-6 flex cursor-pointer items-start gap-3 rounded-2xl border-2 p-4 transition-all duration-200 ${
               checked
@@ -114,10 +133,10 @@ const DaftarPage = () => {
                 Centang untuk mengaktifkan tombol pendaftaran
               </p>
             </div>
-          </label>
+          </motion.label>
 
           {/* ── CTA ke Form ── */}
-          <div className="mt-5">
+          <motion.div variants={itemVariants} className="mt-5">
             {checked ? (
               <Link
                 to={activeTab === 'magang' ? '/daftar/magang/1' : '/daftar/penelitian/1'}
@@ -136,9 +155,9 @@ const DaftarPage = () => {
                 Centang persetujuan untuk melanjutkan
               </button>
             )}
-          </div>
+          </motion.div>
 
-        </div>
+        </motion.div>
       </main>
 
       <Footer />
