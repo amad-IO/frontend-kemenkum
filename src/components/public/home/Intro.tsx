@@ -28,13 +28,11 @@ const Intro = () => {
   })
 
   // Rotate from 12deg (entering at bottom) -> 0deg (fully visible) -> 12deg (leaving at top)
-  // By using [0, 0.35, 0.85, 1], the card animates slowly while entering from the bottom,
-  // stays straight while in the middle and top of the screen, and tilts when leaving.
   const rotate = useTransform(scrollYProgress, [0, 0.35, 0.85, 1], [12, 0, 0, 12])
 
   return (
     <section
-      className="mx-auto mb-20 mt-10 grid max-w-[1210px] items-center gap-10 px-6 text-center sm:mt-14 lg:mb-32 lg:mt-16 lg:grid-cols-[minmax(240px,420px)_minmax(0,1fr)] lg:gap-[clamp(48px,8vw,132px)] lg:px-0 lg:text-left"
+      className="mx-auto mb-20 mt-10 grid max-w-[1210px] items-center gap-12 px-6 sm:mt-14 lg:mb-32 lg:mt-16 lg:grid-cols-[minmax(240px,420px)_minmax(0,1fr)] lg:gap-[clamp(48px,8vw,132px)] lg:px-0"
       id="registration"
     >
       <div className="flex justify-center lg:justify-start">
@@ -59,34 +57,58 @@ const Intro = () => {
         </div>
       </div>
 
-      <div className="flex flex-col gap-5">
-        <span className="inline-flex w-fit mx-auto lg:mx-0 items-center gap-2 rounded-full bg-[#6E473B]/10 px-4 py-1.5 text-[0.78rem] font-semibold uppercase tracking-[0.12em] text-primary">
-          Program Resmi Kementerian Hukum
-        </span>
+      <div className="flex flex-col gap-6 text-left">
+        <motion.div
+          initial={{ opacity: 0, x: 40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: 'easeOut' }}
+          viewport={{ once: true, margin: '-50px' }}
+          className="flex justify-start"
+        >
+          <span className="inline-flex w-fit items-center gap-2 rounded-full bg-[#6E473B]/10 px-3 py-1.5 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-primary whitespace-nowrap sm:px-4 sm:text-[0.78rem] sm:tracking-[0.12em]">
+            Program Resmi Kementerian Hukum
+          </span>
+        </motion.div>
 
-        <h2 className="mx-auto max-w-[640px] text-[clamp(1.7rem,2.8vw,3.1rem)] font-extrabold leading-[1.08] tracking-[-0.02em] text-[#211D1B] lg:mx-0">
+        <motion.h2
+          initial={{ opacity: 0, x: -40 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.7, ease: 'easeOut', delay: 0.1 }}
+          viewport={{ once: true, margin: '-50px' }}
+          className="max-w-[680px] text-[clamp(1.4rem,4.5vw,3.2rem)] font-extrabold leading-[1.12] tracking-[-0.02em] text-[#211D1B]"
+        >
           {renderHoverWords('Eksplorasi ruang belajar')}{' '}
           {renderHoverWords('profesional,', 'text-primary')}{' '}
           {renderHoverWords('kembangkan inovasi bersama para ahli, dan bangun')}{' '}
           {renderHoverWords('fondasi karir masa depan', 'italic font-medium text-[#6E473B]/70')}{' '}
           {renderHoverWords('Anda di sini.')}
-        </h2>
+        </motion.h2>
 
-        <div className="flex flex-wrap justify-center gap-2 lg:justify-start">
-          {['Kerja Praktik', 'Penelitian Akademik', 'Pengembangan Karir'].map((tag) => (
-            <span
+        <div className="mt-2 flex flex-wrap justify-center gap-2.5 lg:justify-start">
+          {['Kerja Praktik', 'Penelitian Akademik', 'Pengembangan Karir'].map((tag, index) => (
+            <motion.span
               key={tag}
-              className="rounded-full border border-primary/20 bg-primary/5 px-4 py-1 text-[0.82rem] font-semibold tracking-wide text-primary"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: 'easeOut', delay: 0.2 + index * 0.15 }}
+              viewport={{ once: true, margin: '-50px' }}
+              className="rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-[0.82rem] font-semibold tracking-wide text-primary transition-colors hover:bg-primary/10"
             >
               {tag}
-            </span>
+            </motion.span>
           ))}
         </div>
 
-        <div className="mt-2">
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.65 }}
+          viewport={{ once: true, margin: '-50px' }}
+          className="mt-4 flex justify-center lg:justify-start"
+        >
           <Link
             to="/daftar"
-            className="group inline-flex items-center justify-center gap-4 rounded-2xl bg-primary px-10 py-4 text-[1.15rem] font-bold tracking-wide text-white shadow-[0_8px_32px_rgba(110,71,59,0.30)] transition-all duration-300 hover:-translate-y-1 hover:bg-primary-dark hover:shadow-[0_12px_40px_rgba(110,71,59,0.40)] sm:text-[1.25rem]"
+            className="group inline-flex items-center justify-center gap-4 rounded-2xl bg-primary px-9 py-4 text-[1.1rem] font-bold tracking-wide text-white shadow-[0_8px_32px_rgba(110,71,59,0.30)] transition-all duration-300 hover:-translate-y-1 hover:bg-primary-dark hover:shadow-[0_12px_40px_rgba(110,71,59,0.40)] sm:text-[1.15rem]"
           >
             <span>Daftar Sekarang</span>
             <ArrowRight
@@ -95,7 +117,7 @@ const Intro = () => {
               className="transition-transform duration-300 group-hover:translate-x-1"
             />
           </Link>
-        </div>
+        </motion.div>
       </div>
     </section>
   )

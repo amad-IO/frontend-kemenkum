@@ -77,7 +77,7 @@ const Navbar = () => {
       {/* Navigation Links (Floating on Mobile) */}
       <div
         ref={menuRef}
-        className={`absolute right-0 top-full z-50 mt-3 flex w-[220px] flex-col gap-3 rounded-[24px] bg-neutral-card p-5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out origin-top-right lg:static lg:mt-0 lg:w-auto lg:flex-row lg:items-center lg:justify-end lg:gap-3 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none lg:scale-100 lg:opacity-100 lg:visible lg:mr-6 xl:mr-12 ${
+        className={`absolute right-0 top-full z-50 mt-3 flex w-[220px] flex-col gap-3 rounded-[24px] bg-neutral-card p-5 shadow-[0_12px_40px_rgba(0,0,0,0.12)] transition-all duration-300 ease-out origin-top-right lg:static lg:mt-0 lg:w-auto lg:flex-row lg:items-center lg:justify-end lg:gap-3 lg:rounded-none lg:bg-transparent lg:p-0 lg:shadow-none lg:scale-100 lg:opacity-100 lg:visible lg:ml-6 ${
           isOpen ? 'scale-100 opacity-100 visible' : 'scale-95 opacity-0 invisible'
         }`}
       >
