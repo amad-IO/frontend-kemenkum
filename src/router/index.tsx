@@ -2,6 +2,8 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import type { ReactNode } from 'react'
 import useAuthStore from '../store/authStore'
+import { useIsMobileDevice } from '../hooks/useIsMobileDevice'
+import MobileBlockPage from '../pages/admin/MobileBlockPage'
 
 // Public Pages — lazy loaded (tidak di-download sampai halaman dikunjungi)
 const LandingPage        = lazy(() => import('../pages/public/LandingPage'))
@@ -30,7 +32,7 @@ const withSuspense = (element: ReactNode) => (
   <Suspense fallback={<PageLoader />}>{element}</Suspense>
 )
 
-// Guard route admin
+// ── Guard 1: Hanya boleh login admin ─────────────────────────────────────────
 type ProtectedRouteProps = {
   children: ReactNode
 }
@@ -38,6 +40,14 @@ type ProtectedRouteProps = {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { isAuthenticated } = useAuthStore()
   return isAuthenticated ? children : <Navigate to="/admin/login" replace />
+}
+
+// ── Guard 2: Blokir smartphone dari SEMUA halaman admin ──────────────────────
+// Tablet (iPad, Android tablet ≥ 768px) dan desktop tetap diizinkan.
+// Jika diakses dari smartphone → tampilkan MobileBlockPage, tidak bisa lanjut.
+const AdminDeviceGuard = ({ children }: ProtectedRouteProps) => {
+  const isMobile = useIsMobileDevice()
+  return isMobile ? <MobileBlockPage /> : <>{children}</>
 }
 
 const router = createBrowserRouter([
@@ -64,23 +74,31 @@ const router = createBrowserRouter([
   },
 
   // ─── Admin Routes ────────────────────────────────
+  // Semua route admin dibungkus AdminDeviceGuard.
+  // Smartphone → MobileBlockPage. Tablet/Desktop → lanjut normal.
   {
     path: '/admin/login',
-    element: withSuspense(<Login />),
+    element: (
+      <AdminDeviceGuard>
+        {withSuspense(<Login />)}
+      </AdminDeviceGuard>
+    ),
   },
   {
     path: '/admin',
     element: (
-      <ProtectedRoute>
-        <AdminLayout />
-      </ProtectedRoute>
+      <AdminDeviceGuard>
+        <ProtectedRoute>
+          <AdminLayout />
+        </ProtectedRoute>
+      </AdminDeviceGuard>
     ),
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
       { path: 'dashboard', element: withSuspense(<Dashboard />) },
-      { path: 'program', element: withSuspense(<KelolaProgramPage />) },
+      { path: 'program',   element: withSuspense(<KelolaProgramPage />) },
       { path: 'pendaftar', element: withSuspense(<ListPendaftarPage />) },
-      { path: 'settings', element: withSuspense(<SettingsPage />) },
+      { path: 'settings',  element: withSuspense(<SettingsPage />) },
     ],
   },
 ])

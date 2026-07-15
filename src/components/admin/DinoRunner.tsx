@@ -31,7 +31,7 @@ const DinoRunner = () => {
     <div className="login-dino-runner relative z-10 mt-auto">
       <iframe
         ref={frameRef}
-        src="/dino-runner/index.html?v=6"
+        src="/dino-runner/index.html?v=7"
         className="login-dino-frame"
         title="Permainan dinosaurus. Tekan spasi atau panah atas untuk melompat."
         tabIndex={-1}
