@@ -68,6 +68,7 @@ const CERTIFICATE_FONTS = [
     { value: 'times', label: 'Times New Roman', fontFamily: '"Times New Roman", Times, serif' },
     { value: 'georgia', label: 'Georgia', fontFamily: 'Georgia, serif' },
     { value: 'montserrat', label: 'Montserrat', fontFamily: 'Montserrat, Arial, sans-serif' },
+    { value: 'poppins', label: 'Poppins', fontFamily: 'Poppins, sans-serif' },
     { value: 'playfair', label: 'Playfair Display', fontFamily: '"Playfair Display", Georgia, serif' },
     { value: 'dancing-script', label: 'Dancing Script', fontFamily: '"Dancing Script", cursive' },
     { value: 'great-vibes', label: 'Great Vibes', fontFamily: '"Great Vibes", cursive' },
@@ -93,6 +94,10 @@ const FONT_VARIANTS: Record<string, Array<{ weight: number; style: 'normal' | 'i
             { weight, style: 'italic' as const, label: `${name} Italic` },
         ]
     }),
+    poppins: [400, 700].flatMap(weight => [
+        { weight, style: 'normal' as const, label: weight === 400 ? 'Regular' : 'Bold' },
+        { weight, style: 'italic' as const, label: weight === 400 ? 'Italic' : 'Bold Italic' },
+    ]),
     playfair: [400, 500, 600, 700, 800].flatMap(weight => {
         const name = ({ 400: 'Regular', 500: 'Medium', 600: 'SemiBold', 700: 'Bold', 800: 'ExtraBold' } as Record<number, string>)[weight]
         return [
@@ -113,6 +118,7 @@ const FONT_CSS: Record<string, string> = {
     times: '"Times New Roman", Times, serif',
     georgia: 'Georgia, serif',
     montserrat: 'Montserrat, Arial, sans-serif',
+    poppins: 'Poppins, sans-serif',
     playfair: '"Playfair Display", Georgia, serif',
     'dancing-script': '"Dancing Script", cursive',
     'great-vibes': '"Great Vibes", cursive',
