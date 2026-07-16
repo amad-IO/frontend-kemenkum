@@ -4,6 +4,7 @@ import { Check, ChevronDown } from 'lucide-react'
 interface Option {
   value: string
   label: string
+  fontFamily?: string
 }
 
 interface CustomSelectProps {
@@ -39,7 +40,7 @@ const CustomSelect = ({ options, value, onChange, icon, fullWidth = false }: Cus
       >
         <div className="flex items-center gap-2">
           {icon}
-          <span>{selectedOption?.label}</span>
+          <span style={{ fontFamily: selectedOption?.fontFamily }}>{selectedOption?.label}</span>
         </div>
         <ChevronDown size={14} className={`text-neutral-muted transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
@@ -65,7 +66,7 @@ const CustomSelect = ({ options, value, onChange, icon, fullWidth = false }: Cus
                   : 'text-neutral-text hover:bg-primary/10 hover:text-primary'
               }`}
             >
-              {option.label}
+              <span style={{ fontFamily: option.fontFamily }}>{option.label}</span>
               {value === option.value && <Check size={16} className="ml-3 shrink-0" />}
             </button>
           ))}

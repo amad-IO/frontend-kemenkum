@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import type { Submission } from '../../pages/admin/ListPendaftar'
 import DateRangePickerField from '../public/forms/DateRangePickerField'
 import api from '../../services/api'
+import CertificateModal from './CertificateModal'
 import {
     publishSubmissionChatSyncEvent,
     subscribeSubmissionChatSyncEvents,
@@ -82,6 +83,7 @@ const DetailPendaftarModal = ({
     const [latestApplicantMessageId, setLatestApplicantMessageId] = useState(0)
     const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false)
     const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false)
+    const [showCertificateModal, setShowCertificateModal] = useState(false)
     const permitInputRef = useRef<HTMLInputElement>(null)
     const messageListRef = useRef<HTMLDivElement>(null)
     const chatPanelRef = useRef<HTMLElement>(null)
@@ -563,6 +565,7 @@ const DetailPendaftarModal = ({
     }
 
     return (
+        <>
         <div
             className={
                 chatOnly
@@ -586,14 +589,14 @@ const DetailPendaftarModal = ({
                             {submission.status === 'approved' && (
                                 <button
                                     onClick={() => {
-                                        // TODO: buka modal generate sertifikat
-                                        setIsGeneratingCertificate(true)
+                                        setShowCertificateModal(true)
+                                        setIsGeneratingCertificate(false)
                                     }}
                                     disabled={isGeneratingCertificate}
                                     className="flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-amber-600 active:scale-95 disabled:opacity-60"
                                 >
                                     <Award size={15} />
-                                    {isGeneratingCertificate ? 'Memproses...' : 'Generate Sertifikat'}
+                                    Generate Sertifikat
                                 </button>
                             )}
                             <button
@@ -983,6 +986,18 @@ const DetailPendaftarModal = ({
                 </div>
             )}
         </div>
+
+        {/* ── Certificate Modal ── */}
+        {showCertificateModal && (
+            <CertificateModal
+                submission={submission}
+                onClose={() => setShowCertificateModal(false)}
+                onSuccess={(_updatedSubmission) => {
+                    setShowCertificateModal(false)
+                }}
+            />
+        )}
+        </>
     )
 }
 
