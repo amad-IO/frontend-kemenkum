@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Briefcase,
   Settings,
+  Award,
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import useAuthStore from '../../store/authStore'
@@ -16,8 +17,8 @@ import logo1 from '../../assets/logo 1.svg'
 const navItems = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'List Pendaftar', to: '/admin/pendaftar', icon: Users },
-  { label: 'Kelola Program', to: '/admin/program', icon: Briefcase },
-  { label: 'Pengaturan', to: '/admin/settings', icon: Settings },
+  { label: 'Sertifikat', to: '/admin/sertifikat', icon: Award },
+  { label: 'Pengaturan', to: '/admin/program', icon: Settings },
 ]
 
 interface SidebarProps {

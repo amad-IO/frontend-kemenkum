@@ -75,8 +75,8 @@ export const getPersyaratanMagang = (): KategoriPersyaratan[] => [
     {
         kategori: 'Data yang harus diisi',
         items: [
-            { teks: 'Asal Instansi Pendidikan (Sekolah / Universitas)' },
-            { teks: 'Kota / Kabupaten Asal Kampus / Sekolah' },
+            { teks: 'Asal Instansi Pendidikan (Instansi/Universitas)' },
+            { teks: 'Kota / Kabupaten Asal Instansi/Universitas' },
             { teks: 'Jenjang Pendidikan (SMA, SMK, D3, D4, S1)' },
             { teks: 'Program Studi / Jurusan' },
             { teks: 'Nomor Surat Permohonan dari Kampus' },
@@ -107,8 +107,8 @@ export const getPersyaratanPenelitian = (): KategoriPersyaratan[] => [
     {
         kategori: 'Data yang harus diisi',
         items: [
-            { teks: 'Asal Instansi Pendidikan (Sekolah / Universitas)' },
-            { teks: 'Kota / Kabupaten Asal Kampus / Sekolah' },
+            { teks: 'Asal Instansi Pendidikan (Instansi/Universitas)' },
+            { teks: 'Kota / Kabupaten Asal Instansi/Universitas' },
             { teks: 'Jenjang Pendidikan (SMA, SMK, D3, D4, S1)' },
             { teks: 'Program Studi / Jurusan' },
             { teks: 'Judul Penelitian yang diajukan' },

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronRight, ClipboardEdit, FileSearch, CheckSquare, MessageCircle, Megaphone, Check, Download, Send, X, RefreshCw } from 'lucide-react'
+import { motion } from 'framer-motion'
 import Footer from '../../components/public/layout/Footer'
 import HeroLayout from '../../components/public/layout/HeroLayout'
 import checkStatusImage from '../../assets/05.webp'
@@ -271,6 +272,29 @@ const CheckStatusPage = () => {
         }
     }, [chatOpen, submissionId])  // hanya restart jika chat dibuka/ditutup atau submissionId berubah
 
+    // ─── Polling status otomatis setiap 10 detik ─────────────────────────────
+    const pollStatusRef = useRef(runStatusSearch)
+    useEffect(() => { pollStatusRef.current = runStatusSearch })
+
+    useEffect(() => {
+        if (!hasResult || !submissionId) return
+
+        const interval = window.setInterval(() => {
+            // Cek status otomatis di background tanpa reset UI
+            pollStatusRef.current({ silent: true, keepResult: true })
+        }, 10000)
+
+        const handleVisibility = () => {
+            if (!document.hidden) pollStatusRef.current({ silent: true, keepResult: true })
+        }
+        document.addEventListener('visibilitychange', handleVisibility)
+
+        return () => {
+            window.clearInterval(interval)
+            document.removeEventListener('visibilitychange', handleVisibility)
+        }
+    }, [hasResult, submissionId])
+
     useEffect(() => {
         if (!submissionId) return
 
@@ -434,9 +458,18 @@ const CheckStatusPage = () => {
 
                     {/* Status Timeline */}
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                        <div className="overflow-hidden rounded-[24px] border border-secondary bg-white shadow-[0_18px_45px_rgba(110,71,59,0.12)]">
+                        <motion.div 
+                            key={timelineAnimationKey}
+                            initial="hidden"
+                            animate="visible"
+                            variants={{
+                                hidden: { opacity: 0, y: 20 },
+                                visible: { opacity: 1, y: 0, transition: { duration: 0.5, staggerChildren: 0.15 } }
+                            }}
+                            className="overflow-hidden rounded-[24px] border border-secondary bg-white shadow-[0_18px_45px_rgba(110,71,59,0.12)]"
+                        >
                             {hasResult ? (
-                                <div className="border-b border-secondary bg-gradient-to-br from-neutral-card via-white to-secondary-light px-6 py-6 sm:px-8">
+                                <motion.div variants={{ hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } }} className="border-b border-secondary bg-gradient-to-br from-neutral-card via-white to-secondary-light px-6 py-6 sm:px-8">
                                     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                                         <div>
                                             <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-primary/70">Hasil Pencarian</p>
@@ -464,25 +497,26 @@ const CheckStatusPage = () => {
                                             </button>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             ) : (
-                                <div className="border-b border-secondary bg-gradient-to-br from-neutral-card via-white to-secondary-light px-6 py-6 sm:px-8">
+                                <motion.div variants={{ hidden: { opacity: 0, y: -10 }, visible: { opacity: 1, y: 0 } }} className="border-b border-secondary bg-gradient-to-br from-neutral-card via-white to-secondary-light px-6 py-6 sm:px-8">
                                     <p className="mb-2 text-xs font-extrabold uppercase tracking-[0.14em] text-primary/70">Panduan Status</p>
                                     <h3 className="text-lg font-bold text-neutral-text">Alur Status Pendaftaran</h3>
                                     <p className="mt-1 text-sm text-neutral-subtle">
                                         Masukkan email dan NIM/ Nomor Identitas Ketua Kelompok, lalu tekan <strong>Cari Status</strong> untuk melihat posisi pendaftaran Anda.
                                     </p>
-                                </div>
+                                </motion.div>
                             )}
 
                             <div className="relative px-6 py-7 sm:px-8">
-                                <div
+                                <motion.div
+                                    variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.8 } } }}
                                     className="absolute left-[calc(2.75rem-1px)] top-12 w-0.5 bg-secondary sm:left-[calc(3.25rem-1px)]"
                                     style={{ height: timelineLineHeight }}
                                 />
                                 {hasResult && (
-                                    <div
-                                        className="status-line-progress absolute left-[calc(2.75rem-1px)] top-12 w-0.5 bg-primary sm:left-[calc(3.25rem-1px)]"
+                                    <motion.div
+                                        className="status-line-progress absolute left-[calc(2.75rem-1px)] top-12 w-0.5 bg-primary sm:left-[calc(3.25rem-1px)] transition-[height] duration-700 ease-in-out"
                                         style={{ height: progressHeight }}
                                     />
                                 )}
@@ -496,17 +530,19 @@ const CheckStatusPage = () => {
                                         const Icon = step.icon
 
                                         return (
-                                            <div
-                                                key={`${timelineAnimationKey}-${step.id}`}
+                                            <motion.div
+                                                key={step.id}
+                                                variants={{
+                                                    hidden: { opacity: 0, x: -20 },
+                                                    visible: { opacity: 1, x: 0, transition: { duration: 0.4, ease: 'easeOut' } }
+                                                }}
                                                 ref={(element) => {
                                                     timelineStepRefs.current[step.id] = element
                                                 }}
-                                                style={hasResult ? { animationDelay: `${step.id * 110}ms` } : undefined}
-                                                className={`relative z-10 flex gap-4 rounded-2xl transition-all duration-300 sm:gap-6 ${hasResult ? 'status-step-animate' : ''
-                                                    }`}
+                                                className="relative z-10 flex gap-4 rounded-2xl transition-colors duration-300 sm:gap-6"
                                             >
                                                 <div className="relative h-10 w-10 shrink-0">
-                                                    <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-300 ${isActive ? 'border-primary bg-primary text-white shadow-lg shadow-primary/25 ring-4 ring-primary/10 scale-105' :
+                                                    <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-700 ease-in-out ${isActive ? 'border-primary bg-primary text-white shadow-lg shadow-primary/25 ring-4 ring-primary/10 scale-105' :
                                                             isCompleted ? 'border-primary bg-primary text-white shadow-md shadow-primary/20' :
                                                                 'border-neutral-border bg-white text-neutral-muted'
                                                         }`}>
@@ -542,9 +578,9 @@ const CheckStatusPage = () => {
                                                         </button>
                                                     )}
 
-                                                    {isActive && (
-                                                        <>
-                                                            <div className="mt-3 rounded-2xl border border-secondary bg-white p-4 text-xs shadow-sm sm:text-sm text-neutral-text">
+                                                    <div className={`grid transition-all duration-700 ease-in-out ${isActive ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
+                                                        <div className="overflow-hidden">
+                                                            <div className="rounded-2xl border border-secondary bg-white p-4 text-xs shadow-sm sm:text-sm text-neutral-text">
                                                                 <span className="font-semibold text-primary">Informasi:</span> {statusMessage}
                                                             </div>
 
@@ -559,15 +595,15 @@ const CheckStatusPage = () => {
                                                                     {downloadingPermit ? 'Mengunduh...' : 'Unduh Surat Izin'}
                                                                 </button>
                                                             )}
-                                                        </>
-                                                    )}
+                                                        </div>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         )
                                     })}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     </div>
 
                     {!hasResult && (

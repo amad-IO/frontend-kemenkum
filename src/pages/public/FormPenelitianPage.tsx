@@ -227,15 +227,15 @@ const FormPenelitianPage = () => {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
-                    Sekolah / Universitas <span className="text-red-500">*</span>
+                    Instansi/Universitas <span className="text-red-500">*</span>
                   </label>
-                  <input {...register('institution')} placeholder="Nama sekolah atau universitas" className="input-field" />
+                  <input {...register('institution')} placeholder="Nama instansi atau universitas" className="input-field" />
                   {errors.institution && <p className="text-xs text-red-500">{errors.institution.message}</p>}
                 </div>
 
                 <div className={fieldWrap}>
                   <label className="text-sm font-semibold text-neutral-text">
-                    Lokasi Kampus / Sekolah <span className="text-red-500">*</span>
+                    Lokasi Instansi/Universitas <span className="text-red-500">*</span>
                   </label>
                   <input type="hidden" {...register('campus_city')} />
                   <RegencyCombobox

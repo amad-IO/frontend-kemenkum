@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2, Upload, MessageCircle, Send, Minus } from 'lucide-react'
+import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2, Upload, MessageCircle, Send, Minus, Award } from 'lucide-react'
 import { toast } from 'react-toastify'
 import type { Submission } from '../../pages/admin/ListPendaftar'
 import DateRangePickerField from '../public/forms/DateRangePickerField'
@@ -81,6 +81,7 @@ const DetailPendaftarModal = ({
     const [clientUnreadCount, setClientUnreadCount] = useState(0)
     const [latestApplicantMessageId, setLatestApplicantMessageId] = useState(0)
     const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false)
+    const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false)
     const permitInputRef = useRef<HTMLInputElement>(null)
     const messageListRef = useRef<HTMLDivElement>(null)
     const chatPanelRef = useRef<HTMLElement>(null)
@@ -580,12 +581,28 @@ const DetailPendaftarModal = ({
                             <h2 className="text-lg font-extrabold text-neutral-text">Detail Pendaftar</h2>
                             <StatusBadge />
                         </div>
-                        <button
-                            onClick={onClose}
-                            className="rounded-full p-2 text-neutral-muted transition-colors hover:bg-neutral-bg hover:text-neutral-text"
-                        >
-                            <X size={20} />
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {/* Tombol Generate Sertifikat — hanya muncul jika status approved */}
+                            {submission.status === 'approved' && (
+                                <button
+                                    onClick={() => {
+                                        // TODO: buka modal generate sertifikat
+                                        setIsGeneratingCertificate(true)
+                                    }}
+                                    disabled={isGeneratingCertificate}
+                                    className="flex items-center gap-2 rounded-xl bg-amber-500 px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-amber-600 active:scale-95 disabled:opacity-60"
+                                >
+                                    <Award size={15} />
+                                    {isGeneratingCertificate ? 'Memproses...' : 'Generate Sertifikat'}
+                                </button>
+                            )}
+                            <button
+                                onClick={onClose}
+                                className="rounded-full p-2 text-neutral-muted transition-colors hover:bg-neutral-bg hover:text-neutral-text"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-6">

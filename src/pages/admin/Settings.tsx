@@ -16,7 +16,7 @@ const Settings = () => {
 
   const fetchSettings = async () => {
     try {
-      const data = await getSettings()
+        const data = await getSettings()
       setSettings(data)
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Gagal memuat pengaturan')
@@ -52,72 +52,71 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 size={32} className="animate-spin text-primary" />
+      <div className="mb-8 max-w-2xl animate-pulse">
+        <div className="mb-5">
+          <div className="h-6 w-64 rounded-md bg-neutral-bg" />
+          <div className="mt-2 h-4 w-full max-w-md rounded-md bg-neutral-bg" />
+        </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-2">
+            <div className="h-5 w-32 rounded-md bg-neutral-bg" />
+            <div className="h-[42px] w-full rounded-xl bg-neutral-bg" />
+          </div>
+          <div className="h-[42px] w-28 shrink-0 rounded-xl bg-neutral-bg" />
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <SettingsIcon size={24} />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-text">Pengaturan Sistem</h1>
-          <p className="text-sm text-neutral-muted">Kelola konfigurasi surat dan aplikasi</p>
-        </div>
+    <div className="mb-8 max-w-2xl">
+      <div className="mb-5">
+        <h2 className="text-lg font-bold text-neutral-text flex items-center gap-2">
+          <SettingsIcon size={20} className="text-primary" />
+          Pengaturan Template Surat
+        </h2>
+        <p className="mt-1.5 text-sm text-neutral-muted leading-relaxed">
+          Data ini akan digunakan untuk mengganti nama pejabat pada template surat. Pastikan data yang dimasukkan sudah benar.
+        </p>
       </div>
 
-      <div className="rounded-2xl border border-neutral-border bg-white shadow-sm overflow-hidden">
-        <div className="border-b border-neutral-border bg-neutral-bg/50 px-6 py-4">
-          <h2 className="font-semibold text-neutral-text">Pengaturan Template Surat</h2>
-          <p className="mt-1 text-xs text-neutral-muted">
-            Data ini akan digunakan untuk mengganti placeholder pejabat pada saat generate dokumen surat (contoh: surat izin magang/penelitian).
-          </p>
+      <form onSubmit={handleSubmit}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1 space-y-2">
+            <label className="text-sm font-bold text-neutral-text flex items-center gap-2">
+              <User size={16} className="text-neutral-muted" />
+              Nama Pejabat
+            </label>
+            <input
+              type="text"
+              name="pejabat_name"
+              value={settings.pejabat_name}
+              onChange={handleChange}
+              placeholder="Misal: R. Prasetyo Wibowo"
+              className="w-full rounded-xl border border-neutral-300 bg-white/60 px-4 py-2.5 text-sm transition-all focus:border-primary focus:bg-white focus:outline-none focus:ring-4 focus:ring-primary/20 hover:bg-white"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={saving}
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+          >
+            {saving ? (
+              <>
+                <Loader2 size={16} className="animate-spin" />
+                Menyimpan...
+              </>
+            ) : (
+              <>
+                <Save size={16} />
+                Simpan
+              </>
+            )}
+          </button>
         </div>
-
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-neutral-text flex items-center gap-2">
-                <User size={16} className="text-primary" />
-                Nama Pejabat
-              </label>
-              <input
-                type="text"
-                name="pejabat_name"
-                value={settings.pejabat_name}
-                onChange={handleChange}
-                placeholder="Misal: R. Prasetyo Wibowo"
-                className="w-full rounded-xl border border-neutral-200 bg-white px-4 py-2.5 text-sm transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/20"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="mt-8 flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 rounded-xl bg-primary px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-dark focus:ring-4 focus:ring-primary/30 disabled:opacity-70 disabled:cursor-not-allowed shadow-button"
-            >
-              {saving ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" />
-                  Menyimpan...
-                </>
-              ) : (
-                <>
-                  <Save size={16} />
-                  Simpan Pengaturan
-                </>
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
+      </form>
     </div>
   )
 }
