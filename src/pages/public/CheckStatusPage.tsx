@@ -12,6 +12,7 @@ import {
     subscribeSubmissionChatSyncEvents,
     type SubmissionChatMessage,
 } from '../../shared/submissionChatSync'
+import echo from '../../services/echo'
 import { toast } from 'react-toastify'
 
 const steps = [
@@ -245,19 +246,16 @@ const CheckStatusPage = () => {
         }
     }
 
-    // ─── Polling pesan baru setiap 2 detik ───────────────────────────────────
-    // Pakai ref agar interval tidak restart saat messages/state berubah
+    // ─── Event WebSockets & Fallback Tab Aktif ───────────────────────────────────
+    // Pakai ref agar listener websocket tidak pakai stale closure
     const pollRef = useRef(pollNewMessages)
-    useEffect(() => { pollRef.current = pollNewMessages })  // selalu update ke versi terbaru
+    useEffect(() => { pollRef.current = pollNewMessages })
 
     useEffect(() => {
         if (!chatOpen || !submissionId) return
 
         // Jalankan segera saat chat dibuka (setelah loadMessages selesai)
         const immediateTimer = window.setTimeout(() => pollRef.current(), 500)
-
-        // Polling rutin setiap 2 detik
-        const interval = window.setInterval(() => pollRef.current(), 2000)
 
         // Fetch ulang segera saat tab aktif kembali
         const handleVisibility = () => {
@@ -267,31 +265,41 @@ const CheckStatusPage = () => {
 
         return () => {
             window.clearTimeout(immediateTimer)
-            window.clearInterval(interval)
             document.removeEventListener('visibilitychange', handleVisibility)
         }
-    }, [chatOpen, submissionId])  // hanya restart jika chat dibuka/ditutup atau submissionId berubah
+    }, [chatOpen, submissionId])
 
-    // ─── Polling status otomatis setiap 10 detik ─────────────────────────────
+    // ─── Listener Reverb WebSocket & Status Fallback ─────────────────────────────
     const pollStatusRef = useRef(runStatusSearch)
     useEffect(() => { pollStatusRef.current = runStatusSearch })
 
     useEffect(() => {
         if (!hasResult || !submissionId) return
 
-        const interval = window.setInterval(() => {
-            // Cek status otomatis di background tanpa reset UI
+        // Dengarkan event WebSockets
+        const channel = echo.channel(`submissions.${submissionId}`)
+        
+        channel.listen('SubmissionUpdated', () => {
+            // Ketika status dari admin berubah, fetch ulang status
             pollStatusRef.current({ silent: true, keepResult: true })
-        }, 10000)
+        })
 
+        channel.listen('MessageSent', () => {
+            // Ketika ada pesan baru, fetch ulang pesan
+            pollRef.current()
+        })
+
+        // Fetch ulang saat tab aktif (fallback)
         const handleVisibility = () => {
             if (!document.hidden) pollStatusRef.current({ silent: true, keepResult: true })
         }
         document.addEventListener('visibilitychange', handleVisibility)
 
         return () => {
-            window.clearInterval(interval)
             document.removeEventListener('visibilitychange', handleVisibility)
+            channel.stopListening('SubmissionUpdated')
+            channel.stopListening('MessageSent')
+            echo.leaveChannel(`submissions.${submissionId}`)
         }
     }, [hasResult, submissionId])
 
