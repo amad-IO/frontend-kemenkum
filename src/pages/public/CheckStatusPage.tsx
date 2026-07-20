@@ -120,8 +120,8 @@ const CheckStatusPage = () => {
             if (!lastStep) return
 
             const lineTopOffset = 48
-            const iconCenterOffset = 20
-            const iconBottomOffset = 40
+            const iconCenterOffset = 24 // 48px / 2
+            const iconBottomOffset = 48
             const nextLineHeight = Math.max(0, lastStep.offsetTop + iconBottomOffset - lineTopOffset)
             const nextProgressHeight = activeStep
                 ? Math.max(0, activeStep.offsetTop + iconCenterOffset - lineTopOffset)
@@ -519,17 +519,17 @@ const CheckStatusPage = () => {
                             <div className="relative px-6 py-7 sm:px-8">
                                 <motion.div
                                     variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { duration: 0.8 } } }}
-                                    className="absolute left-[calc(2.75rem-1px)] top-12 w-0.5 bg-secondary sm:left-[calc(3.25rem-1px)]"
+                                    className="absolute left-[calc(3rem-1px)] top-12 w-0.5 bg-secondary sm:left-[calc(3.5rem-1px)]"
                                     style={{ height: timelineLineHeight }}
                                 />
                                 {hasResult && (
                                     <motion.div
-                                        className="status-line-progress absolute left-[calc(2.75rem-1px)] top-12 w-0.5 bg-primary sm:left-[calc(3.25rem-1px)] transition-[height] duration-700 ease-in-out"
+                                        className="status-line-progress absolute left-[calc(3rem-1px)] top-12 w-0.5 bg-gradient-to-b from-primary/80 to-primary sm:left-[calc(3.5rem-1px)] transition-[height] duration-[1200ms] ease-[cubic-bezier(0.25,1,0.5,1)] shadow-[0_0_8px_rgba(110,71,59,0.5)]"
                                         style={{ height: progressHeight }}
                                     />
                                 )}
 
-                                <div className="flex flex-col gap-8">
+                                <div className="flex flex-col gap-6 sm:gap-8">
                                     {steps.map((step) => {
                                         const isActive = hasResult && step.id === currentStep
                                         const isCompleted = hasResult && step.id < currentStep
@@ -541,36 +541,46 @@ const CheckStatusPage = () => {
                                             <motion.div
                                                 key={step.id}
                                                 variants={{
-                                                    hidden: { opacity: 0, x: -20 },
-                                                    visible: { opacity: 1, x: 0, transition: { duration: 0.4, ease: 'easeOut' } }
+                                                    hidden: { opacity: 0, x: -30, filter: 'blur(4px)' },
+                                                    visible: { opacity: 1, x: 0, filter: 'blur(0px)', transition: { duration: 0.5, ease: 'easeOut' } }
                                                 }}
                                                 ref={(element) => {
                                                     timelineStepRefs.current[step.id] = element
                                                 }}
-                                                className="relative z-10 flex gap-4 rounded-2xl transition-colors duration-300 sm:gap-6"
+                                                className="relative z-10 flex gap-4 sm:gap-6 group"
                                             >
-                                                <div className="relative h-10 w-10 shrink-0">
-                                                    <div className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 transition-all duration-700 ease-in-out ${isActive ? 'border-primary bg-primary text-white shadow-lg shadow-primary/25 ring-4 ring-primary/10 scale-105' :
+                                                {/* Ikon Step */}
+                                                <div className="relative h-12 w-12 shrink-0">
+                                                    {isActive && (
+                                                        <span className="absolute inset-0 animate-ping rounded-full bg-primary/40 duration-1000" />
+                                                    )}
+                                                    <div className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 transition-all duration-700 ease-in-out ${isActive ? 'border-primary bg-primary text-white shadow-[0_0_15px_rgba(110,71,59,0.4)] ring-4 ring-primary/10 scale-110' :
                                                             isCompleted ? 'border-primary bg-primary text-white shadow-md shadow-primary/20' :
-                                                                'border-neutral-border bg-white text-neutral-muted'
+                                                                'border-neutral-border bg-white text-neutral-muted group-hover:border-secondary'
                                                         }`}>
-                                                        <Icon size={18} strokeWidth={isCompleted || isActive ? 2.5 : 2} />
+                                                        <Icon size={20} strokeWidth={isCompleted || isActive ? 2.5 : 2} />
                                                     </div>
                                                     {isCompleted && (
-                                                        <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full border-2 border-white bg-primary text-white shadow-sm">
-                                                            <Check size={10} strokeWidth={3} />
-                                                        </span>
+                                                        <motion.span 
+                                                            initial={{ scale: 0 }} 
+                                                            animate={{ scale: 1 }} 
+                                                            transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                                                            className="absolute -right-1 -top-1 z-20 grid h-5 w-5 place-items-center rounded-full border-2 border-white bg-primary text-white shadow-sm"
+                                                        >
+                                                            <Check size={12} strokeWidth={3} />
+                                                        </motion.span>
                                                     )}
                                                 </div>
 
-                                                <div className="pt-1">
-                                                    <h4 className={`text-sm font-bold sm:text-base ${isActive ? 'text-primary' :
+                                                {/* Konten Step */}
+                                                <div className={`flex-1 pt-1 pb-2 transition-all duration-500 ease-out ${isActive ? 'bg-primary/[0.04] border border-primary/15 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 -mt-3 -ml-2 shadow-[inset_0_0_20px_rgba(0,0,0,0.015)] backdrop-blur-sm' : 'pl-2'}`}>
+                                                    <h4 className={`text-base font-extrabold sm:text-lg transition-colors duration-300 ${isActive ? 'text-primary' :
                                                             isCompleted ? 'text-neutral-text' :
                                                                 hasResult ? 'text-neutral-muted' : 'text-neutral-text'
                                                         }`}>
                                                         {step.title}
                                                     </h4>
-                                                    <p className={`mt-0.5 text-xs sm:text-sm ${isActive ? 'font-medium text-neutral-text' : 'text-neutral-muted'
+                                                    <p className={`mt-1 text-xs sm:text-sm transition-colors duration-300 ${isActive ? 'font-medium text-neutral-text' : 'text-neutral-muted'
                                                         }`}>
                                                         {step.description}
                                                     </p>
@@ -579,17 +589,19 @@ const CheckStatusPage = () => {
                                                             type="button"
                                                             aria-label="Buka chat forum diskusi"
                                                             onClick={handleOpenDiscussion}
-                                                            className="mt-2 inline-flex items-center gap-2 rounded-full bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-md shadow-primary/20 transition hover:-translate-y-0.5 hover:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-primary/15"
+                                                            className="mt-3 inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-xs font-bold text-white shadow-lg shadow-primary/25 transition-all hover:-translate-y-1 hover:bg-primary-dark focus:outline-none focus:ring-4 focus:ring-primary/15"
                                                         >
-                                                            <MessageCircle size={14} />
-                                                            Buka Chat
+                                                            <MessageCircle size={15} />
+                                                            Buka Chat Diskusi
                                                         </button>
                                                     )}
 
-                                                    <div className={`grid transition-all duration-700 ease-in-out ${isActive ? 'grid-rows-[1fr] opacity-100 mt-3' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
+                                                    {/* Area Informasi Aktif */}
+                                                    <div className={`grid transition-all duration-700 ease-[cubic-bezier(0.25,1,0.5,1)] ${isActive ? 'grid-rows-[1fr] opacity-100 mt-4' : 'grid-rows-[0fr] opacity-0 mt-0 pointer-events-none'}`}>
                                                         <div className="overflow-hidden">
-                                                            <div className="rounded-2xl border border-secondary bg-white p-4 text-xs shadow-sm sm:text-sm text-neutral-text">
-                                                                <span className="font-semibold text-primary">Informasi:</span> {statusMessage}
+                                                            <div className="rounded-xl border border-primary/20 bg-white/70 p-4 text-sm leading-relaxed shadow-sm text-neutral-text backdrop-blur-md">
+                                                                <span className="mb-1 block text-xs font-black uppercase tracking-wider text-primary">Informasi Status:</span> 
+                                                                {statusMessage}
                                                             </div>
 
                                                             {effectiveStage === 'announcement' && finalStatus === 'approved' && permitFileName && (
@@ -597,10 +609,10 @@ const CheckStatusPage = () => {
                                                                     type="button"
                                                                     onClick={handleDownloadPermit}
                                                                     disabled={downloadingPermit}
-                                                                    className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark disabled:opacity-60"
+                                                                    className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-all hover:-translate-y-1 hover:bg-primary-dark disabled:opacity-60"
                                                                 >
-                                                                    <Download size={16} />
-                                                                    {downloadingPermit ? 'Mengunduh...' : 'Unduh Surat Izin'}
+                                                                    <Download size={18} />
+                                                                    {downloadingPermit ? 'Mengunduh...' : 'Unduh Surat Izin Magang'}
                                                                 </button>
                                                             )}
                                                         </div>
