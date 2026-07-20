@@ -1,5 +1,5 @@
-﻿import { useState, useEffect, useMemo } from 'react'
-import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useState, useEffect, useMemo } from 'react'
+import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
@@ -89,6 +89,7 @@ const ListPendaftarPage = () => {
         setLocalPatches(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
     }
 
+    const [isExporting, setIsExporting] = useState(false)
     const [isUpdating, setIsUpdating] = useState(false)
     const [isDownloading, setIsDownloading] = useState(false)
     const [isUploadingPermit, setIsUploadingPermit] = useState(false)
@@ -169,6 +170,34 @@ const ListPendaftarPage = () => {
             toast.error(error.response?.data?.message || 'Gagal mengubah status permohonan')
         } finally {
             setIsUpdating(false)
+        }
+    }
+
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true)
+            const res = await api.get('/admin/submissions/export', { responseType: 'blob' })
+            const url = window.URL.createObjectURL(new Blob([res.data]))
+            const link = document.createElement('a')
+            link.href = url
+            
+            const contentDisposition = res.headers['content-disposition'];
+            let fileName = 'Data_Pendaftar.xlsx';
+            if (contentDisposition) {
+                const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
+                if (fileNameMatch && fileNameMatch.length >= 2)
+                    fileName = fileNameMatch[1];
+            }
+            
+            link.setAttribute('download', fileName)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+        } catch (error) {
+            console.error('Failed to export', error)
+            toast.error('Gagal mengekspor data ke Excel.')
+        } finally {
+            setIsExporting(false)
         }
     }
 
@@ -331,14 +360,24 @@ const ListPendaftarPage = () => {
                         Kelola semua data pendaftaran magang dan penelitian
                     </p>
                 </div>
-                <button
-                    onClick={() => refetch()}
-                    disabled={refreshing}
-                    className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
-                >
-                    <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
-                    Refresh
-                </button>
+                <div className="flex gap-2">
+                    <button
+                        onClick={handleExportExcel}
+                        disabled={isExporting}
+                        className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-green-700 disabled:opacity-50"
+                    >
+                        <FileSpreadsheet size={15} className={isExporting ? 'animate-pulse' : ''} />
+                        Export Excel
+                    </button>
+                    <button
+                        onClick={() => refetch()}
+                        disabled={refreshing}
+                        className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
+                    >
+                        <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             {/* ── Filters ── */}
