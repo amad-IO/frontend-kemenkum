@@ -173,16 +173,17 @@ const ListPendaftarPage = () => {
         }
     }
 
-    const handleExportExcel = async () => {
+    const handleExportExcel = async (id?: number) => {
         try {
             setIsExporting(true)
-            const res = await api.get('/admin/submissions/export', { responseType: 'blob' })
+            const urlEndpoint = id ? `/admin/submissions/${id}/export` : '/admin/submissions/export'
+            const res = await api.get(urlEndpoint, { responseType: 'blob' })
             const url = window.URL.createObjectURL(new Blob([res.data]))
             const link = document.createElement('a')
             link.href = url
             
             const contentDisposition = res.headers['content-disposition'];
-            let fileName = 'Data_Pendaftar.xlsx';
+            let fileName = id ? `Data_Pendaftar_${id}.xlsx` : 'Data_Pendaftar.xlsx';
             if (contentDisposition) {
                 const fileNameMatch = contentDisposition.match(/filename="?([^"]+)"?/);
                 if (fileNameMatch && fileNameMatch.length >= 2)
@@ -362,7 +363,7 @@ const ListPendaftarPage = () => {
                 </div>
                 <div className="flex gap-2">
                     <button
-                        onClick={handleExportExcel}
+                        onClick={() => handleExportExcel()}
                         disabled={isExporting}
                         className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-green-700 disabled:opacity-50"
                     >
@@ -439,6 +440,7 @@ const ListPendaftarPage = () => {
                         data={paginatedData}
                         onOpenDetail={handleOpenDetail}
                         onOpenChat={handleOpenChatFromTable}
+                        onExportSingle={(id) => handleExportExcel(id)}
                     />
                 )}
 

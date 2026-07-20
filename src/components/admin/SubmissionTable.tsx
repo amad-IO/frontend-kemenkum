@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Eye, MessageCircle } from 'lucide-react'
+import { Eye, MessageCircle, FileSpreadsheet } from 'lucide-react'
 import type { Submission } from '../../pages/admin/ListPendaftar'
 import api from '../../services/api'
 
@@ -7,6 +7,7 @@ interface SubmissionTableProps {
   data: Submission[]
   onOpenDetail: (submission: Submission) => void
   onOpenChat: (submission: Submission) => void
+  onExportSingle?: (id: number) => void
 }
 
 const StatusBadge = ({ status }: { status: Submission['status'] }) => {
@@ -54,7 +55,7 @@ const getLatestMessageFallbackCount = (submission: Submission) => {
   return Number(latestMessage.id) > seenId ? 1 : 0
 }
 
-const SubmissionTable = ({ data, onOpenDetail, onOpenChat }: SubmissionTableProps) => {
+const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: SubmissionTableProps) => {
   const [clientUnreadCounts, setClientUnreadCounts] = useState<Record<number, number>>({})
   const [latestApplicantMessageIds, setLatestApplicantMessageIds] = useState<Record<number, number>>({})
 
@@ -198,6 +199,18 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat }: SubmissionTableProp
                     >
                       <Eye size={14} /> Detail
                     </button>
+                    {onExportSingle && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onExportSingle(s.id)
+                        }}
+                        className="ml-2 inline-flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
+                        title="Export Excel"
+                      >
+                        <FileSpreadsheet size={14} />
+                      </button>
+                    )}
                   </td>
                 </tr>
               )
