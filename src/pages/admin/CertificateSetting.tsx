@@ -505,11 +505,6 @@ const CertificateSettingPage = () => {
         }
     }
 
-    const makeFullWidthCenter = (field: CertField) => {
-        updateField(field.id, { x: 0, width: 100, text_align: 'center' })
-        setPixelPositions(prev => ({ ...prev, [field.id]: { ...prev[field.id], x: 0 } }))
-    }
-
     // ── Simpan semua posisi ke backend ────────────────────────────────────────
     const handleSave = async () => {
         if (fields.length === 0) {
@@ -856,7 +851,6 @@ const CertificateSettingPage = () => {
                               <div className="grid grid-cols-2 gap-2">
                                 <button type="button" onClick={() => centerField(selectedFieldData, 'horizontal')} className="rounded-lg border border-neutral-border bg-white px-2 py-2 text-[10px] font-bold text-neutral-text hover:border-primary hover:text-primary">Tengah Horizontal</button>
                                 <button type="button" onClick={() => centerField(selectedFieldData, 'vertical')} className="rounded-lg border border-neutral-border bg-white px-2 py-2 text-[10px] font-bold text-neutral-text hover:border-primary hover:text-primary">Tengah Vertikal</button>
-                                <button type="button" onClick={() => makeFullWidthCenter(selectedFieldData)} className="col-span-2 rounded-lg bg-primary/10 px-2 py-2 text-[10px] font-bold text-primary hover:bg-primary/20">Tengahkan Sempurna (Lebar 100%)</button>
                               </div>
                             </div>
                             <label className="block">
