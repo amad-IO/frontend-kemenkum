@@ -190,27 +190,29 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
                   </td>
 
                   <td className="px-5 py-3 text-right">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onOpenDetail(s)
-                      }}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
-                    >
-                      <Eye size={14} /> Detail
-                    </button>
-                    {onExportSingle && (
+                    <div className="flex flex-col items-end gap-2">
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          onExportSingle(s.id)
+                          onOpenDetail(s)
                         }}
-                        className="ml-2 inline-flex items-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
-                        title="Export Excel"
+                        className="inline-flex w-24 items-center justify-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
                       >
-                        <FileSpreadsheet size={14} />
+                        <Eye size={14} /> Detail
                       </button>
-                    )}
+                      {onExportSingle && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onExportSingle(s.id)
+                          }}
+                          className="inline-flex w-24 items-center justify-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
+                          title="Export Excel"
+                        >
+                          <FileSpreadsheet size={14} /> Export
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               )
