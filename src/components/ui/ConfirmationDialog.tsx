@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { AlertTriangle, LogOut, Trash2, CheckCircle2, Monitor } from 'lucide-react'
+import { AlertTriangle, LogOut, Trash2, CheckCircle2, Monitor, X } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
