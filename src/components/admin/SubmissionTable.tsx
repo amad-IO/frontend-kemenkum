@@ -114,7 +114,7 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
             <th className="px-5 py-3 text-left font-semibold w-[16%]">Tanggal Kegiatan</th>
             <th className="px-5 py-3 text-left font-semibold w-[12%]">Status</th>
             <th className="px-5 py-3 text-center font-semibold w-[10%]">Chat</th>
-            <th className="px-5 py-3 text-right font-semibold w-[10%]">Aksi</th>
+            <th className="px-5 py-3 text-right font-semibold w-[14%]">Aksi</th>
           </tr>
         </thead>
         <tbody>
@@ -190,28 +190,28 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
                   </td>
 
                   <td className="px-5 py-3 text-right">
-                    <div className="flex flex-col items-end gap-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onOpenDetail(s)
-                        }}
-                        className="inline-flex w-24 items-center justify-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
-                      >
-                        <Eye size={14} /> Detail
-                      </button>
+                    <div className="flex items-center justify-end gap-2">
                       {onExportSingle && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             onExportSingle(s.id)
                           }}
-                          className="inline-flex w-24 items-center justify-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
+                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
                           title="Export Excel"
                         >
                           <FileSpreadsheet size={14} /> Export
                         </button>
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onOpenDetail(s)
+                        }}
+                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
+                      >
+                        <Eye size={14} /> Detail
+                      </button>
                     </div>
                   </td>
                 </tr>
