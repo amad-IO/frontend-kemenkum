@@ -11,6 +11,7 @@ const DaftarPage         = lazy(() => import('../pages/public/DaftarPage'))
 const FormMagangPage     = lazy(() => import('../pages/public/FormMagangPage'))
 const FormPenelitianPage = lazy(() => import('../pages/public/FormPenelitianPage'))
 const CheckStatusPage    = lazy(() => import('../pages/public/CheckStatusPage'))
+const NotFoundPage       = lazy(() => import('../pages/public/NotFoundPage'))
 
 // Admin Pages — lazy loaded (tidak di-download oleh pengunjung publik)
 const Login              = lazy(() => import('../pages/admin/Login'))
@@ -102,6 +103,12 @@ const router = createBrowserRouter([
       { path: 'sertifikat', element: withSuspense(<CertificateSettingPage />) },
     ],
   },
+  
+  // ─── Catch-all 404 Route ───────────────────────────────────
+  {
+    path: '*',
+    element: withSuspense(<NotFoundPage />),
+  }
 ])
 
 const AppRouter = () => <RouterProvider router={router} />

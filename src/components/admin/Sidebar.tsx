@@ -5,7 +5,6 @@ import {
   LogOut,
   X,
   ChevronRight,
-  Briefcase,
   Settings,
   Award,
 } from 'lucide-react'
@@ -13,6 +12,7 @@ import { toast } from 'react-toastify'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 import logo1 from '../../assets/logo 1.svg'
+import { useConfirm } from '../../context/ConfirmContext'
 
 const navItems = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
@@ -29,8 +29,18 @@ interface SidebarProps {
 const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const navigate = useNavigate()
   const { logout, admin } = useAuthStore()
+  const confirm = useConfirm()
 
   const handleLogout = async () => {
+    const ok = await confirm({
+      title: 'Keluar dari aplikasi?',
+      message: 'Sesi Anda akan diakhiri dan Anda perlu login kembali untuk mengakses panel admin.',
+      variant: 'logout',
+      confirmText: 'Ya, Keluar',
+      cancelText: 'Batal',
+    })
+    if (!ok) return
+
     try {
       await api.post('/admin/logout')
     } catch {

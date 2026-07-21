@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAllPeriod, createPeriod, updatePeriod, deletePeriod } from '../../services/programService'
 import PeriodModal, { PeriodFormValues } from '../../components/admin/PeriodModal'
 import Settings from './Settings'
+import { useConfirm } from '../../context/ConfirmContext'
 
 interface Period {
   id: number
@@ -19,6 +20,7 @@ interface Period {
 
 const KelolaProgramPage = () => {
   const queryClient = useQueryClient()
+  const confirm = useConfirm()
 
   // ── Data Fetching (TanStack Query) ────────────────────────────────────────
   const {
@@ -82,7 +84,13 @@ const KelolaProgramPage = () => {
   }
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('Apakah Anda yakin ingin menghapus periode ini? Tindakan ini tidak dapat dibatalkan.')) return
+    const ok = await confirm({
+      title: 'Hapus periode ini?',
+      message: 'Tindakan ini permanen dan tidak dapat dibatalkan. Semua data yang terkait dengan periode ini akan ikut terhapus.',
+      variant: 'danger',
+      confirmText: 'Ya, Hapus',
+    })
+    if (!ok) return
 
     setDeletingId(id)
     try {
@@ -97,8 +105,19 @@ const KelolaProgramPage = () => {
   }
 
   const handleToggleStatus = async (period: Period) => {
-    setTogglingId(period.id)
+    const isActivating = period.status !== 'active'
+    const ok = await confirm({
+      title: isActivating ? 'Aktifkan periode ini?' : 'Nonaktifkan periode ini?',
+      message: isActivating
+        ? 'Periode ini akan langsung muncul sebagai opsi di form pendaftaran publik.'
+        : 'Periode ini tidak akan bisa dipilih oleh pendaftar. Pendaftar yang sudah terdaftar tidak terpengaruh.',
+      variant: 'warning',
+      confirmText: isActivating ? 'Ya, Aktifkan' : 'Ya, Nonaktifkan',
+    })
+    if (!ok) return
+
     const newStatus = period.status === 'active' ? 'inactive' : 'active'
+    setTogglingId(period.id)
     try {
       await updatePeriod(period.id, { status: newStatus })
       toast.success(`Status berhasil diubah menjadi ${newStatus === 'active' ? 'Aktif' : 'Tidak Aktif'}`)

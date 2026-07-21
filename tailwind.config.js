@@ -6,6 +6,39 @@ export default {
   ],
   theme: {
     extend: {
+      // ── Animations ─────────────────────────────────────
+      keyframes: {
+        // Dialog card: scale + slide up
+        'dialog-in': {
+          '0%':   { opacity: '0', transform: 'scale(0.93) translateY(12px)' },
+          '60%':  { opacity: '1', transform: 'scale(1.01) translateY(-2px)' },
+          '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+        },
+        // Backdrop: simple fade in
+        'backdrop-in': {
+          '0%':   { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        // Icon: small bounce entrance
+        'icon-pop': {
+          '0%':   { opacity: '0', transform: 'scale(0.5)' },
+          '70%':  { opacity: '1', transform: 'scale(1.15)' },
+          '100%': { opacity: '1', transform: 'scale(1)' },
+        },
+        // Subtle shimmer on confirm button
+        'shimmer': {
+          '0%':   { backgroundPosition: '-200% center' },
+          '100%': { backgroundPosition: '200% center' },
+        },
+      },
+      animation: {
+        'dialog-in':   'dialog-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        'backdrop-in': 'backdrop-in 0.2s ease-out forwards',
+        'icon-pop':    'icon-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s both',
+        'shimmer':     'shimmer 1.6s linear infinite',
+      },
+
+
       // ── Font ────────────────────────────────
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', 'sans-serif'],

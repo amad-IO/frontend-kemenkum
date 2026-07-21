@@ -10,6 +10,7 @@ import {
     subscribeSubmissionChatSyncEvents,
     type SubmissionChatMessage,
 } from '../../shared/submissionChatSync'
+import { useConfirm } from '../../context/ConfirmContext'
 
 type DiscussionMessage = SubmissionChatMessage & {
     status?: 'sending' | 'failed'
@@ -69,6 +70,7 @@ const DetailPendaftarModal = ({
     isUploadingPermit,
     isStartingDiscussion,
 }: Props) => {
+    const confirm = useConfirm()
     const [editStart, setEditStart] = useState('')
     const [editEnd, setEditEnd] = useState('')
     const [chatOpen, setChatOpen] = useState(false)
@@ -389,8 +391,13 @@ const DetailPendaftarModal = ({
 
         const replace = Boolean(submission.permit_file_path)
         if (replace) {
-            const confirmed = window.confirm('File izin sudah tersedia. Upload ulang akan mengganti file sebelumnya. Lanjutkan?')
-            if (!confirmed) return
+            const ok = await confirm({
+                title: 'Ganti file izin?',
+                message: 'File izin yang sudah ada akan diganti permanen dengan file baru. Tindakan ini tidak bisa dibatalkan.',
+                variant: 'warning',
+                confirmText: 'Ya, Ganti File',
+            })
+            if (!ok) return
         }
 
         await onUploadPermit(submission.id, file, replace)

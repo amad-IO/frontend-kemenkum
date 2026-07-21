@@ -8,6 +8,7 @@ import Draggable from 'react-draggable'
 import * as pdfjsLib from 'pdfjs-dist'
 import api from '../../services/api'
 import CustomSelect from '../../components/admin/CustomSelect'
+import { useConfirm } from '../../context/ConfirmContext'
 
 // @ts-ignore — Vite resolves ?url ke path lokal worker file
 import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.js?url'
@@ -219,6 +220,7 @@ const DraggableField = ({ field, position, selected, width, previewMode, onSelec
 
 // ── Komponen utama ────────────────────────────────────────────────────────────
 const CertificateSettingPage = () => {
+    const confirm = useConfirm()
     const [templateUrl, setTemplateUrl]       = useState<string | null>(null)
     const [templatePath, setTemplatePath]     = useState<string | null>(null)
     const [fields, setFields]                 = useState<CertField[]>([])
@@ -390,7 +392,14 @@ const CertificateSettingPage = () => {
 
     // ── Hapus template ──────────────────────────────────────────────────────────
     const handleDeleteTemplate = async () => {
-        if (!window.confirm('Hapus template sertifikat? Semua posisi field akan tetap tersimpan.')) return
+        const ok = await confirm({
+            title: 'Hapus template sertifikat?',
+            message: 'File PDF template akan dihapus permanen dari server. Posisi semua field yang sudah diatur akan tetap tersimpan.',
+            variant: 'danger',
+            confirmText: 'Ya, Hapus Template',
+        })
+        if (!ok) return
+
         setDeleting(true)
         try {
             await api.delete('/admin/certificate/template')
@@ -448,7 +457,16 @@ const CertificateSettingPage = () => {
     }
 
     // ── Hapus field ───────────────────────────────────────────────────────────
-    const handleRemoveField = (fieldId: string) => {
+    const handleRemoveField = async (fieldId: string) => {
+        const field = fields.find(f => f.id === fieldId)
+        const ok = await confirm({
+            title: `Hapus field "${field?.label ?? fieldId}"?`,
+            message: 'Field ini akan dihapus dari kanvas sertifikat. Anda bisa menambahkannya kembali kapan saja.',
+            variant: 'danger',
+            confirmText: 'Hapus Field',
+        })
+        if (!ok) return
+
         setFields(prev => prev.filter(f => f.id !== fieldId))
         setPixelPositions(prev => {
             const next = { ...prev }

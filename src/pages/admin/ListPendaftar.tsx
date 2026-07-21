@@ -8,6 +8,7 @@ import SubmissionTable from '../../components/admin/SubmissionTable'
 import CustomSelect from '../../components/admin/CustomSelect'
 import { useAdminChat } from '../../contexts/AdminChatContext'
 import { publishSubmissionChatSyncEvent, subscribeSubmissionChatSyncEvents } from '../../shared/submissionChatSync'
+import { useConfirm } from '../../context/ConfirmContext'
 
 export interface Submission {
     id: number
@@ -39,6 +40,7 @@ export interface Submission {
 const ListPendaftarPage = () => {
     const { openAdminChat, readReceipt } = useAdminChat()
     const queryClient = useQueryClient()
+    const confirm = useConfirm()
 
     // ── Data Fetching (TanStack Query) ───────────────────────────────────────
     const {
@@ -150,6 +152,17 @@ const ListPendaftarPage = () => {
 
     // Actions
     const handleStatusChange = async (id: number, status: 'approved' | 'rejected') => {
+        const isApproving = status === 'approved'
+        const ok = await confirm({
+            title: isApproving ? 'Terima permohonan ini?' : 'Tolak permohonan ini?',
+            message: isApproving
+                ? 'Status pendaftar akan diubah menjadi Diterima. Pastikan data sudah diperiksa sebelum dikonfirmasi.'
+                : 'Status pendaftar akan diubah menjadi Ditolak. Tindakan ini dapat diubah kembali jika diperlukan.',
+            variant: isApproving ? 'default' : 'danger',
+            confirmText: isApproving ? 'Ya, Terima' : 'Ya, Tolak',
+        })
+        if (!ok) return
+
         try {
             setIsUpdating(true)
             await api.patch(`/admin/submissions/${id}/status`, { status })
