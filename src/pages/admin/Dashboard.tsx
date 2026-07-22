@@ -17,6 +17,7 @@ import SubmissionTable from '../../components/admin/SubmissionTable'
 import type { Submission } from './ListPendaftar'
 import { useAdminChat } from '../../contexts/AdminChatContext'
 import { useConfirm } from '../../context/ConfirmContext'
+import { Skeleton } from '../../components/ui/Skeleton'
 
 interface Stats {
   total: number
@@ -250,8 +251,76 @@ const Dashboard = () => {
 
   if (loading) {
     return (
-      <div className="flex h-64 items-center justify-center">
-        <RefreshCw size={28} className="animate-spin text-primary" />
+      <div className="flex flex-col gap-6">
+        {/* Page Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-8 w-40 mb-1" />
+            <Skeleton className="h-4 w-64" />
+          </div>
+          <Skeleton className="h-10 w-28 rounded-xl" />
+        </div>
+
+        {/* Stat Cards Skeleton */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center gap-4 rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card">
+              <Skeleton variant="circular" className="h-12 w-12 shrink-0" />
+              <div className="flex-1">
+                <Skeleton className="h-7 w-12 mb-1" />
+                <Skeleton className="h-3 w-24" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Split Cards Row Skeleton */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card h-48 flex flex-col">
+              <div className="flex justify-between items-center mb-4">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton variant="circular" className="h-5 w-5" />
+              </div>
+              <div className="flex-1 space-y-3">
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-2 w-3/4" />
+                <Skeleton className="h-2 w-full" />
+                <Skeleton className="h-2 w-5/6" />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
+          <div className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-20" />
+          </div>
+          <div className="p-0">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
+                <div className="flex-1">
+                  <Skeleton className="h-5 w-48 mb-1.5" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <div className="flex-1">
+                  <Skeleton className="h-4 w-16 mb-1.5 rounded-full" />
+                  <Skeleton className="h-3 w-40" />
+                </div>
+                <div className="flex-1">
+                  <Skeleton className="h-3 w-32 mb-1" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton variant="circular" className="h-9 w-9" />
+                  <Skeleton className="h-9 w-20 rounded-lg" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     )
   }

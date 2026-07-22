@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipboardCheck, ChevronRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import Footer from '../../components/public/layout/Footer'
 import HeroLayout from '../../components/public/layout/HeroLayout'
 import PersyaratanBox from '../../components/public/forms/PersyaratanBox'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
   getPersyaratanMagang,
   getPersyaratanPenelitian,
@@ -29,17 +30,28 @@ const programTabs: {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' as const } }
 }
 
 const DaftarPage = () => {
   const [activeTab, setActiveTab] = useState<TabType>('magang')
   const [checked, setChecked] = useState(false)
+  const [loadingPersyaratan, setLoadingPersyaratan] = useState(true)
+
+  // Simulasi fetch API karena nanti persyaratan akan dari database
+  useEffect(() => {
+    setLoadingPersyaratan(true)
+    const timer = setTimeout(() => {
+      setLoadingPersyaratan(false)
+    }, 600)
+    return () => clearTimeout(timer)
+  }, [activeTab])
 
   const persyaratan =
     activeTab === 'magang' ? getPersyaratanMagang() : getPersyaratanPenelitian()
 
   const handleTabChange = (tab: TabType) => {
+    if (activeTab === tab) return
     setActiveTab(tab)
     setChecked(false) // reset checklist saat ganti tab
   }
@@ -103,7 +115,34 @@ const DaftarPage = () => {
 
           {/* ── Kotak Persyaratan ── */}
           <motion.div variants={itemVariants}>
-            <PersyaratanBox kategoriList={persyaratan} jenis={activeTab} />
+            {loadingPersyaratan ? (
+              <div className="rounded-[24px] border border-neutral-200 bg-white p-6 shadow-sm sm:p-8 space-y-6">
+                <div>
+                  <Skeleton className="h-6 w-56 mb-4" />
+                  <div className="space-y-3">
+                    {[1, 2, 3].map(i => (
+                      <div key={i} className="flex gap-3">
+                        <Skeleton className="h-5 w-5 rounded-full shrink-0 mt-0.5" />
+                        <Skeleton className="h-5 w-full max-w-md" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Skeleton className="h-6 w-48 mb-4" />
+                  <div className="space-y-3">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="flex gap-3">
+                        <Skeleton className="h-5 w-5 rounded-md shrink-0 mt-0.5" />
+                        <Skeleton className="h-5 w-full max-w-sm" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <PersyaratanBox kategoriList={persyaratan} jenis={activeTab} />
+            )}
           </motion.div>
 
           {/* ── Checklist Persetujuan ── */}

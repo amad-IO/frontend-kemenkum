@@ -6,6 +6,7 @@ import { getAllPeriod, createPeriod, updatePeriod, deletePeriod } from '../../se
 import PeriodModal, { PeriodFormValues } from '../../components/admin/PeriodModal'
 import Settings from './Settings'
 import { useConfirm } from '../../context/ConfirmContext'
+import { Skeleton } from '../../components/ui/Skeleton'
 
 interface Period {
   id: number
@@ -168,9 +169,61 @@ const KelolaProgramPage = () => {
 
       {/* ── Content Area ── */}
       {loading ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-neutral-border bg-neutral-card py-24 shadow-card">
-          <RefreshCw size={40} className="mb-4 animate-spin text-primary" />
-          <p className="text-sm font-semibold text-neutral-muted">Memuat data periode...</p>
+        <div className="flex flex-col gap-4">
+          <div className="hidden lg:block overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
+            <div className="flex border-b border-neutral-border bg-neutral-bg px-5 py-3">
+              <Skeleton className="h-4 w-[25%] mr-auto" />
+              <Skeleton className="h-4 w-[15%] mr-auto" />
+              <Skeleton className="h-4 w-[25%] mr-auto" />
+              <Skeleton className="h-4 w-[20%] mr-auto" />
+              <Skeleton className="h-4 w-[15%]" />
+            </div>
+            <div className="p-0">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
+                  <div className="w-[25%] pr-4">
+                    <Skeleton className="h-4 w-3/4 mb-1" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                  <div className="w-[15%] pr-4">
+                    <Skeleton className="h-4 w-12" />
+                  </div>
+                  <div className="w-[25%] pr-4">
+                    <Skeleton className="h-2 w-full mb-2" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                  <div className="w-[20%] pr-4">
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                  <div className="w-[15%] flex justify-end gap-2">
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                    <Skeleton className="h-8 w-8 rounded-lg" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="grid gap-4 lg:hidden">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card">
+                <div className="mb-4 flex items-center justify-between">
+                  <Skeleton className="h-5 w-32" />
+                  <Skeleton className="h-6 w-20 rounded-full" />
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <Skeleton className="h-3 w-16 mb-2" />
+                    <Skeleton className="h-2 w-full mb-2" />
+                  </div>
+                  <div className="flex gap-2">
+                    <Skeleton className="h-10 flex-1 rounded-xl" />
+                    <Skeleton className="h-10 flex-1 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : periods.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-primary/20 bg-primary/5 px-6 py-24 text-center">

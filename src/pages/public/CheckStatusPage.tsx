@@ -7,6 +7,7 @@ import HeroLayout from '../../components/public/layout/HeroLayout'
 import checkStatusImage from '../../assets/05.webp'
 
 import api from '../../services/api'
+import { Skeleton } from '../../components/ui/Skeleton'
 import {
     publishSubmissionChatSyncEvent,
     subscribeSubmissionChatSyncEvents,
@@ -633,44 +634,60 @@ const CheckStatusPage = () => {
                                     Pendaftaran berhasil dikirim. Gunakan email dan NIM anggota pertama/ketua untuk mengecek status.
                                 </div>
                             )}
-                            <h2 className="mb-2 text-xl font-bold text-neutral-text">Lacak Permohonan</h2>
-                            <p className="mb-7 text-sm text-neutral-subtle">
-                                Masukkan <strong>Email</strong> dan <strong>NIM/Nomor Identitas</strong> Ketua Kelompok untuk melihat status pendaftaran Anda saat ini.
-                            </p>
+                            {isSearching ? (
+                                <div className="space-y-5">
+                                    <div>
+                                        <Skeleton className="h-7 w-44 mb-2" />
+                                        <Skeleton className="h-4 w-full max-w-xs" />
+                                    </div>
+                                    <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-center">
+                                        <Skeleton className="h-12 rounded-xl" />
+                                        <Skeleton className="h-12 rounded-xl" />
+                                        <Skeleton className="h-12 w-28 rounded-xl" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                <h2 className="mb-2 text-xl font-bold text-neutral-text">Lacak Permohonan</h2>
+                                <p className="mb-7 text-sm text-neutral-subtle">
+                                    Masukkan <strong>Email</strong> dan <strong>NIM/Nomor Identitas</strong> Ketua Kelompok untuk melihat status pendaftaran Anda saat ini.
+                                </p>
 
-                            <form onSubmit={handleSearch} className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
-                                <div className="relative flex-1">
-                                    <input
-                                        type="email"
-                                        placeholder="Email Ketua Kelompok"
-                                        value={emailValue}
-                                        onChange={(e) => setEmailValue(e.target.value)}
-                                        className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
-                                        required
-                                    />
-                                </div>
-                                <div className="relative flex-1">
-                                    <input
-                                        type="text"
-                                        placeholder="NIM/Nomor Identitas"
-                                        value={nimValue}
-                                        onChange={(e) => setNimValue(e.target.value)}
-                                        className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
-                                        required
-                                    />
-                                </div>
-                                <button
-                                    type="submit"
-                                    disabled={isSearching}
-                                    className="flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
-                                >
-                                    {isSearching ? (
-                                        <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                                    ) : (
-                                        'Cari Status'
-                                    )}
-                                </button>
-                            </form>
+                                <form onSubmit={handleSearch} className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="email"
+                                            placeholder="Email Ketua Kelompok"
+                                            value={emailValue}
+                                            onChange={(e) => setEmailValue(e.target.value)}
+                                            className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="relative flex-1">
+                                        <input
+                                            type="text"
+                                            placeholder="NIM/Nomor Identitas"
+                                            value={nimValue}
+                                            onChange={(e) => setNimValue(e.target.value)}
+                                            className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+                                            required
+                                        />
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={isSearching}
+                                        className="flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                                    >
+                                        {isSearching ? (
+                                            <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                        ) : (
+                                            'Cari Status'
+                                        )}
+                                    </button>
+                                </form>
+                                </>
+                            )}
                         </div>
                     )}
 
@@ -704,9 +721,14 @@ const CheckStatusPage = () => {
                         <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-bg p-4">
                             {/* Loading awal: hanya tampil kalau belum ada pesan sama sekali */}
                             {loadingMessages && messages.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-full gap-2 py-10">
-                                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-                                    <p className="text-xs font-semibold text-neutral-muted">Memuat pesan...</p>
+                                <div className="flex flex-col gap-3 py-2">
+                                    {[1, 2, 3, 4].map((i) => (
+                                        <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
+                                            <Skeleton
+                                                className={`h-14 ${i % 2 === 0 ? 'w-2/3 rounded-2xl rounded-bl-md' : 'w-1/2 rounded-2xl rounded-br-md'}`}
+                                            />
+                                        </div>
+                                    ))}
                                 </div>
                             ) : messages.length === 0 ? (
                                 <div className="rounded-2xl bg-white p-4 text-center text-xs font-semibold text-neutral-muted shadow-sm">

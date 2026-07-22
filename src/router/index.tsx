@@ -22,15 +22,38 @@ const CertificateSettingPage = lazy(() => import('../pages/admin/CertificateSett
 
 import AdminLayout from '../components/admin/AdminLayout'
 
-// Fallback loading spinner saat chunk sedang di-download
-const PageLoader = () => (
+import { Skeleton } from '../components/ui/Skeleton'
+
+// Fallback loading spinner untuk halaman publik
+const PublicPageLoader = () => (
   <div className="flex min-h-screen items-center justify-center bg-neutral-bg">
     <div className="h-9 w-9 animate-spin rounded-full border-4 border-primary border-t-transparent" />
   </div>
 )
 
-const withSuspense = (element: ReactNode) => (
-  <Suspense fallback={<PageLoader />}>{element}</Suspense>
+// Fallback skeleton untuk halaman admin saat di-lazy load
+const AdminPageLoader = () => (
+  <div className="flex flex-col gap-6">
+    <div className="flex items-center justify-between">
+      <div>
+        <Skeleton className="h-8 w-40 mb-1" />
+        <Skeleton className="h-4 w-64" />
+      </div>
+    </div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {[1, 2, 3, 4].map((i) => (
+         <Skeleton key={i} className="h-24 w-full rounded-2xl" />
+      ))}
+    </div>
+  </div>
+)
+
+const withPublicSuspense = (element: ReactNode) => (
+  <Suspense fallback={<PublicPageLoader />}>{element}</Suspense>
+)
+
+const withAdminSuspense = (element: ReactNode) => (
+  <Suspense fallback={<AdminPageLoader />}>{element}</Suspense>
 )
 
 // ── Guard 1: Hanya boleh login admin ─────────────────────────────────────────
@@ -56,23 +79,23 @@ const router = createBrowserRouter([
   // ─── Public Routes ───────────────────────────────
   {
     path: '/',
-    element: withSuspense(<LandingPage />),
+    element: withPublicSuspense(<LandingPage />),
   },
   {
     path: '/daftar',
-    element: withSuspense(<DaftarPage />),
+    element: withPublicSuspense(<DaftarPage />),
   },
   {
     path: '/status',
-    element: withSuspense(<CheckStatusPage />),
+    element: withPublicSuspense(<CheckStatusPage />),
   },
   {
     path: '/daftar/magang/:id',
-    element: withSuspense(<FormMagangPage />),
+    element: withPublicSuspense(<FormMagangPage />),
   },
   {
     path: '/daftar/penelitian/:id',
-    element: withSuspense(<FormPenelitianPage />),
+    element: withPublicSuspense(<FormPenelitianPage />),
   },
 
   // ─── Admin Routes ────────────────────────────────
@@ -82,7 +105,7 @@ const router = createBrowserRouter([
     path: '/admin/login',
     element: (
       <AdminDeviceGuard>
-        {withSuspense(<Login />)}
+        {withPublicSuspense(<Login />)}
       </AdminDeviceGuard>
     ),
   },
@@ -97,17 +120,17 @@ const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
-      { path: 'dashboard', element: withSuspense(<Dashboard />) },
-      { path: 'program',   element: withSuspense(<KelolaProgramPage />) },
-      { path: 'pendaftar', element: withSuspense(<ListPendaftarPage />) },
-      { path: 'sertifikat', element: withSuspense(<CertificateSettingPage />) },
+      { path: 'dashboard', element: withAdminSuspense(<Dashboard />) },
+      { path: 'program',   element: withAdminSuspense(<KelolaProgramPage />) },
+      { path: 'pendaftar', element: withAdminSuspense(<ListPendaftarPage />) },
+      { path: 'sertifikat', element: withAdminSuspense(<CertificateSettingPage />) },
     ],
   },
   
   // ─── Catch-all 404 Route ───────────────────────────────────
   {
     path: '*',
-    element: withSuspense(<NotFoundPage />),
+    element: withPublicSuspense(<NotFoundPage />),
   }
 ])
 

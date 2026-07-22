@@ -13,6 +13,7 @@ import {
 import HeroLayout from '../../components/public/layout/HeroLayout'
 import Footer from '../../components/public/layout/Footer'
 import ConfirmModal from '../../components/public/forms/ConfirmModal'
+import { Skeleton } from '../../components/ui/Skeleton'
 import daftarHeroImage from '../../assets/03.webp'
 import { EDUCATION_LEVELS } from '../../data/indonesiaCities'
 import RegencyCombobox from '../../components/public/forms/RegencyCombobox'
@@ -305,30 +306,31 @@ const FormMagangPage = () => {
                 <label className="text-sm font-semibold text-neutral-text">
                   Pilih Periode <span className="text-red-500">*</span>
                 </label>
-                <button
-                  type="button"
-                  disabled={loadingPeriode}
-                  onClick={() => setPeriodOpen((open) => !open)}
-                  className={`group flex min-h-14 w-full items-center gap-3 rounded-xl border-2 bg-white px-4 text-left transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:shadow-md disabled:cursor-not-allowed disabled:bg-neutral-50 disabled:text-neutral-muted ${
-                    errors.period_id ? 'border-red-300' : periodOpen ? 'border-primary ring-4 ring-primary/20 shadow-sm' : 'border-neutral-200'
-                  }`}
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
-                    <CalendarDays size={19} />
-                  </span>
-                  <span className={`min-w-0 flex-1 truncate text-sm font-bold ${selectedPeriod ? 'text-neutral-text' : 'text-neutral-muted'}`}>
-                    {loadingPeriode 
-                      ? 'Memuat periode...' 
-                      : selectedPeriod 
-                        ? `${formatDate(selectedPeriod.start_date)} - ${formatDate(selectedPeriod.end_date)} (Sisa Kuota: ${selectedPeriod.remaining_quota})`
-                        : 'Pilih periode magang'
-                    }
-                  </span>
-                  <ChevronDown
-                    size={19}
-                    className={`shrink-0 text-primary transition-transform duration-200 ${periodOpen ? 'rotate-180' : ''}`}
-                  />
-                </button>
+                {loadingPeriode ? (
+                  <Skeleton className="h-[60px] w-full rounded-xl" />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setPeriodOpen((open) => !open)}
+                    className={`group flex min-h-14 w-full items-center gap-3 rounded-xl border-2 bg-white px-4 text-left transition-all duration-300 hover:border-primary hover:bg-primary/5 hover:shadow-md ${
+                      errors.period_id ? 'border-red-300' : periodOpen ? 'border-primary ring-4 ring-primary/20 shadow-sm' : 'border-neutral-200'
+                    }`}
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-110">
+                      <CalendarDays size={19} />
+                    </span>
+                    <span className={`min-w-0 flex-1 truncate text-sm font-bold ${selectedPeriod ? 'text-neutral-text' : 'text-neutral-muted'}`}>
+                      {selectedPeriod 
+                          ? `${formatDate(selectedPeriod.start_date)} - ${formatDate(selectedPeriod.end_date)} (Sisa Kuota: ${selectedPeriod.remaining_quota})`
+                          : 'Pilih periode magang'
+                      }
+                    </span>
+                    <ChevronDown
+                      size={19}
+                      className={`shrink-0 text-primary transition-transform duration-200 ${periodOpen ? 'rotate-180' : ''}`}
+                    />
+                  </button>
+                )}
 
                 {periodOpen && (
                   <div className="absolute left-0 right-0 top-full z-20 mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl transition-all">

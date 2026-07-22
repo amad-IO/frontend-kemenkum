@@ -5,6 +5,7 @@ import type { Submission } from '../../pages/admin/ListPendaftar'
 import DateRangePickerField from '../public/forms/DateRangePickerField'
 import api from '../../services/api'
 import CertificateModal from './CertificateModal'
+import { Skeleton } from '../ui/Skeleton'
 import {
     publishSubmissionChatSyncEvent,
     subscribeSubmissionChatSyncEvents,
@@ -924,7 +925,15 @@ const DetailPendaftarModal = ({
 
                             <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-bg p-4">
                                 {loadingMessages && messages.length === 0 ? (
-                                    <p className="text-center text-xs font-semibold text-neutral-muted">Memuat pesan...</p>
+                                    <div className="flex flex-col gap-3 py-2">
+                                        {[1, 2, 3, 4].map((i) => (
+                                            <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
+                                                <Skeleton
+                                                    className={`h-14 ${i % 2 === 0 ? 'w-2/3 rounded-2xl rounded-bl-md' : 'w-1/2 rounded-2xl rounded-br-md'}`}
+                                                />
+                                            </div>
+                                        ))}
+                                    </div>
                                 ) : messages.length === 0 ? (
                                     <div className="rounded-2xl bg-white p-4 text-center text-xs font-semibold text-neutral-muted shadow-sm">
                                         Belum ada pesan diskusi.

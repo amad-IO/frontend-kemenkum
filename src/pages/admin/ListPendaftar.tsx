@@ -9,6 +9,7 @@ import CustomSelect from '../../components/admin/CustomSelect'
 import { useAdminChat } from '../../contexts/AdminChatContext'
 import { publishSubmissionChatSyncEvent, subscribeSubmissionChatSyncEvents } from '../../shared/submissionChatSync'
 import { useConfirm } from '../../context/ConfirmContext'
+import { Skeleton } from '../../components/ui/Skeleton'
 
 export interface Submission {
     id: number
@@ -440,9 +441,43 @@ const ListPendaftarPage = () => {
             {/* ── Data Table ── */}
             <div className="overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
                 {loading ? (
-                    <div className="py-16 text-center">
-                        <RefreshCw size={30} className="mx-auto animate-spin text-primary" />
-                        <p className="mt-3 text-sm text-neutral-muted">Memuat data pendaftar...</p>
+                    <div className="w-full">
+                        <div className="flex border-b border-neutral-border bg-neutral-bg px-5 py-3">
+                            <Skeleton className="h-4 w-[22%]" />
+                            <Skeleton className="h-4 w-[26%]" />
+                            <Skeleton className="h-4 w-[16%]" />
+                            <Skeleton className="h-4 w-[12%]" />
+                            <Skeleton className="h-4 w-[10%]" />
+                            <Skeleton className="h-4 w-[14%]" />
+                        </div>
+                        <div className="p-0">
+                            {[1, 2, 3, 4, 5, 6].map((i) => (
+                                <div key={i} className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
+                                    <div className="w-[22%] pr-4">
+                                        <Skeleton className="h-4 w-3/4 mb-2" />
+                                        <Skeleton className="h-3 w-1/2" />
+                                    </div>
+                                    <div className="w-[26%] pr-4">
+                                        <Skeleton className="h-4 w-16 mb-2 rounded-full" />
+                                        <Skeleton className="h-3 w-5/6" />
+                                    </div>
+                                    <div className="w-[16%] pr-4">
+                                        <Skeleton className="h-3 w-24 mb-1" />
+                                        <Skeleton className="h-3 w-24" />
+                                    </div>
+                                    <div className="w-[12%] pr-4">
+                                        <Skeleton className="h-5 w-20 rounded-full" />
+                                    </div>
+                                    <div className="w-[10%] flex justify-center pr-4">
+                                        <Skeleton variant="circular" className="h-9 w-9" />
+                                    </div>
+                                    <div className="w-[14%] flex justify-end gap-2">
+                                        <Skeleton className="h-8 w-20 rounded-lg" />
+                                        <Skeleton className="h-8 w-20 rounded-lg" />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 ) : paginatedData.length === 0 ? (
                     <div className="py-16 text-center">

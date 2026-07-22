@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Settings as SettingsIcon, Save, Loader2, User, Briefcase } from 'lucide-react'
 import { getSettings, updateSettings, SettingsData } from '../../services/settingsService'
+import { Skeleton } from '../../components/ui/Skeleton'
 
 const Settings = () => {
   const [settings, setSettings] = useState<SettingsData>({
@@ -52,17 +53,17 @@ const Settings = () => {
 
   if (loading) {
     return (
-      <div className="mb-8 max-w-2xl animate-pulse">
+      <div className="mb-8 max-w-2xl">
         <div className="mb-5">
-          <div className="h-6 w-64 rounded-md bg-neutral-bg" />
-          <div className="mt-2 h-4 w-full max-w-md rounded-md bg-neutral-bg" />
+          <Skeleton className="h-6 w-64 mb-2" />
+          <Skeleton className="h-4 w-full max-w-md" />
         </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
-            <div className="h-5 w-32 rounded-md bg-neutral-bg" />
-            <div className="h-[42px] w-full rounded-xl bg-neutral-bg" />
+            <Skeleton className="h-5 w-32" />
+            <Skeleton className="h-[42px] w-full rounded-xl" />
           </div>
-          <div className="h-[42px] w-28 shrink-0 rounded-xl bg-neutral-bg" />
+          <Skeleton className="h-[42px] w-28 shrink-0 rounded-xl" />
         </div>
       </div>
     )
