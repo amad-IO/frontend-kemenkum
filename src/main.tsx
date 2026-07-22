@@ -6,6 +6,7 @@ import 'react-toastify/dist/ReactToastify.css'
 import './index.css'
 import AppRouter from './router/index'
 import { ConfirmProvider } from './context/ConfirmContext'
+import ErrorBoundary from './components/ErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -18,17 +19,19 @@ const queryClient = new QueryClient({
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <ConfirmProvider>
-        <AppRouter />
-        <ToastContainer
-          position="top-right"
-          autoClose={3000}
-          hideProgressBar={false}
-          pauseOnHover
-          theme="light"
-        />
-      </ConfirmProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <ConfirmProvider>
+          <AppRouter />
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            pauseOnHover
+            theme="light"
+          />
+        </ConfirmProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   </StrictMode>
 )
