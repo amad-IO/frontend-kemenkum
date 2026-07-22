@@ -1,7 +1,5 @@
-import { useEffect, useRef } from 'react'
-import { AlertTriangle, LogOut, Trash2, CheckCircle2, Monitor, X } from 'lucide-react'
-
-// ── Types ─────────────────────────────────────────────────────────────────────
+import { useEffect, useRef, type ReactNode } from 'react'
+import { AlertTriangle, CheckCircle2, LogOut, Trash2, X } from 'lucide-react'
 
 export type ConfirmVariant = 'danger' | 'warning' | 'default' | 'logout'
 
@@ -19,118 +17,94 @@ interface ConfirmationDialogProps extends ConfirmOptions {
   onCancel: () => void
 }
 
-// ── Variant config ─────────────────────────────────────────────────────────────
-
 const variantConfig: Record<
   ConfirmVariant,
   {
-    glowColor: string
-    illustration: React.ReactNode
+    icon: ReactNode
+    iconClass: string
+    accentClass: string
     confirmBtnClass: string
     defaultConfirmText: string
   }
 > = {
   danger: {
-    glowColor: 'bg-red-400/20',
-    illustration: (
-      <div className="relative flex h-32 w-32 items-center justify-center">
-        {/* Decorative background shapes */}
-        <div className="absolute inset-2 rounded-[2rem] bg-red-50 rotate-6 transition-transform group-hover:rotate-12" />
-        <div className="absolute inset-2 rounded-[2rem] bg-red-100/50 -rotate-3 transition-transform group-hover:-rotate-6" />
-        {/* Main Icon */}
-        <Trash2 size={56} className="text-red-500 relative z-10 drop-shadow-sm" strokeWidth={1.2} />
-        {/* Badge */}
-        <div className="absolute bottom-1 -right-1 flex h-10 w-10 items-center justify-center rounded-full border-[3px] border-white bg-red-500 text-white shadow-sm z-20">
-          <AlertTriangle size={18} strokeWidth={2.5} />
-        </div>
-      </div>
-    ),
-    confirmBtnClass: 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/30 text-white',
-    defaultConfirmText: 'Delete',
+    icon: <Trash2 size={25} strokeWidth={2} />,
+    iconClass: 'bg-red-50 text-red-600 ring-red-100',
+    accentClass: 'bg-red-500',
+    confirmBtnClass: 'bg-red-600 text-white shadow-red-600/20 hover:bg-red-700 focus-visible:ring-red-200',
+    defaultConfirmText: 'Ya, Hapus',
   },
   warning: {
-    glowColor: 'bg-amber-400/20',
-    illustration: (
-      <div className="relative flex h-32 w-32 items-center justify-center">
-        <div className="absolute inset-2 rounded-full bg-amber-50" />
-        <div className="absolute inset-4 rounded-full bg-amber-100/60" />
-        <Monitor size={56} className="text-neutral-700 relative z-10 drop-shadow-sm" strokeWidth={1.2} />
-        <div className="absolute -bottom-1 -right-2 flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-white bg-red-500 text-white shadow-sm z-20">
-          <X size={20} strokeWidth={2.5} />
-        </div>
-      </div>
-    ),
-    confirmBtnClass: 'bg-black hover:bg-neutral-800 shadow-lg shadow-black/20 text-white',
-    defaultConfirmText: 'Yes',
+    icon: <AlertTriangle size={25} strokeWidth={2} />,
+    iconClass: 'bg-amber-50 text-amber-600 ring-amber-100',
+    accentClass: 'bg-amber-500',
+    confirmBtnClass: 'bg-amber-500 text-white shadow-amber-500/20 hover:bg-amber-600 focus-visible:ring-amber-200',
+    defaultConfirmText: 'Ya, Lanjutkan',
   },
   logout: {
-    glowColor: 'bg-primary/10',
-    illustration: (
-      <div className="relative flex h-32 w-32 items-center justify-center">
-        <div className="absolute inset-2 rounded-[2rem] bg-primary/5 -rotate-6" />
-        <div className="absolute inset-2 rounded-[2rem] bg-primary/10 rotate-3" />
-        <LogOut size={56} className="text-primary relative z-10 drop-shadow-sm ml-3" strokeWidth={1.2} />
-      </div>
-    ),
-    confirmBtnClass: 'bg-primary hover:bg-primary-dark shadow-lg shadow-primary/30 text-white',
-    defaultConfirmText: 'Keluar',
+    icon: <LogOut size={25} strokeWidth={2} />,
+    iconClass: 'bg-primary/10 text-primary ring-primary/10',
+    accentClass: 'bg-primary',
+    confirmBtnClass: 'bg-primary text-white shadow-primary/20 hover:bg-primary-dark focus-visible:ring-primary/20',
+    defaultConfirmText: 'Ya, Keluar',
   },
   default: {
-    glowColor: 'bg-green-400/20',
-    illustration: (
-      <div className="relative flex h-32 w-32 items-center justify-center">
-        <div className="absolute inset-2 rounded-full bg-green-50" />
-        <div className="absolute inset-4 rounded-full bg-green-100/60" />
-        <Monitor size={56} className="text-neutral-700 relative z-10 drop-shadow-sm" strokeWidth={1.2} />
-        <div className="absolute -bottom-1 -right-2 flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-white bg-green-500 text-white shadow-sm z-20">
-          <CheckCircle2 size={20} strokeWidth={2.5} />
-        </div>
-      </div>
-    ),
-    confirmBtnClass: 'bg-black hover:bg-neutral-800 shadow-lg shadow-black/20 text-white',
-    defaultConfirmText: 'Yes',
+    icon: <CheckCircle2 size={25} strokeWidth={2} />,
+    iconClass: 'bg-emerald-50 text-emerald-600 ring-emerald-100',
+    accentClass: 'bg-emerald-500',
+    confirmBtnClass: 'bg-primary text-white shadow-primary/20 hover:bg-primary-dark focus-visible:ring-primary/20',
+    defaultConfirmText: 'Ya, Konfirmasi',
   },
 }
-
-// ── Component ──────────────────────────────────────────────────────────────────
 
 const ConfirmationDialog = ({
   isOpen,
   title,
   message,
   confirmText,
-  cancelText = 'Cancel',
+  cancelText = 'Batal',
   variant = 'default',
   onConfirm,
   onCancel,
 }: ConfirmationDialogProps) => {
-  const cancelRef  = useRef<HTMLButtonElement>(null)
+  const cancelRef = useRef<HTMLButtonElement>(null)
   const confirmRef = useRef<HTMLButtonElement>(null)
-  const config     = variantConfig[variant]
+  const config = variantConfig[variant]
 
-  // ── Focus trap + ESC ───────────────────────────────────────────────────────
   useEffect(() => {
     if (!isOpen) return
 
-    const timer = setTimeout(() => cancelRef.current?.focus(), 60)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    const timer = window.setTimeout(() => cancelRef.current?.focus(), 60)
 
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { onCancel(); return }
+    const handleKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        onCancel()
+        return
+      }
 
-      if (e.key === 'Tab') {
+      if (event.key === 'Tab') {
         const nodes = [cancelRef.current, confirmRef.current].filter(Boolean) as HTMLElement[]
         const first = nodes[0]
-        const last  = nodes[nodes.length - 1]
-        if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault(); last.focus()
-        } else if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault(); first.focus()
+        const last = nodes[nodes.length - 1]
+
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first.focus()
         }
       }
     }
 
     document.addEventListener('keydown', handleKey)
-    return () => { document.removeEventListener('keydown', handleKey); clearTimeout(timer) }
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      window.clearTimeout(timer)
+      document.body.style.overflow = previousOverflow
+    }
   }, [isOpen, onCancel])
 
   if (!isOpen) return null
@@ -143,62 +117,53 @@ const ConfirmationDialog = ({
       aria-describedby="confirm-desc"
       className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
     >
-      {/* ── Animated backdrop ── */}
-      <div
-        className="absolute inset-0 bg-neutral-900/40 backdrop-blur-[3px] animate-backdrop-in"
+      <button
+        type="button"
+        className="absolute inset-0 h-full w-full cursor-default bg-neutral-900/45 backdrop-blur-[2px] animate-backdrop-in"
         onClick={onCancel}
-        aria-hidden="true"
+        aria-label="Tutup dialog"
+        tabIndex={-1}
       />
 
-      {/* ── Dialog card ── */}
-      <div className="relative w-full max-w-[360px] overflow-hidden rounded-[36px] bg-white shadow-2xl animate-dialog-in text-center p-8">
-        
-        {/* ── Radial Glow Top ── */}
-        <div className={`absolute -top-24 left-1/2 h-48 w-48 -translate-x-1/2 rounded-full blur-[40px] opacity-80 pointer-events-none ${config.glowColor}`} />
+      <div className="relative w-full max-w-[430px] overflow-hidden rounded-2xl border border-white/70 bg-white text-left shadow-[0_24px_70px_-18px_rgba(33,29,27,0.38)] animate-dialog-in">
+        <div className={`absolute inset-x-0 top-0 h-1 ${config.accentClass}`} />
 
-        {/* ── Header ── */}
-        <h2
-          id="confirm-title"
-          className="relative z-10 text-[22px] font-bold text-neutral-800 tracking-tight mb-8"
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Tutup"
+          className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full text-neutral-muted transition hover:bg-neutral-soft hover:text-neutral-text focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
         >
-          {title}
-        </h2>
+          <X size={19} />
+        </button>
 
-        {/* ── Illustration Area ── */}
-        <div className="relative z-10 flex justify-center mb-8 group">
-          {config.illustration}
+        <div className="px-6 pb-5 pt-7 sm:px-7 sm:pt-8">
+          <div className={`mb-5 grid h-14 w-14 place-items-center rounded-2xl ring-1 ${config.iconClass}`}>
+            {config.icon}
+          </div>
+
+          <h2 id="confirm-title" className="pr-10 text-xl font-extrabold tracking-tight text-neutral-text sm:text-[22px]">
+            {title}
+          </h2>
+          <p id="confirm-desc" className="mt-2.5 text-sm font-medium leading-6 text-neutral-subtle">
+            {message}
+          </p>
         </div>
 
-        {/* ── Message ── */}
-        <p
-          id="confirm-desc"
-          className="relative z-10 text-[15px] font-medium text-neutral-600 leading-snug mb-10 px-2"
-        >
-          {message}
-        </p>
-
-        {/* ── Actions ── */}
-        <div className="relative z-10 flex items-center justify-center gap-3 sm:gap-4">
-          {/* Cancel */}
+        <div className="flex flex-col-reverse gap-2.5 border-t border-neutral-border/70 bg-neutral-soft/70 px-6 py-4 sm:flex-row sm:justify-end sm:px-7">
           <button
             ref={cancelRef}
+            type="button"
             onClick={onCancel}
-            className="flex-1 rounded-full bg-neutral-400/20 px-4 py-3.5 text-[15px] font-bold text-neutral-600 transition-colors hover:bg-neutral-400/30 focus:outline-none focus:ring-4 focus:ring-neutral-200"
+            className="min-h-11 rounded-xl border border-neutral-border bg-white px-5 text-sm font-bold text-neutral-text shadow-sm transition hover:border-neutral-muted hover:bg-neutral-bg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:min-w-[105px]"
           >
             {cancelText}
           </button>
-
-          {/* Confirm */}
           <button
             ref={confirmRef}
+            type="button"
             onClick={onConfirm}
-            className={`
-              flex-1 rounded-full px-4 py-3.5 text-[15px] font-bold
-              transition-all duration-200
-              active:scale-95
-              focus:outline-none focus:ring-4 focus:ring-black/10
-              ${config.confirmBtnClass}
-            `}
+            className={`min-h-11 rounded-xl px-5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 sm:min-w-[135px] ${config.confirmBtnClass}`}
           >
             {confirmText ?? config.defaultConfirmText}
           </button>
