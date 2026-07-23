@@ -11,7 +11,7 @@ import CustomSelect from '../../components/admin/CustomSelect'
 import { useConfirm } from '../../context/ConfirmContext'
 
 // @ts-ignore — Vite resolves ?url ke path lokal worker file
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.js?url'
+import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 
 // Set worker lokal (tidak perlu CDN, tidak kena CORS)
 pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
@@ -324,7 +324,7 @@ const CertificateSettingPage = () => {
 
             const ctx = canvas.getContext('2d')!
             // pdfjs v3: tidak perlu property 'canvas' di render params
-            await page.render({ canvasContext: ctx, viewport }).promise
+            await page.render({ canvasContext: ctx, viewport, canvas }).promise
 
             setPdfImageUrl(canvas.toDataURL('image/png'))
         } catch (err) {
