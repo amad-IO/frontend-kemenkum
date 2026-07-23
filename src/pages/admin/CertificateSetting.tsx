@@ -989,7 +989,7 @@ const CertificateSettingPage = () => {
                     <Award className="mx-auto mb-3 h-12 w-12 text-neutral-muted/50" />
                     <p className="text-sm font-semibold text-neutral-muted">Upload template PDF terlebih dahulu</p>
                     <p className="mt-1 text-xs text-neutral-muted/70">
-                        Design di Canva → Export sebagai PDF → Upload di sini
+                        Design di Canva , Export sebagai PDF , Upload di sini
                     </p>
                 </div>
             )}

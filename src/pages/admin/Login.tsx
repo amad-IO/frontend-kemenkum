@@ -82,7 +82,7 @@ const Login = () => {
               Gunakan Desktop atau Laptop
             </h1>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-neutral-500">
-              Panel admin Kemenkuham dirancang untuk layar yang lebih lebar.
+              Panel admin dirancang untuk layar yang lebih lebar.
               Buka halaman ini di <strong>komputer, laptop, atau tablet</strong> Anda.
             </p>
           </div>
