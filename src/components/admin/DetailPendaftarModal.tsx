@@ -40,7 +40,7 @@ const formatTime = (dateStr: string) =>
 interface Props {
     submission: Submission | null
     onClose: () => void
-    onStatusChange: (id: number, status: 'approved' | 'rejected') => void
+    onStatusChange: (id: number, status: 'approved' | 'rejected', rejection_note?: string, skipConfirm?: boolean) => void
     onDatesChange: (id: number, start_date: string, end_date: string) => void
     onDownload: (id: number, e: React.MouseEvent) => void
     onUploadPermit: (id: number, file: File, replace?: boolean) => Promise<boolean>
@@ -86,6 +86,8 @@ const DetailPendaftarModal = ({
     const [isGeneratingTemplate, setIsGeneratingTemplate] = useState(false)
     const [isGeneratingCertificate, setIsGeneratingCertificate] = useState(false)
     const [showCertificateModal, setShowCertificateModal] = useState(false)
+    const [showRejectForm, setShowRejectForm] = useState(false)
+    const [rejectionNote, setRejectionNote] = useState('')
     const permitInputRef = useRef<HTMLInputElement>(null)
     const messageListRef = useRef<HTMLDivElement>(null)
     const chatPanelRef = useRef<HTMLElement>(null)
@@ -133,6 +135,8 @@ const DetailPendaftarModal = ({
         setChatMinimized(false)
         setClientUnreadCount(0)
         setLatestApplicantMessageId(0)
+        setShowRejectForm(false)
+        setRejectionNote('')
         isSendingRef.current = false
     }, [submission?.id])
 
@@ -723,33 +727,75 @@ const DetailPendaftarModal = ({
                     </div>
 
                     <div className="flex items-center justify-end gap-3 rounded-b-2xl border-t border-neutral-border bg-neutral-bg px-6 py-4">
-                        <button
-                            onClick={onClose}
-                            className="rounded-xl px-4 py-2 text-sm font-bold text-neutral-subtle transition hover:bg-neutral-border"
-                        >
-                            Tutup
-                        </button>
+                        {showRejectForm ? (
+                            <div className="flex w-full flex-col gap-3">
+                                <div>
+                                    <label htmlFor="rejectionNote" className="mb-1 block text-xs font-bold text-neutral-text">
+                                        Catatan Penolakan (Opsional)
+                                    </label>
+                                    <textarea
+                                        id="rejectionNote"
+                                        rows={2}
+                                        value={rejectionNote}
+                                        onChange={(e) => setRejectionNote(e.target.value)}
+                                        placeholder="Berikan alasan mengapa permohonan ini ditolak..."
+                                        className="w-full rounded-xl border border-neutral-border bg-white px-3 py-2 text-sm font-semibold text-neutral-text placeholder:font-medium placeholder:text-neutral-400 focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500"
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-2">
+                                    <button
+                                        onClick={() => setShowRejectForm(false)}
+                                        disabled={isUpdating}
+                                        className="rounded-xl px-4 py-2 text-sm font-bold text-neutral-subtle transition hover:bg-neutral-border"
+                                    >
+                                        Batal
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            onStatusChange(submission.id, 'rejected', rejectionNote, true)
+                                            setShowRejectForm(false)
+                                        }}
+                                        disabled={isUpdating}
+                                        className="flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Konfirmasi Tolak
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={onClose}
+                                    className="rounded-xl px-4 py-2 text-sm font-bold text-neutral-subtle transition hover:bg-neutral-border"
+                                >
+                                    Tutup
+                                </button>
 
-                        {submission.status !== 'rejected' && (
-                            <button
-                                onClick={() => onStatusChange(submission.id, 'rejected')}
-                                disabled={isUpdating}
-                                className="flex items-center gap-2 rounded-xl bg-white border border-red-200 px-4 py-2 text-sm font-bold text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <XCircle size={16} />
-                                Tolak
-                            </button>
-                        )}
+                                {submission.status !== 'rejected' && (
+                                    <button
+                                        onClick={() => {
+                                            setRejectionNote(`Mohon maaf, permohonan ${submission.type} Anda belum dapat kami terima.`)
+                                            setShowRejectForm(true)
+                                        }}
+                                        disabled={isUpdating}
+                                        className="flex items-center gap-2 rounded-xl bg-white border border-red-200 px-4 py-2 text-sm font-bold text-red-600 shadow-sm transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <XCircle size={16} />
+                                        Tolak
+                                    </button>
+                                )}
 
-                        {submission.status !== 'approved' && (
-                            <button
-                                onClick={() => onStatusChange(submission.id, 'approved')}
-                                disabled={isUpdating}
-                                className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-card transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
-                            >
-                                <CheckCircle2 size={16} />
-                                Terima Peserta
-                            </button>
+                                {submission.status !== 'approved' && (
+                                    <button
+                                        onClick={() => onStatusChange(submission.id, 'approved')}
+                                        disabled={isUpdating}
+                                        className="flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-card transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        <CheckCircle2 size={16} />
+                                        Terima Peserta
+                                    </button>
+                                )}
+                            </>
                         )}
                     </div>
                 </div>

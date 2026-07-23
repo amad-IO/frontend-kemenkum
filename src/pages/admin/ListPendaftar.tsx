@@ -25,6 +25,7 @@ export interface Submission {
     letter_number: string
     phone_number: string
     status: 'pending' | 'approved' | 'rejected'
+    rejection_note?: string | null
     document_downloaded_at: string | null
     discussion_started_at: string | null
     permit_file_path: string | null
@@ -134,25 +135,27 @@ const ListPendaftarPage = () => {
     const [isStartingDiscussion, setIsStartingDiscussion] = useState(false)
 
     // Actions
-    const handleStatusChange = async (id: number, status: 'approved' | 'rejected') => {
+    const handleStatusChange = async (id: number, status: 'approved' | 'rejected', rejection_note?: string, skipConfirm = false) => {
         const isApproving = status === 'approved'
-        const ok = await confirm({
-            title: isApproving ? 'Terima permohonan ini?' : 'Tolak permohonan ini?',
-            message: isApproving
-                ? 'Status pendaftar akan diubah menjadi Diterima. Pastikan data sudah diperiksa sebelum dikonfirmasi.'
-                : 'Status pendaftar akan diubah menjadi Ditolak. Tindakan ini dapat diubah kembali jika diperlukan.',
-            variant: isApproving ? 'default' : 'danger',
-            confirmText: isApproving ? 'Ya, Terima' : 'Ya, Tolak',
-        })
-        if (!ok) return
+        if (!skipConfirm) {
+            const ok = await confirm({
+                title: isApproving ? 'Terima permohonan ini?' : 'Tolak permohonan ini?',
+                message: isApproving
+                    ? 'Status pendaftar akan diubah menjadi Diterima. Pastikan data sudah diperiksa sebelum dikonfirmasi.'
+                    : 'Status pendaftar akan diubah menjadi Ditolak. Tindakan ini dapat diubah kembali jika diperlukan.',
+                variant: isApproving ? 'default' : 'danger',
+                confirmText: isApproving ? 'Ya, Terima' : 'Ya, Tolak',
+            })
+            if (!ok) return
+        }
 
         try {
             setIsUpdating(true)
-            await api.patch(`/admin/submissions/${id}/status`, { status })
+            await api.patch(`/admin/submissions/${id}/status`, { status, rejection_note })
 
-            patchSubmission(id, { status })
+            patchSubmission(id, { status, rejection_note })
             if (selectedSubmission?.id === id) {
-                setSelectedSubmission(prev => prev ? { ...prev, status } : null)
+                setSelectedSubmission(prev => prev ? { ...prev, status, rejection_note } : null)
             }
 
             publishSubmissionChatSyncEvent({

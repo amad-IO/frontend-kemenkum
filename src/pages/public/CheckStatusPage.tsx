@@ -49,13 +49,19 @@ const stageStepMap: Record<EffectiveStage, number> = {
     announcement: 5,
 }
 
-const getStageMessage = (stage: EffectiveStage, status: FinalStatus, type: ProgramType) => {
+const getStageMessage = (stage: EffectiveStage, status: FinalStatus, type: ProgramType, rejectionNote?: string | null) => {
     if (stage === 'submitted') return 'Berkas berhasil dikirim.'
     if (stage === 'verification') return 'Berkas permohonan Anda telah masuk ke tahap verifikasi awal. Tim kami akan mengecek kelengkapan data pendaftaran Anda.'
     if (stage === 'document_review') return 'Berkas pendukung Anda sedang ditinjau oleh tim kami. Harap pantau halaman ini secara berkala.'
     if (stage === 'discussion') return 'Forum diskusi telah dibuka. Silakan gunakan fitur ini untuk berdiskusi dengan admin terkait pendaftaran Anda.'
     if (status === 'approved') return `Selamat, permohonan ${type} Anda diterima. Silakan unduh surat izin yang perlu dibawa ke Kementerian Hukum.`
-    return `Mohon maaf, permohonan ${type} Anda belum dapat kami terima.`
+    if (status === 'rejected') {
+        if (rejectionNote && rejectionNote.trim() !== '') {
+            return rejectionNote
+        }
+        return `Mohon maaf, permohonan ${type} Anda belum dapat kami terima.`
+    }
+    return ''
 }
 
 const getStatusLabel = (stage: EffectiveStage, status: FinalStatus) => {
@@ -92,6 +98,7 @@ const CheckStatusPage = () => {
     const [finalStatus, setFinalStatus] = useState<FinalStatus>('pending')
     const [programType, setProgramType] = useState<ProgramType>('magang')
     const [permitFileName, setPermitFileName] = useState<string | null>(null)
+    const [rejectionNote, setRejectionNote] = useState<string | null>(null)
     const [discussionStartedAt, setDiscussionStartedAt] = useState<string | null>(null)
     const [chatOpen, setChatOpen] = useState(false)
     const [chatMessage, setChatMessage] = useState('')
@@ -183,8 +190,9 @@ const CheckStatusPage = () => {
             setFinalStatus(status)
             setEffectiveStage(stage)
             setCurrentStep(stageStepMap[stage] ?? 2)
-            setStatusMessage(getStageMessage(stage, status, type))
+            setStatusMessage(getStageMessage(stage, status, type, data?.rejection_note))
             setPermitFileName(data?.permit_file_name ?? null)
+            setRejectionNote(data?.rejection_note ?? null)
             setDiscussionStartedAt(data?.discussion_started_at ?? null)
             setHasResult(true)
             setTimelineAnimationKey(prev => prev + 1)
@@ -263,7 +271,7 @@ const CheckStatusPage = () => {
                 setDiscussionStartedAt(event.discussionStartedAt)
                 setEffectiveStage('discussion')
                 setCurrentStep(4)
-                setStatusMessage(getStageMessage('discussion', finalStatus, programType))
+                setStatusMessage(getStageMessage('discussion', finalStatus, programType, rejectionNote))
                 setHasResult(true)
                 return
             }
@@ -273,7 +281,7 @@ const CheckStatusPage = () => {
                 const nextStage: EffectiveStage = event.status === 'pending' ? 'verification' : 'announcement'
                 setEffectiveStage(nextStage)
                 setCurrentStep(stageStepMap[nextStage])
-                setStatusMessage(getStageMessage(nextStage, event.status, programType))
+                setStatusMessage(getStageMessage(nextStage, event.status, programType, rejectionNote))
                 setHasResult(true)
                 return
             }
