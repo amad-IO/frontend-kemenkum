@@ -1,20 +1,22 @@
 import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
 import {
     Upload, Plus, Trash2, Save, Award, AlertCircle, Eye, EyeOff, Crosshair,
-    CheckCircle2, Loader2, GripVertical, ChevronDown, AlignLeft, AlignCenter, AlignRight
+    CheckCircle2, Loader2, GripVertical, ChevronDown, AlignLeft, AlignCenter, AlignRight,
+    Settings as SettingsIcon
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Draggable from 'react-draggable'
-import * as pdfjsLib from 'pdfjs-dist'
+import * as pdfjs from 'pdfjs-dist'
+// ?url: Vite meng-copy worker ke /assets/ dengan MIME type yang benar.
+// Gunakan pdfjs-dist v4.x — v5 punya regresi n.toHex bug pada PDF dari Canva.
+import pdfjsWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import api from '../../services/api'
 import CustomSelect from '../../components/admin/CustomSelect'
 import { useConfirm } from '../../context/ConfirmContext'
+import { Skeleton } from '../../components/ui/Skeleton'
 
-// @ts-ignore — Vite resolves ?url ke path lokal worker file
-import pdfjsWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
-
-// Set worker lokal (tidak perlu CDN, tidak kena CORS)
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorkerUrl
+// Set worker sekali di module level
+pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerSrc
 
 // ── Tipe Data ─────────────────────────────────────────────────────────────────
 interface CertField {
@@ -309,26 +311,26 @@ const CertificateSettingPage = () => {
         setPdfRendering(true)
         setPdfImageUrl(null)
         try {
-            // Gunakan axios agar token auth otomatis disertakan
             const response = await api.get(url, { responseType: 'arraybuffer' })
             const arrayBuffer: ArrayBuffer = response.data
 
-            const loadingTask = pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) })
-            const pdf         = await loadingTask.promise
-            const page        = await pdf.getPage(1)
-            const viewport    = page.getViewport({ scale: 2.0 })
+            const loadingTask = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) })
+            const pdf      = await loadingTask.promise
+            const page     = await pdf.getPage(1)
+            const viewport = page.getViewport({ scale: 2.0 })
 
-            const canvas    = document.createElement('canvas')
-            canvas.width    = viewport.width
-            canvas.height   = viewport.height
+            const canvas   = document.createElement('canvas')
+            canvas.width   = viewport.width
+            canvas.height  = viewport.height
 
-            const ctx = canvas.getContext('2d')!
-            // pdfjs v3: tidak perlu property 'canvas' di render params
-            await page.render({ canvasContext: ctx, viewport, canvas }).promise
+            const ctx = canvas.getContext('2d')
+            if (!ctx) throw new Error('Canvas 2D context tidak tersedia')
+
+            await page.render({ canvasContext: ctx, viewport }).promise
 
             setPdfImageUrl(canvas.toDataURL('image/png'))
-        } catch (err) {
-            console.error('PDF render error:', err)
+        } catch (err: any) {
+            console.error('PDF render error:', err?.name, err?.message, err)
             toast.error('Gagal merender preview PDF. Pastikan file PDF valid.')
         } finally {
             setPdfRendering(false)
@@ -550,11 +552,60 @@ const CertificateSettingPage = () => {
         }
     }
 
-    // ── Render ────────────────────────────────────────────────────────────────
+    // ── Render Skeleton saat loading ──────────────────────────────────────────
     if (loading) {
         return (
-            <div className="flex min-h-[60vh] items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="mx-auto max-w-6xl space-y-6 p-6">
+                {/* Header skeleton */}
+                <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10" variant="circular" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-48" />
+                        <Skeleton className="h-3 w-72" />
+                    </div>
+                </div>
+
+                {/* Main content skeleton: canvas + panel */}
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_340px]">
+                    {/* Canvas area */}
+                    <div className="space-y-3">
+                        {/* Toolbar */}
+                        <div className="flex items-center gap-2">
+                            <Skeleton className="h-9 w-32" />
+                            <Skeleton className="h-9 w-24" />
+                            <Skeleton className="h-9 w-24" />
+                            <div className="ml-auto flex gap-2">
+                                <Skeleton className="h-9 w-28" />
+                                <Skeleton className="h-9 w-28" />
+                            </div>
+                        </div>
+                        {/* Canvas placeholder */}
+                        <Skeleton className="w-full" style={{ aspectRatio: '1.414 / 1' }} />
+                    </div>
+
+                    {/* Right panel */}
+                    <div className="space-y-4">
+                        {/* Upload card */}
+                        <div className="rounded-2xl border border-neutral-border bg-neutral-card p-5 space-y-3">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-28 w-full" />
+                        </div>
+                        {/* Fields card */}
+                        <div className="rounded-2xl border border-neutral-border bg-neutral-card p-5 space-y-3">
+                            <Skeleton className="h-4 w-24" />
+                            {[1, 2, 3, 4].map(i => (
+                                <Skeleton key={i} className="h-10 w-full" />
+                            ))}
+                        </div>
+                        {/* Properties card */}
+                        <div className="rounded-2xl border border-neutral-border bg-neutral-card p-5 space-y-3">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-8 w-full" />
+                            <Skeleton className="h-8 w-full" />
+                            <Skeleton className="h-8 w-3/4" />
+                        </div>
+                    </div>
+                </div>
             </div>
         )
     }
@@ -564,23 +615,21 @@ const CertificateSettingPage = () => {
     const selectedFieldData = fields.find(field => field.id === selectedField) ?? null
 
     return (
-        <div className="mx-auto max-w-6xl space-y-6 p-6">
+        <div className="mx-auto max-w-6xl space-y-4 p-3 sm:space-y-6 sm:p-6">
             {/* ── Header ── */}
-            <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
-                    <Award size={22} />
-                </div>
-                <div>
-                    <h1 className="text-xl font-extrabold text-neutral-text">Pengaturan Sertifikat</h1>
-                    <p className="text-sm text-neutral-muted">
-                        Upload template PDF dari Canva, lalu atur posisi field secara visual
-                    </p>
-                </div>
+            <div>
+                <h2 className="text-lg font-bold text-neutral-text flex items-center gap-2">
+                    <SettingsIcon size={20} className="text-primary" />
+                    Pengaturan Sertifikat
+                </h2>
+                <p className="mt-1.5 text-sm text-neutral-muted leading-relaxed">
+                    Upload template PDF dari Canva, lalu atur posisi field secara visual
+                </p>
             </div>
 
             {/* ── Section 1: Upload Template ── */}
-            <div className="rounded-2xl border border-neutral-border bg-neutral-card p-6 shadow-sm">
-                <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-neutral-muted">
+            <div className="rounded-2xl border border-neutral-border bg-neutral-card p-3 shadow-sm sm:p-6">
+                <h2 className="mb-4 flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-primary">
                     <Upload size={14} />
                     Template PDF
                 </h2>
@@ -593,7 +642,7 @@ const CertificateSettingPage = () => {
                         className={`rounded-xl border transition-all ${
                             isDraggingOver
                                 ? 'border-primary bg-primary/5 px-4 py-4'
-                                : 'border-emerald-200 bg-emerald-50 px-4 py-3'
+                                : 'border-emerald-200 bg-emerald-50 px-3 py-3 sm:px-4'
                         }`}
                     >
                         {isDraggingOver ? (
@@ -602,24 +651,24 @@ const CertificateSettingPage = () => {
                                 <p className="text-sm font-semibold text-primary">Lepaskan PDF untuk mengganti template</p>
                             </div>
                         ) : (
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 text-sm text-emerald-700">
-                                    <CheckCircle2 size={16} />
-                                    <span className="font-semibold">Template aktif:</span>
-                                    <span className="font-mono text-xs">{templatePath.split('/').pop()}</span>
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                                <div className="flex min-w-0 items-center gap-2 text-sm text-emerald-700">
+                                    <CheckCircle2 size={16} className="shrink-0" />
+                                    <span className="shrink-0 font-semibold">Template aktif:</span>
+                                    <span className="truncate font-mono text-xs">{templatePath.split('/').pop()}</span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex shrink-0 items-center gap-2">
                                     <button
                                         onClick={() => fileInputRef.current?.click()}
                                         disabled={uploading || deleting}
-                                        className="rounded-lg border border-emerald-300 bg-white px-3 py-1.5 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
+                                        className="rounded-full border border-emerald-600 bg-transparent px-4 py-2 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50 disabled:opacity-50"
                                     >
                                         {uploading ? 'Mengupload...' : 'Ganti Template'}
                                     </button>
                                     <button
                                         onClick={handleDeleteTemplate}
                                         disabled={deleting || uploading}
-                                        className="flex items-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-50"
+                                        className="flex items-center gap-1.5 rounded-full border border-red-500 bg-red-500 px-4 py-2 text-xs font-bold text-white transition hover:bg-red-600 disabled:opacity-50"
                                     >
                                         {deleting
                                             ? <Loader2 size={13} className="animate-spin" />
@@ -684,17 +733,19 @@ const CertificateSettingPage = () => {
 
             {/* ── Section 2: Visual Editor ── */}
             {templateUrl && (
-                <div className="rounded-2xl border border-neutral-border bg-neutral-card p-6 shadow-sm">
-                    <div className="mb-4 flex items-center justify-between">
-                        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-neutral-muted">
+                <div className="rounded-2xl border border-neutral-border bg-neutral-card p-3 shadow-sm sm:p-6">
+                    {/* Toolbar: judul + tombol — wrap ke baris baru di mobile */}
+                    <div className="mb-4 flex flex-wrap items-center gap-2">
+                        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-primary">
                             <GripVertical size={14} />
                             Atur Posisi Field
                         </h2>
-                        <div className="flex items-center gap-2">
+                        {/* spacer mendorong tombol ke kanan di layar lebar */}
+                        <div className="flex flex-1 flex-wrap items-center justify-end gap-2">
                             <button
                                 type="button"
                                 onClick={() => setPreviewMode(value => !value)}
-                                className="flex items-center gap-1.5 rounded-xl border border-neutral-border bg-white px-3 py-2 text-xs font-semibold text-neutral-text"
+                                className="flex items-center gap-1.5 rounded-full border border-primary bg-transparent px-4 py-2 text-xs font-bold text-primary transition hover:bg-[#ebdcd5]"
                             >
                                 {previewMode ? <EyeOff size={14} /> : <Eye size={14} />}
                                 {previewMode ? 'Kembali Mengatur' : 'Lihat Hasil'}
@@ -703,7 +754,7 @@ const CertificateSettingPage = () => {
                               <button
                                   type="button"
                                   onClick={() => setShowGuides(value => !value)}
-                                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-semibold ${showGuides ? 'border-primary bg-primary/5 text-primary' : 'border-neutral-border bg-white text-neutral-text'}`}
+                                  className={`flex items-center gap-1.5 rounded-full border border-primary px-4 py-2 text-xs font-bold transition ${showGuides ? 'bg-[#ebdcd5] text-primary' : 'bg-transparent text-primary'}`}
                               >
                                   <Crosshair size={14} />
                                   Garis Tengah
@@ -714,7 +765,7 @@ const CertificateSettingPage = () => {
                                 <button
                                     onClick={() => setShowAddMenu(v => !v)}
                                     disabled={availableToAdd.length === 0}
-                                    className="flex items-center gap-1.5 rounded-xl border border-neutral-border bg-white px-3 py-2 text-xs font-semibold text-neutral-text shadow-sm transition hover:bg-neutral-bg disabled:cursor-not-allowed disabled:opacity-40"
+                                    className="flex items-center gap-1.5 rounded-full border border-primary bg-transparent px-4 py-2 text-xs font-bold text-primary shadow-sm transition hover:bg-[#ebdcd5] disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <Plus size={14} />
                                     Tambah Field
@@ -811,7 +862,7 @@ const CertificateSettingPage = () => {
                       </div>
 
                       <aside className="rounded-xl border border-neutral-border bg-neutral-bg p-4">
-                        <h3 className="mb-4 text-xs font-extrabold uppercase tracking-wider text-neutral-muted">Pengaturan Field</h3>
+                        <h3 className="mb-4 text-xs font-extrabold uppercase tracking-wider text-primary">Pengaturan Field</h3>
                         {selectedFieldData ? (
                           <div className="space-y-4">
                             <div>
@@ -878,7 +929,7 @@ const CertificateSettingPage = () => {
                                 <span className="text-xs font-mono">{selectedFieldData.font_color}</span>
                               </div>
                             </label>
-                            <button type="button" onClick={() => handleRemoveField(selectedFieldData.id)} className="flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 py-2 text-xs font-bold text-red-600 hover:bg-red-50"><Trash2 size={13} /> Hapus Field</button>
+                            <button type="button" onClick={() => handleRemoveField(selectedFieldData.id)} className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500 bg-red-500 py-2 text-xs font-bold text-white transition hover:bg-red-600"><Trash2 size={13} /> Hapus Field</button>
                           </div>
                         ) : (
                           <p className="text-xs leading-relaxed text-neutral-muted">Klik salah satu field pada sertifikat untuk mengatur teks, font, ukuran, alignment, dan warnanya.</p>
@@ -889,10 +940,10 @@ const CertificateSettingPage = () => {
                     {/* Daftar field aktif + font size editor */}
                     {fields.length > 0 && (
                         <div className="mt-4 rounded-xl border border-neutral-border bg-neutral-bg p-4">
-                            <p className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-muted">
+                            <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-primary">
                                 Field Aktif ({fields.length})
-                            </p>
-                            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            </h3>
+                            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                                 {fields.map(f => (
                                     <div
                                         key={f.id}

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation } from 'react-router-dom'
 import { ChevronRight, ClipboardEdit, FileSearch, CheckSquare, MessageCircle, Megaphone, Check, Download, Send, X, RefreshCw } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -93,9 +94,7 @@ const CheckStatusPage = () => {
     const [permitFileName, setPermitFileName] = useState<string | null>(null)
     const [discussionStartedAt, setDiscussionStartedAt] = useState<string | null>(null)
     const [chatOpen, setChatOpen] = useState(false)
-    const [messages, setMessages] = useState<DiscussionMessage[]>([])
     const [chatMessage, setChatMessage] = useState('')
-    const [loadingMessages, setLoadingMessages] = useState(false)
     const [sendingMessage, setSendingMessage] = useState(false)
     const [downloadingPermit, setDownloadingPermit] = useState(false)
     const [isRefreshingStatus, setIsRefreshingStatus] = useState(false)
@@ -104,10 +103,23 @@ const CheckStatusPage = () => {
     const [timelineAnimationKey, setTimelineAnimationKey] = useState(0)
     const messageListRef = useRef<HTMLDivElement>(null)
     const timelineStepRefs = useRef<Record<number, HTMLDivElement | null>>({})
-    const lastMessageIdRef = useRef<number>(0)
     const lastSentRef = useRef<number>(0)
     const isSendingRef = useRef<boolean>(false)    // hard lock: cegah double-send
-    const messagesLoadedRef = useRef<boolean>(false) // track apakah pesan sudah pernah di-load
+    
+    const queryClient = useQueryClient()
+    const { data: messages = [], isLoading: loadingMessages } = useQuery({
+        queryKey: ['discussion', submissionId],
+        queryFn: async () => {
+            if (!submissionId) return []
+            const res = await api.get(`/submissions/${submissionId}/messages`, {
+                params: { email: emailValue, nim: nimValue },
+            })
+            return (res.data?.data ?? []) as DiscussionMessage[]
+        },
+        enabled: chatOpen && !!submissionId, // Hanya fetch jika chat terbuka
+        staleTime: Infinity, // WebSocket yang akan mengupdate cache
+    })
+
     const statusLabel = getStatusLabel(effectiveStage, finalStatus)
     const statusColorClass = finalStatus === 'rejected' && effectiveStage === 'announcement'
         ? 'text-red-500'
@@ -154,9 +166,6 @@ const CheckStatusPage = () => {
             setApplicantAccount(null)
             setDiscussionStartedAt(null)
             setChatOpen(false)
-            setMessages([])
-            messagesLoadedRef.current = false  // reset agar bisa load ulang saat cari status baru
-            lastMessageIdRef.current = 0
         }
 
         try {
@@ -202,73 +211,7 @@ const CheckStatusPage = () => {
         }
     }
 
-    // Load SEMUA pesan — hanya sekali saat pertama buka chat
-    const loadMessages = async (force = false) => {
-        if (!submissionId) return
-        // Pakai ref (bukan state) agar guard selalu up-to-date walau closure stale
-        if (!force && messagesLoadedRef.current) return
-        try {
-            setLoadingMessages(true)
-            const res = await api.get(`/submissions/${submissionId}/messages`, {
-                params: { email: emailValue, nim: nimValue },
-            })
-            const msgs: DiscussionMessage[] = res.data?.data ?? []
-            setMessages(msgs)
-            messagesLoadedRef.current = true
-            if (msgs.length > 0) lastMessageIdRef.current = msgs[msgs.length - 1].id
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Gagal memuat pesan diskusi')
-        } finally {
-            setLoadingMessages(false)
-        }
-    }
 
-    // Poll HANYA PESAN BARU — efisien, tidak kirim ulang semua pesan
-    const pollNewMessages = async () => {
-        if (!submissionId) return
-        try {
-            const params: Record<string, unknown> = { email: emailValue, nim: nimValue }
-            if (lastMessageIdRef.current > 0) params.since = lastMessageIdRef.current
-            const res = await api.get(`/submissions/${submissionId}/messages`, { params })
-            const newMsgs: DiscussionMessage[] = res.data?.data ?? []
-            if (newMsgs.length > 0) {
-                setMessages(prev => {
-                    // Set ID yang sudah ada (hanya pesan real dari server, id > 0)
-                    const existingIds = new Set(prev.filter(m => m.id > 0).map(m => m.id))
-                    // Hapus optimistik (id < 0), tambah HANYA pesan yang belum ada
-                    const withoutOptimistic = prev.filter(m => m.id > 0)
-                    const trulyNew = newMsgs.filter(m => !existingIds.has(m.id))
-                    return trulyNew.length > 0 ? [...withoutOptimistic, ...trulyNew] : prev
-                })
-                lastMessageIdRef.current = newMsgs[newMsgs.length - 1].id
-            }
-        } catch {
-            // Silent — jangan ganggu UX jika polling gagal
-        }
-    }
-
-    // ─── Event WebSockets & Fallback Tab Aktif ───────────────────────────────────
-    // Pakai ref agar listener websocket tidak pakai stale closure
-    const pollRef = useRef(pollNewMessages)
-    useEffect(() => { pollRef.current = pollNewMessages })
-
-    useEffect(() => {
-        if (!chatOpen || !submissionId) return
-
-        // Jalankan segera saat chat dibuka (setelah loadMessages selesai)
-        const immediateTimer = window.setTimeout(() => pollRef.current(), 500)
-
-        // Fetch ulang segera saat tab aktif kembali
-        const handleVisibility = () => {
-            if (!document.hidden) pollRef.current()
-        }
-        document.addEventListener('visibilitychange', handleVisibility)
-
-        return () => {
-            window.clearTimeout(immediateTimer)
-            document.removeEventListener('visibilitychange', handleVisibility)
-        }
-    }, [chatOpen, submissionId])
 
     // ─── Listener Reverb WebSocket & Status Fallback ─────────────────────────────
     const pollStatusRef = useRef(runStatusSearch)
@@ -285,9 +228,15 @@ const CheckStatusPage = () => {
             pollStatusRef.current({ silent: true, keepResult: true })
         })
 
-        channel.listen('MessageSent', () => {
-            // Ketika ada pesan baru, fetch ulang pesan
-            pollRef.current()
+        channel.listen('MessageSent', (event: any) => {
+            if (event.message) {
+                queryClient.setQueryData<DiscussionMessage[]>(['discussion', submissionId], (old = []) => {
+                    if (old.some(m => m.id === event.message.id)) return old;
+                    return [...old.filter(m => m.id > 0), event.message]
+                })
+            } else {
+                queryClient.invalidateQueries({ queryKey: ['discussion', submissionId] })
+            }
         })
 
         // Fetch ulang saat tab aktif (fallback)
@@ -302,7 +251,7 @@ const CheckStatusPage = () => {
             channel.stopListening('MessageSent')
             echo.leaveChannel(`submissions.${submissionId}`)
         }
-    }, [hasResult, submissionId])
+    }, [hasResult, submissionId, queryClient])
 
     useEffect(() => {
         if (!submissionId) return
@@ -330,19 +279,14 @@ const CheckStatusPage = () => {
             }
 
             const incomingMessage = event.message
-            setMessages((prev) => {
-                if (prev.some((message) => message.id === incomingMessage.id)) {
-                    return prev
+            queryClient.setQueryData<DiscussionMessage[]>(['discussion', submissionId], (old = []) => {
+                if (old.some((message) => message.id === incomingMessage.id)) {
+                    return old
                 }
-
-                return [...prev.filter((message) => message.id > 0), incomingMessage]
+                return [...old.filter((message) => message.id > 0), incomingMessage]
             })
-
-            if (incomingMessage.id > lastMessageIdRef.current) {
-                lastMessageIdRef.current = incomingMessage.id
-            }
         })
-    }, [submissionId, finalStatus, programType])
+    }, [submissionId, finalStatus, programType, queryClient])
 
     useEffect(() => {
         if (!chatOpen) return
@@ -353,8 +297,6 @@ const CheckStatusPage = () => {
 
     const handleOpenDiscussion = async () => {
         setChatOpen(true)
-        // Hanya load jika belum ada pesan — polling akan handle update berikutnya
-        await loadMessages()
     }
 
     const handleSendMessage = async () => {
@@ -384,7 +326,8 @@ const CheckStatusPage = () => {
             created_at: new Date().toISOString(),
             status: 'sending',
         }
-        setMessages(prev => [...prev, optimisticMsg])
+        
+        queryClient.setQueryData<DiscussionMessage[]>(['discussion', submissionId], (old = []) => [...old, optimisticMsg])
         setChatMessage('') // kosongkan input seketika
 
         try {
@@ -394,30 +337,28 @@ const CheckStatusPage = () => {
                 nim: nimValue,
                 message,
             })
-            // Ganti pesan temp dengan data real dari server
-            // Jika polling sudah ambil pesan ini lebih dulu, map tidak mengubah apapun (aman)
             const serverMsg = res.data?.data as DiscussionMessage
-            setMessages(prev => {
-                const hasTemp = prev.some(m => m.id === tempId)
-                const alreadyAdded = prev.some(m => m.id === serverMsg?.id)
+            
+            queryClient.setQueryData<DiscussionMessage[]>(['discussion', submissionId], (old = []) => {
+                const hasTemp = old.some(m => m.id === tempId)
+                const alreadyAdded = old.some(m => m.id === serverMsg?.id)
                 if (hasTemp) {
-                    // Normal case: ganti optimistic dengan data server
-                    return prev.map(m => (m.id === tempId ? serverMsg : m))
+                    return old.map(m => (m.id === tempId ? serverMsg : m))
                 } else if (!alreadyAdded && serverMsg?.id) {
-                    // Polling belum ambil, tambah manual (buang optimistic jika masih ada)
-                    return [...prev.filter(m => m.id !== tempId), serverMsg]
+                    return [...old.filter(m => m.id !== tempId), serverMsg]
                 }
-                return prev.filter(m => m.id !== tempId) // buang optimistic yang tersisa
+                return old.filter(m => m.id !== tempId)
             })
-            if (serverMsg?.id) lastMessageIdRef.current = Math.max(lastMessageIdRef.current, serverMsg.id)
+
             publishSubmissionChatSyncEvent({
                 kind: 'message-sent',
                 submissionId,
                 message: serverMsg,
             })
         } catch (error: any) {
-            // Tandai gagal — jangan hapus pesannya
-            setMessages(prev => prev.map(m => (m.id === tempId ? { ...m, status: 'failed' } : m)))
+            queryClient.setQueryData<DiscussionMessage[]>(['discussion', submissionId], (old = []) => 
+                old.map(m => (m.id === tempId ? { ...m, status: 'failed' } : m))
+            )
             toast.error(error.response?.data?.message || 'Gagal mengirim pesan')
         } finally {
             setSendingMessage(false)
@@ -660,7 +601,7 @@ const CheckStatusPage = () => {
                                             placeholder="Email Ketua Kelompok"
                                             value={emailValue}
                                             onChange={(e) => setEmailValue(e.target.value)}
-                                            className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+                                            className="h-12 w-full rounded-2xl border border-neutral-border bg-white px-4 text-sm font-semibold text-neutral-text transition placeholder:text-neutral-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                                             required
                                         />
                                     </div>
@@ -670,14 +611,14 @@ const CheckStatusPage = () => {
                                             placeholder="NIM/Nomor Identitas"
                                             value={nimValue}
                                             onChange={(e) => setNimValue(e.target.value)}
-                                            className="h-12 w-full rounded-xl border border-neutral-border bg-neutral-soft px-4 text-sm font-semibold text-neutral-text transition focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/15"
+                                            className="h-12 w-full rounded-2xl border border-neutral-border bg-white px-4 text-sm font-semibold text-neutral-text transition placeholder:text-neutral-400 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/15"
                                             required
                                         />
                                     </div>
                                     <button
                                         type="submit"
                                         disabled={isSearching}
-                                        className="flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
+                                        className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-primary px-6 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70 sm:w-auto"
                                     >
                                         {isSearching ? (
                                             <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />

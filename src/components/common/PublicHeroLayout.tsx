@@ -41,7 +41,7 @@ const PublicHeroLayout = ({ children }: PublicHeroLayoutProps) => {
 
               <h1 className={`${isRegistration ? 'mt-4 text-3xl sm:text-5xl lg:text-6xl' : 'text-[clamp(1rem,3.8vw,2.35rem)]'} font-bold italic leading-[1.08] tracking-normal text-neutral-card drop-shadow-[0_2px_4px_rgba(0,0,0,0.24)]`}>
                 {titleLines.map((line) => (
-                  <span key={line} className="block whitespace-nowrap">
+                  <span key={line} className="block">
                     {line}
                   </span>
                 ))}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
-import { Settings as SettingsIcon, Save, Loader2, User, Briefcase } from 'lucide-react'
+import { Settings as SettingsIcon, Save, Loader2, User } from 'lucide-react'
+import { useQuery } from '@tanstack/react-query'
 import { getSettings, updateSettings, SettingsData } from '../../services/settingsService'
 import { Skeleton } from '../../components/ui/Skeleton'
 
@@ -8,23 +9,22 @@ const Settings = () => {
   const [settings, setSettings] = useState<SettingsData>({
     pejabat_name: '',
   })
-  const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  useEffect(() => {
-    fetchSettings()
-  }, [])
+  const { data: fetchedSettings, isLoading: loading } = useQuery({
+    queryKey: ['admin-settings'],
+    queryFn: async () => {
+      const data = await getSettings()
+      return data
+    },
+    staleTime: 5 * 60 * 1000,
+  })
 
-  const fetchSettings = async () => {
-    try {
-        const data = await getSettings()
-      setSettings(data)
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Gagal memuat pengaturan')
-    } finally {
-      setLoading(false)
+  useEffect(() => {
+    if (fetchedSettings) {
+      setSettings(fetchedSettings)
     }
-  }
+  }, [fetchedSettings])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSettings((prev) => ({
@@ -77,15 +77,16 @@ const Settings = () => {
           Pengaturan Template Surat
         </h2>
         <p className="mt-1.5 text-sm text-neutral-muted leading-relaxed">
-          Data ini akan digunakan untuk mengganti nama pejabat pada template surat. Pastikan data yang dimasukkan sudah benar.
+          Data ini akan digunakan untuk mengganti nama pejabat pada template surat.<br />
+          Pastikan data yang dimasukkan sudah benar.
         </p>
       </div>
 
       <form onSubmit={handleSubmit}>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-2">
-            <label className="text-sm font-bold text-neutral-text flex items-center gap-2">
-              <User size={16} className="text-neutral-muted" />
+            <label className="text-sm font-bold text-primary flex items-center gap-2">
+              <User size={16} className="text-primary" />
               Nama Pejabat
             </label>
             <input

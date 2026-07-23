@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'react-toastify'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
 import SubmissionTable from '../../components/admin/SubmissionTable'
@@ -43,24 +43,60 @@ const ListPendaftarPage = () => {
     const queryClient = useQueryClient()
     const confirm = useConfirm()
 
+    // Filters & Pagination
+    const [search, setSearch] = useState('')
+    const [debouncedSearch, setDebouncedSearch] = useState('')
+    const [typeFilter, setTypeFilter] = useState<string>('all')
+    const [statusFilter, setStatusFilter] = useState<string>('all')
+    const [currentPage, setCurrentPage] = useState(1)
+
+    // Modal State
+    const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
+
+    // Debounce search
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedSearch(search), 500)
+        return () => clearTimeout(timer)
+    }, [search])
+
+    // Reset pagination on filter change
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [debouncedSearch, typeFilter, statusFilter])
+
     // ── Data Fetching (TanStack Query) ───────────────────────────────────────
     const {
-        data: rawSubmissions = [],
+        data: serverData,
         isLoading: loading,
         isFetching: refreshing,
         refetch,
     } = useQuery({
-        queryKey: ['admin-submissions'],
+        queryKey: ['admin-submissions', currentPage, debouncedSearch, typeFilter, statusFilter],
         queryFn: async () => {
-            const res = await api.get('/admin/submissions')
-            const responseData = res.data?.data
-            return (Array.isArray(responseData) ? responseData : (responseData?.data ?? [])) as Submission[]
+            const res = await api.get('/admin/submissions', {
+                params: {
+                    page: currentPage,
+                    search: debouncedSearch || undefined,
+                    type: typeFilter !== 'all' ? typeFilter : undefined,
+                    status: statusFilter !== 'all' ? statusFilter : undefined
+                }
+            })
+            return res.data?.data
         },
-        staleTime: 8_000,         // data dianggap segar 8 detik
-        refetchInterval: 10_000,  // auto-refresh tiap 10 detik (ganti setInterval manual)
-        refetchIntervalInBackground: false, // hemat resource — berhenti saat tab hidden
+        staleTime: 8_000,
+        refetchInterval: 10_000,
+        refetchIntervalInBackground: false,
         throwOnError: false,
+        placeholderData: keepPreviousData,
     })
+
+    const rawSubmissions = (serverData?.data || []) as Submission[]
+    const paginationMeta = {
+        total: serverData?.total || 0,
+        last_page: serverData?.last_page || 1,
+        from: serverData?.from || 0,
+        to: serverData?.to || 0,
+    }
 
     // Terapkan patch lokal dari readReceipt (unread count) ke cache TanStack Query
     const [localPatches, setLocalPatches] = useState<Record<number, Partial<Submission>>>({})
@@ -87,7 +123,6 @@ const ListPendaftarPage = () => {
         [rawSubmissions, localPatches]
     )
 
-    // Helper: update submission di local patches (untuk hasil mutation)
     const patchSubmission = (id: number, patch: Partial<Submission>) => {
         setLocalPatches(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
     }
@@ -97,59 +132,6 @@ const ListPendaftarPage = () => {
     const [isDownloading, setIsDownloading] = useState(false)
     const [isUploadingPermit, setIsUploadingPermit] = useState(false)
     const [isStartingDiscussion, setIsStartingDiscussion] = useState(false)
-
-    // Filters
-    const [search, setSearch] = useState('')
-    const [typeFilter, setTypeFilter] = useState<string>('all')
-    const [statusFilter, setStatusFilter] = useState<string>('all')
-
-    // Pagination client-side
-    const [currentPage, setCurrentPage] = useState(1)
-    const itemsPerPage = 10
-
-    // Modal State
-    const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
-
-    // Derived data
-    const filteredData = useMemo(() => {
-        let result = submissions
-
-        // Filter Tipe
-        if (typeFilter !== 'all') {
-            result = result.filter(s => s.type === typeFilter)
-        }
-
-        // Filter Status
-        if (statusFilter !== 'all') {
-            result = result.filter(s => s.status === statusFilter)
-        }
-
-        // Search Name or Instansi
-        if (search.trim() !== '') {
-            const lowerSearch = search.toLowerCase()
-            result = result.filter(s => {
-                const ketua = s.member_1?.split('|')[0] ?? ''
-                return (
-                    ketua.toLowerCase().includes(lowerSearch) ||
-                    s.institution.toLowerCase().includes(lowerSearch) ||
-                    s.letter_number.toLowerCase().includes(lowerSearch)
-                )
-            })
-        }
-
-        return result
-    }, [submissions, search, typeFilter, statusFilter])
-
-    // Pagination calc
-    const totalPages = Math.ceil(filteredData.length / itemsPerPage)
-    const paginatedData = useMemo(() => {
-        const start = (currentPage - 1) * itemsPerPage
-        return filteredData.slice(start, start + itemsPerPage)
-    }, [filteredData, currentPage])
-
-    useEffect(() => {
-        setCurrentPage(1)
-    }, [search, typeFilter, statusFilter])
 
     // Actions
     const handleStatusChange = async (id: number, status: 'approved' | 'rejected') => {
@@ -368,29 +350,30 @@ const ListPendaftarPage = () => {
         <div className="flex flex-col gap-6">
 
             {/* ── Page Header ── */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                    <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Daftar Pendaftar</h1>
+                    <h1 className="text-xl font-extrabold tracking-tight text-neutral-text sm:text-2xl">Daftar Pendaftar</h1>
                     <p className="mt-0.5 text-sm text-neutral-muted">
                         Kelola semua data pendaftaran magang dan penelitian
                     </p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex shrink-0 gap-2">
                     <button
                         onClick={() => handleExportExcel()}
                         disabled={isExporting}
-                        className="flex items-center gap-2 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-card transition hover:bg-green-700 disabled:opacity-50"
+                        className="flex items-center gap-2 rounded-xl bg-green-600 px-3 py-2 text-xs font-semibold text-white shadow-card transition hover:bg-green-700 disabled:opacity-50 sm:px-4 sm:text-sm"
                     >
                         <FileSpreadsheet size={15} className={isExporting ? 'animate-pulse' : ''} />
-                        Export Excel
+                        <span className="hidden sm:inline">Export Excel</span>
+                        <span className="sm:hidden">Export</span>
                     </button>
                     <button
                         onClick={() => refetch()}
                         disabled={refreshing}
-                        className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
+                        className="flex items-center gap-2 rounded-full border border-neutral-border bg-white px-3 py-2 text-xs font-bold text-primary shadow-sm transition hover:bg-neutral-bg sm:px-4 sm:text-sm"
                     >
                         <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} />
-                        Refresh
+                        <span className="hidden sm:inline">Refresh</span>
                     </button>
                 </div>
             </div>
@@ -439,7 +422,7 @@ const ListPendaftarPage = () => {
             </div>
 
             {/* ── Data Table ── */}
-            <div className="overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
+            <div className="overflow-hidden rounded-2xl border border-neutral-border bg-[#f3efea] shadow-card">
                 {loading ? (
                     <div className="w-full">
                         <div className="flex border-b border-neutral-border bg-neutral-bg px-5 py-3">
@@ -479,13 +462,13 @@ const ListPendaftarPage = () => {
                             ))}
                         </div>
                     </div>
-                ) : paginatedData.length === 0 ? (
+                ) : submissions.length === 0 ? (
                     <div className="py-16 text-center">
                         <p className="text-sm font-semibold text-neutral-muted">Tidak ada data pendaftar yang ditemukan.</p>
                     </div>
                 ) : (
                     <SubmissionTable
-                        data={paginatedData}
+                        data={submissions}
                         onOpenDetail={handleOpenDetail}
                         onOpenChat={handleOpenChatFromTable}
                         onExportSingle={(id) => handleExportExcel(id)}
@@ -493,10 +476,10 @@ const ListPendaftarPage = () => {
                 )}
 
                 {/* ── Pagination Footer ── */}
-                {!loading && totalPages > 1 && (
+                {!loading && paginationMeta.last_page > 1 && (
                     <div className="flex items-center justify-between border-t border-neutral-border px-5 py-4">
-                        <span className="text-xs font-semibold text-neutral-muted">
-                            Menampilkan {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, filteredData.length)} dari {filteredData.length} data
+                        <span className="text-xs font-semibold text-primary">
+                            Menampilkan {paginationMeta.from} - {paginationMeta.to} dari {paginationMeta.total} data
                         </span>
                         <div className="flex items-center gap-1">
                             <button
@@ -510,8 +493,8 @@ const ListPendaftarPage = () => {
                                 {currentPage}
                             </div>
                             <button
-                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                                disabled={currentPage === totalPages}
+                                onClick={() => setCurrentPage(p => Math.min(paginationMeta.last_page, p + 1))}
+                                disabled={currentPage === paginationMeta.last_page}
                                 className="flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-border text-neutral-text hover:bg-neutral-bg disabled:opacity-50"
                             >
                                 <ChevronRight size={16} />

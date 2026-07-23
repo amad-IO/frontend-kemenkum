@@ -9,6 +9,7 @@ import {
   Award,
 } from 'lucide-react'
 import { toast } from 'react-toastify'
+import { useQueryClient } from '@tanstack/react-query'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
 import logo1 from '../../assets/logo 1.svg'
@@ -30,6 +31,43 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const navigate = useNavigate()
   const { logout, admin } = useAuthStore()
   const confirm = useConfirm()
+  const queryClient = useQueryClient()
+
+  const handleMouseEnter = (to: string) => {
+    if (to === '/admin/dashboard') {
+      import('../../pages/admin/Dashboard')
+      queryClient.prefetchQuery({
+        queryKey: ['dashboard-stats'],
+        queryFn: async () => {
+          const res = await api.get('/admin/dashboard/stats')
+          return res.data
+        },
+        staleTime: 60_000,
+      })
+    } else if (to === '/admin/pendaftar') {
+      import('../../pages/admin/ListPendaftar')
+      queryClient.prefetchQuery({
+        queryKey: ['admin-submissions', 1, '', 'all', 'all'],
+        queryFn: async () => {
+          const res = await api.get('/admin/submissions', { params: { page: 1 } })
+          return res.data?.data
+        },
+        staleTime: 8_000,
+      })
+    } else if (to === '/admin/sertifikat') {
+      import('../../pages/admin/CertificateSetting')
+    } else if (to === '/admin/program') {
+      import('../../pages/admin/KelolaProgram')
+      queryClient.prefetchQuery({
+        queryKey: ['admin-settings'],
+        queryFn: async () => {
+          const res = await api.get('/admin/settings')
+          return res.data?.data
+        },
+        staleTime: 300_000,
+      })
+    }
+  }
 
   const handleLogout = async () => {
     const ok = await confirm({
@@ -89,7 +127,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-neutral-muted">
+          <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-widest text-primary">
             Menu Utama
           </p>
           <ul className="flex flex-col gap-0.5">
@@ -98,6 +136,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                 <NavLink
                   to={to}
                   onClick={() => setSidebarOpen(false)}
+                  onMouseEnter={() => handleMouseEnter(to)}
                   className={({ isActive }) =>
                     `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition-all duration-150 ${
                       isActive
@@ -134,7 +173,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
           </div>
           <button
             onClick={handleLogout}
-            className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-red-500 transition-all hover:bg-red-50"
+            className="flex w-full items-center gap-2 rounded-xl bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-600"
           >
             <LogOut size={16} />
             Keluar

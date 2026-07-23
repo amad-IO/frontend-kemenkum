@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { BriefcaseBusiness, CalendarDays, Check, ChevronDown, ChevronRight, Loader2, Plus, Trash2, Upload, User, Users } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import {
   getPeriodeMagang,
   submitPendaftaran,
@@ -74,8 +75,11 @@ const sectionTitleClass = 'mb-5 flex items-center gap-2.5 text-lg font-extrabold
 
 const FormMagangPage = () => {
   const navigate = useNavigate()
-  const [periodeList, setPeriodeList] = useState<Periode[]>([])
-  const [loadingPeriode, setLoadingPeriode] = useState(true)
+  const { data: periodeList = [], isLoading: loadingPeriode, isError } = useQuery({
+    queryKey: ['active-periods', 'magang'],
+    queryFn: getPeriodeMagang,
+    staleTime: 5 * 60 * 1000,
+  })
   const [periodOpen, setPeriodOpen] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [fileName, setFileName] = useState<string | null>(null)
@@ -131,11 +135,10 @@ const FormMagangPage = () => {
   const letterDate = watch('letter_date')
 
   useEffect(() => {
-    getPeriodeMagang()
-      .then((data) => setPeriodeList(data))
-      .catch(() => toast.error('Gagal memuat daftar periode'))
-      .finally(() => setLoadingPeriode(false))
-  }, [])
+    if (isError) {
+      toast.error('Gagal memuat daftar periode')
+    }
+  }, [isError])
 
   const requiresStudyProgram = ['D3', 'D4', 'S1', 'S2', 'S3'].includes(educationLevel as string)
 

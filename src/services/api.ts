@@ -3,35 +3,25 @@ import axios from 'axios'
 // Dengan Vite proxy: semua /api → http://127.0.0.1:8000
 const api = axios.create({
   baseURL: '/api',
+  withCredentials: true, // Untuk Sanctum SPA (mengirim HTTP-Only cookies)
+  withXSRFToken: true, // Untuk Laravel CSRF Protection
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
 })
 
-// Request interceptor: tambahkan Bearer Token dari localStorage
+// Request interceptor sudah tidak butuh membaca localStorage karena menggunakan cookie otomatis
 api.interceptors.request.use((config) => {
-  const stored = localStorage.getItem('auth-storage')
-  if (stored) {
-    try {
-      const parsed = JSON.parse(stored)
-      const token = parsed?.state?.token
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`
-      }
-    } catch {
-      // Abaikan jika gagal parse
-    }
-  }
   return config
 })
 
-// Response interceptor: redirect ke login jika 401
+// Response interceptor: redirect ke login jika 401 atau 419 (CSRF mismatch)
+// Auth sepenuhnya via HTTP-Only Cookie (Sanctum SPA) — tidak ada token di localStorage
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('auth-storage')
+    if (error.response?.status === 401 || error.response?.status === 419) {
       window.location.href = '/admin/login'
     }
     return Promise.reject(error)

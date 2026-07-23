@@ -12,13 +12,19 @@ interface SubmissionTableProps {
 
 const StatusBadge = ({ status }: { status: Submission['status'] }) => {
   const map = {
-    pending: 'bg-yellow-100 text-yellow-700',
-    approved: 'bg-green-100 text-green-700',
-    rejected: 'bg-red-100 text-red-700',
+    pending: 'bg-yellow-50 text-yellow-700',
+    approved: 'bg-green-50 text-green-700',
+    rejected: 'bg-red-50 text-red-700',
+  }
+  const dotMap = {
+    pending: 'bg-yellow-500',
+    approved: 'bg-green-500',
+    rejected: 'bg-red-500',
   }
   const label = { pending: 'Menunggu', approved: 'Diterima', rejected: 'Ditolak' }
   return (
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${map[status]}`}>
+    <span className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold ${map[status]}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${dotMap[status]}`} />
       {label[status]}
     </span>
   )
@@ -108,13 +114,13 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
     <div className="overflow-x-auto">
       <table className="w-full text-sm table-fixed min-w-[940px]">
         <thead>
-          <tr className="border-b border-neutral-border bg-neutral-bg text-xs text-neutral-muted">
-            <th className="px-5 py-3 text-left font-semibold w-[22%]">Peserta</th>
-            <th className="px-5 py-3 text-left font-semibold w-[26%]">Program & Instansi</th>
-            <th className="px-5 py-3 text-left font-semibold w-[16%]">Tanggal Kegiatan</th>
-            <th className="px-5 py-3 text-left font-semibold w-[12%]">Status</th>
-            <th className="px-5 py-3 text-center font-semibold w-[10%]">Chat</th>
-            <th className="px-5 py-3 text-right font-semibold w-[14%]">Aksi</th>
+          <tr className="border-b border-neutral-border bg-transparent text-xs font-bold text-primary">
+            <th className="px-5 py-4 text-left w-[22%]">Peserta</th>
+            <th className="px-5 py-4 text-left w-[22%]">Program & Instansi</th>
+            <th className="px-5 py-4 text-left w-[16%]">Tanggal Kegiatan</th>
+            <th className="px-5 py-4 text-left w-[12%]">Status</th>
+            <th className="px-5 py-4 text-center w-[10%]">Chat</th>
+            <th className="px-5 py-4 text-center w-[18%]">Aksi Cepat</th>
           </tr>
         </thead>
         <tbody>
@@ -131,34 +137,38 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
               return (
                 <tr
                   key={s.id}
-                  className={`transition-colors ${
-                    i !== data.length - 1 ? 'border-b border-neutral-border' : ''
+                  className={`bg-transparent transition-colors hover:bg-[#faf9f8] ${
+                    i !== data.length - 1 ? 'border-b border-neutral-border/40' : ''
                   }`}
                 >
-                  <td className="px-5 py-3 truncate">
-                    <p className="font-extrabold text-neutral-text truncate">{getName(s.member_1)}</p>
-                    <p className="font-mono text-xs text-neutral-muted mt-0.5 truncate">{s.letter_number}</p>
+                  <td className="px-5 py-4 truncate">
+                    <div className="flex items-center gap-3">
+                      <div>
+                        <p className="font-bold text-neutral-text truncate">{getName(s.member_1)}</p>
+                        <p className="font-mono text-[11px] text-neutral-muted mt-0.5 truncate">{s.letter_number}</p>
+                      </div>
+                    </div>
                   </td>
 
-                  <td className="px-5 py-3 truncate">
+                  <td className="px-5 py-4 truncate">
                     <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-bold mb-1 ${
-                      s.type === 'magang' ? 'bg-primary/10 text-primary' : 'bg-secondary text-neutral-subtle'
+                      s.type === 'magang' ? 'bg-primary/10 text-primary' : 'bg-amber-100 text-amber-700'
                     }`}>
                       {s.type === 'magang' ? 'Magang' : 'Penelitian'}
                     </span>
-                    <p className="text-xs font-semibold text-neutral-subtle truncate">{s.institution}</p>
+                    <p className="text-xs font-semibold text-neutral-500 truncate">{s.institution}</p>
                   </td>
 
-                  <td className="px-5 py-3 text-xs text-neutral-subtle">
+                  <td className="px-5 py-4 text-xs font-medium text-neutral-500">
                     <p>{new Date(s.start_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })} -</p>
                     <p>{new Date(s.end_date).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
                   </td>
 
-                  <td className="px-5 py-3">
+                  <td className="px-5 py-4">
                     <StatusBadge status={s.status} />
                   </td>
 
-                  <td className="px-5 py-3 text-center">
+                  <td className="px-5 py-4 text-center">
                     <button
                       type="button"
                       title={hasUnread ? `${unreadCount} pesan belum dibaca` : 'Buka chat diskusi'}
@@ -174,9 +184,9 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
                       }}
                       className={`relative inline-flex h-9 w-9 items-center justify-center rounded-full border transition ${
                         hasUnread
-                          ? 'border-primary bg-white text-primary shadow-md shadow-primary/20 hover:bg-primary hover:text-white'
+                          ? 'border-primary bg-neutral-bg text-primary shadow-md shadow-primary/20 hover:bg-primary hover:text-white'
                           : chatIsReady
-                            ? 'border-primary/20 bg-white text-primary hover:bg-primary hover:text-white'
+                            ? 'border-primary/20 bg-neutral-bg text-primary hover:bg-primary hover:text-white'
                             : 'border-neutral-border bg-neutral-bg text-neutral-muted hover:border-primary/30 hover:text-primary'
                       }`}
                     >
@@ -189,15 +199,15 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
                     </button>
                   </td>
 
-                  <td className="px-5 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                  <td className="px-5 py-4 text-center">
+                    <div className="flex items-center justify-center gap-2">
                       {onExportSingle && (
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
                             onExportSingle(s.id)
                           }}
-                          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-green-50 px-3 py-1.5 text-xs font-bold text-green-700 transition hover:bg-green-100"
+                          className="flex h-8 items-center justify-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 text-xs font-bold text-emerald-700 transition hover:bg-emerald-500/20"
                           title="Export Excel"
                         >
                           <FileSpreadsheet size={14} /> Export
@@ -208,7 +218,7 @@ const SubmissionTable = ({ data, onOpenDetail, onOpenChat, onExportSingle }: Sub
                           e.stopPropagation()
                           onOpenDetail(s)
                         }}
-                        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-neutral-bg px-3 py-1.5 text-xs font-bold text-primary transition hover:bg-primary/10"
+                        className="flex h-8 items-center justify-center gap-1.5 rounded-full border border-neutral-200 bg-neutral-bg px-3 text-xs font-bold text-neutral-600 transition hover:bg-neutral-border/30"
                       >
                         <Eye size={14} /> Detail
                       </button>

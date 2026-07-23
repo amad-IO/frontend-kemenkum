@@ -5,9 +5,8 @@ type AdminUser = Record<string, unknown> | null
 
 type AuthStore = {
   admin: AdminUser
-  token: string | null
   isAuthenticated: boolean
-  setAuth: (admin: AdminUser, token: string) => void
+  setAuth: (admin: AdminUser) => void
   logout: () => void
 }
 
@@ -15,14 +14,13 @@ const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
       admin: null,
-      token: null,
       isAuthenticated: false,
 
-      setAuth: (admin, token) =>
-        set({ admin, token, isAuthenticated: true }),
+      setAuth: (admin) =>
+        set({ admin, isAuthenticated: true }),
 
       logout: () => {
-        set({ admin: null, token: null, isAuthenticated: false })
+        set({ admin: null, isAuthenticated: false })
       },
     }),
     {

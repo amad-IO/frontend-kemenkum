@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { X, MapPin, Briefcase, GraduationCap, Calendar, Phone, Mail, FileText, CheckCircle2, XCircle, Download, BookOpenText, Edit2, Upload, MessageCircle, Send, Minus, Award } from 'lucide-react'
 import { toast } from 'react-toastify'
 import type { Submission } from '../../pages/admin/ListPendaftar'
@@ -75,9 +76,7 @@ const DetailPendaftarModal = ({
     const [editStart, setEditStart] = useState('')
     const [editEnd, setEditEnd] = useState('')
     const [chatOpen, setChatOpen] = useState(false)
-    const [messages, setMessages] = useState<DiscussionMessage[]>([])
     const [chatMessage, setChatMessage] = useState('')
-    const [loadingMessages, setLoadingMessages] = useState(false)
     const [sendingMessage, setSendingMessage] = useState(false)
     const [chatPosition, setChatPosition] = useState<{ x: number; y: number } | null>(null)
     const [isDraggingChat, setIsDraggingChat] = useState(false)
@@ -93,9 +92,31 @@ const DetailPendaftarModal = ({
     const chatDragOffsetRef = useRef({ x: 0, y: 0 })
     const chatDragMovedRef = useRef(false)
     const chatSuppressClickRef = useRef(false)
-    const lastMessageIdRef = useRef<number>(0)      // untuk delta polling ?since=id
     const isSendingRef = useRef<boolean>(false)      // hard lock cegah double-send
-    const messagesLoadedRef = useRef<boolean>(false) // track apakah sudah initial load
+
+    const queryClient = useQueryClient()
+    const { data: messages = [], isLoading: loadingMessages } = useQuery({
+        queryKey: ['admin-discussion', submission?.id],
+        queryFn: async () => {
+            if (!submission) return []
+            const res = await api.get(`/admin/submissions/${submission.id}/messages`, {
+                params: { mark_read: 1 },
+            })
+            const allMessages = (res.data?.data ?? []) as DiscussionMessage[]
+            
+            const applicantMessages = allMessages.filter(m => m.sender_type === 'applicant')
+            const latestId = applicantMessages.reduce((max, m) => Math.max(max, Number(m.id)), 0)
+            setLatestApplicantMessageId(latestId)
+            
+            if (latestId > 0) writeSeenMessageId(submission.id, latestId)
+            setClientUnreadCount(0)
+            onMessagesRead?.(submission.id)
+            
+            return allMessages
+        },
+        enabled: chatOpen && !!submission,
+        staleTime: Infinity,
+    })
 
     useEffect(() => {
         if (!submission) return
@@ -106,17 +127,13 @@ const DetailPendaftarModal = ({
 
     useEffect(() => {
         setChatOpen(false)
-        setMessages([])
         setChatMessage('')
         setChatPosition(null)
         setIsDraggingChat(false)
         setChatMinimized(false)
         setClientUnreadCount(0)
         setLatestApplicantMessageId(0)
-        // Reset refs saat submission berubah
-        lastMessageIdRef.current = 0
         isSendingRef.current = false
-        messagesLoadedRef.current = false
     }, [submission?.id])
 
     useEffect(() => {
@@ -137,17 +154,12 @@ const DetailPendaftarModal = ({
             }
 
             const incomingMessage = event.message
-            setMessages((prev) => {
-                if (prev.some((message) => message.id === incomingMessage.id)) {
-                    return prev
+            queryClient.setQueryData<DiscussionMessage[]>(['admin-discussion', submission.id], (old = []) => {
+                if (old.some((message) => message.id === incomingMessage.id)) {
+                    return old
                 }
-
-                return [...prev.filter((message) => message.id > 0), incomingMessage]
+                return [...old.filter((message) => message.id > 0), incomingMessage]
             })
-
-            if (incomingMessage.id > lastMessageIdRef.current) {
-                lastMessageIdRef.current = incomingMessage.id
-            }
 
             if (incomingMessage.sender_type === 'applicant') {
                 setLatestApplicantMessageId(incomingMessage.id)
@@ -159,7 +171,7 @@ const DetailPendaftarModal = ({
                 }
             }
         })
-    }, [submission?.id, chatOpen, chatMinimized, onMessagesRead])
+    }, [submission?.id, chatOpen, chatMinimized, onMessagesRead, queryClient])
 
     useEffect(() => {
         if (!isDraggingChat || !chatOnly) return
@@ -272,108 +284,7 @@ const DetailPendaftarModal = ({
         }
     }
 
-    // ── Initial load semua pesan (hanya sekali saat chat pertama dibuka) ──────
-    const loadMessages = async (markRead = true) => {
-        if (!submission) return
-        if (messagesLoadedRef.current) return  // skip jika sudah loaded
 
-        try {
-            setLoadingMessages(true)
-            const res = await api.get(`/admin/submissions/${submission.id}/messages`, {
-                params: { mark_read: markRead ? 1 : 0 },
-            })
-            const allMessages = (res.data?.data ?? []) as DiscussionMessage[]
-            const applicantMessages = allMessages.filter(m => m.sender_type === 'applicant')
-            const latestId = applicantMessages.reduce((max, m) => Math.max(max, Number(m.id)), 0)
-
-            setMessages(allMessages)
-            messagesLoadedRef.current = true
-            if (allMessages.length > 0) lastMessageIdRef.current = allMessages[allMessages.length - 1].id
-            setLatestApplicantMessageId(latestId)
-
-            if (markRead) {
-                if (latestId > 0) writeSeenMessageId(submission.id, latestId)
-                setClientUnreadCount(0)
-                onMessagesRead?.(submission.id)
-            } else {
-                const seenId = Number(readSeenMessageIds()[String(submission.id)] ?? 0)
-                setClientUnreadCount(applicantMessages.filter(m => Number(m.id) > seenId).length)
-            }
-        } catch {
-            toast.error('Gagal memuat pesan diskusi')
-        } finally {
-            setLoadingMessages(false)
-        }
-    }
-
-    // ── Delta polling: hanya ambil pesan baru sejak lastMessageIdRef ───────────
-    const pollNewMessages = async (markRead = true) => {
-        if (!submission || !messagesLoadedRef.current) return
-
-        try {
-            const params: Record<string, unknown> = { mark_read: markRead ? 1 : 0 }
-            if (lastMessageIdRef.current > 0) params.since = lastMessageIdRef.current
-
-            const res = await api.get(`/admin/submissions/${submission.id}/messages`, { params })
-            const newMsgs = (res.data?.data ?? []) as DiscussionMessage[]
-
-            if (newMsgs.length > 0) {
-                setMessages(prev => {
-                    // Dedup: hanya tambah pesan yang belum ada (cegah duplikasi)
-                    const existingIds = new Set(prev.filter(m => m.id > 0).map(m => m.id))
-                    const withoutOptimistic = prev.filter(m => m.id > 0) // hapus optimistik (id < 0)
-                    const trulyNew = newMsgs.filter(m => !existingIds.has(m.id))
-                    return trulyNew.length > 0 ? [...withoutOptimistic, ...trulyNew] : prev
-                })
-                lastMessageIdRef.current = newMsgs[newMsgs.length - 1].id
-
-                // Update unread tracking dari pesan baru
-                const newApplicant = newMsgs.filter(m => m.sender_type === 'applicant')
-                if (newApplicant.length > 0) {
-                    const latestId = newApplicant[newApplicant.length - 1].id
-                    setLatestApplicantMessageId(latestId)
-                    if (markRead) {
-                        writeSeenMessageId(submission.id, latestId)
-                        setClientUnreadCount(0)
-                        onMessagesRead?.(submission.id)
-                    } else {
-                        setClientUnreadCount(prev => prev + newApplicant.length)
-                    }
-                }
-            }
-        } catch {
-            // Silent — jangan ganggu UX saat polling gagal
-        }
-    }
-
-    // ── Ref stabil agar interval tidak restart saat messages berubah ───────────
-    const pollRef = useRef(pollNewMessages)
-    useEffect(() => { pollRef.current = pollNewMessages })
-
-    // ── Polling saat chat terbuka (aktif) — setiap 2 detik ───────────────────
-    useEffect(() => {
-        if (!chatOpen || !submission || (chatOnly && chatMinimized)) return
-
-        loadMessages()  // initial load (di-skip jika sudah loaded)
-        const immediate = window.setTimeout(() => pollRef.current(true), 600)
-        const interval = window.setInterval(() => pollRef.current(true), 2000)
-        const handleVisibility = () => { if (!document.hidden) pollRef.current(true) }
-        document.addEventListener('visibilitychange', handleVisibility)
-
-        return () => {
-            window.clearTimeout(immediate)
-            window.clearInterval(interval)
-            document.removeEventListener('visibilitychange', handleVisibility)
-        }
-    }, [chatOpen, submission?.id, chatOnly, chatMinimized])
-
-    // ── Polling saat minimize — setiap 8 detik, tidak mark read ─────────────
-    useEffect(() => {
-        if (!chatOpen || !submission || !chatOnly || !chatMinimized) return
-
-        const interval = window.setInterval(() => pollRef.current(false), 8000)
-        return () => window.clearInterval(interval)
-    }, [chatOpen, submission?.id, chatOnly, chatMinimized])
 
     useEffect(() => {
         if (!chatOpen) return
@@ -456,29 +367,31 @@ const DetailPendaftarModal = ({
             status: 'sending',
         }
 
-        setMessages(prev => [...prev, optimisticMessage])
+        queryClient.setQueryData<DiscussionMessage[]>(['admin-discussion', submission.id], (old = []) => [...old, optimisticMessage])
         setChatMessage('')
 
         try {
             setSendingMessage(true)
             const res = await api.post(`/admin/submissions/${submission.id}/messages`, { message })
             const serverMsg = res.data?.data as DiscussionMessage
-            // Ganti optimistic dengan data server, atau buang jika polling sudah ambil
-            setMessages(prev => {
-                const hasTemp = prev.some(m => m.id === tempId)
-                const alreadyAdded = prev.some(m => m.id === serverMsg?.id)
-                if (hasTemp) return prev.map(m => m.id === tempId ? serverMsg : m)
-                if (!alreadyAdded && serverMsg?.id) return [...prev.filter(m => m.id !== tempId), serverMsg]
-                return prev.filter(m => m.id !== tempId)
+            
+            queryClient.setQueryData<DiscussionMessage[]>(['admin-discussion', submission.id], (old = []) => {
+                const hasTemp = old.some(m => m.id === tempId)
+                const alreadyAdded = old.some(m => m.id === serverMsg?.id)
+                if (hasTemp) return old.map(m => m.id === tempId ? serverMsg : m)
+                if (!alreadyAdded && serverMsg?.id) return [...old.filter(m => m.id !== tempId), serverMsg]
+                return old.filter(m => m.id !== tempId)
             })
-            if (serverMsg?.id) lastMessageIdRef.current = Math.max(lastMessageIdRef.current, serverMsg.id)
+            
             publishSubmissionChatSyncEvent({
                 kind: 'message-sent',
                 submissionId: submission.id,
                 message: serverMsg,
             })
         } catch (error: any) {
-            setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'failed' } : m))
+            queryClient.setQueryData<DiscussionMessage[]>(['admin-discussion', submission.id], (old = []) => 
+                old.map(m => m.id === tempId ? { ...m, status: 'failed' } : m)
+            )
             toast.error(error.response?.data?.message || 'Gagal mengirim pesan')
         } finally {
             setSendingMessage(false)

@@ -131,6 +131,15 @@
   box-shadow: 0 0 0 4px rgba(110, 71, 59, .14);
 }
 
+.admin-login-input:-webkit-autofill,
+.admin-login-input:-webkit-autofill:hover, 
+.admin-login-input:-webkit-autofill:focus, 
+.admin-login-input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #f5f6f7 inset !important;
+  -webkit-text-fill-color: #25201e !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 .admin-login-submit {
   display: flex;
   width: 100%;

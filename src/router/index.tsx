@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import useAuthStore from '../store/authStore'
 import { useIsMobileDevice } from '../hooks/useIsMobileDevice'
 import MobileBlockPage from '../pages/admin/MobileBlockPage'
+import RouteErrorBoundary from '../components/RouteErrorBoundary'
 
 // Public Pages — lazy loaded (tidak di-download sampai halaman dikunjungi)
 const LandingPage        = lazy(() => import('../pages/public/LandingPage'))
@@ -76,26 +77,30 @@ const AdminDeviceGuard = ({ children }: ProtectedRouteProps) => {
 }
 
 const router = createBrowserRouter([
-  // ─── Public Routes ───────────────────────────────
   {
     path: '/',
     element: withPublicSuspense(<LandingPage />),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/daftar',
     element: withPublicSuspense(<DaftarPage />),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/status',
     element: withPublicSuspense(<CheckStatusPage />),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/daftar/magang/:id',
     element: withPublicSuspense(<FormMagangPage />),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/daftar/penelitian/:id',
     element: withPublicSuspense(<FormPenelitianPage />),
+    errorElement: <RouteErrorBoundary />,
   },
 
   // ─── Admin Routes ────────────────────────────────
@@ -108,6 +113,7 @@ const router = createBrowserRouter([
         {withPublicSuspense(<Login />)}
       </AdminDeviceGuard>
     ),
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: '/admin',
@@ -118,6 +124,7 @@ const router = createBrowserRouter([
         </ProtectedRoute>
       </AdminDeviceGuard>
     ),
+    errorElement: <RouteErrorBoundary />,
     children: [
       { index: true, element: <Navigate to="/admin/dashboard" replace /> },
       { path: 'dashboard', element: withAdminSuspense(<Dashboard />) },

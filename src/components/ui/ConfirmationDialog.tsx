@@ -43,9 +43,9 @@ const variantConfig: Record<
   },
   logout: {
     icon: <LogOut size={25} strokeWidth={2} />,
-    iconClass: 'bg-primary/10 text-primary ring-primary/10',
-    accentClass: 'bg-primary',
-    confirmBtnClass: 'bg-primary text-white shadow-primary/20 hover:bg-primary-dark focus-visible:ring-primary/20',
+    iconClass: 'text-red-500',
+    accentClass: 'bg-red-500',
+    confirmBtnClass: 'bg-red-500 text-white shadow-red-500/20 hover:bg-red-600 focus-visible:ring-red-200',
     defaultConfirmText: 'Ya, Keluar',
   },
   default: {
@@ -125,37 +125,37 @@ const ConfirmationDialog = ({
         tabIndex={-1}
       />
 
-      <div className="relative w-full max-w-[430px] overflow-hidden rounded-2xl border border-white/70 bg-white text-left shadow-[0_24px_70px_-18px_rgba(33,29,27,0.38)] animate-dialog-in">
-        <div className={`absolute inset-x-0 top-0 h-1 ${config.accentClass}`} />
-
+      <div className="relative w-full max-w-[420px] overflow-hidden rounded-[32px] bg-[#fcfaf7] shadow-[0_24px_70px_-18px_rgba(33,29,27,0.38)] animate-dialog-in">
         <button
           type="button"
           onClick={onCancel}
           aria-label="Tutup"
-          className="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center rounded-full text-neutral-muted transition hover:bg-neutral-soft hover:text-neutral-text focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
+          className="absolute right-5 top-5 z-10 grid h-10 w-10 place-items-center rounded-full text-neutral-400 transition hover:bg-neutral-100 hover:text-neutral-700 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
         >
-          <X size={19} />
+          <X size={20} strokeWidth={2.5} />
         </button>
 
-        <div className="px-6 pb-5 pt-7 sm:px-7 sm:pt-8">
-          <div className={`mb-5 grid h-14 w-14 place-items-center rounded-2xl ring-1 ${config.iconClass}`}>
-            {config.icon}
+        <div className="flex flex-col items-center px-8 pb-6 pt-12 text-center sm:px-10 sm:pb-8 sm:pt-14">
+          <div className={`mb-6 grid h-20 w-20 place-items-center rounded-full ${config.iconClass}`}>
+            <div className="scale-125">
+              {config.icon}
+            </div>
           </div>
 
-          <h2 id="confirm-title" className="pr-10 text-xl font-extrabold tracking-tight text-neutral-text sm:text-[22px]">
+          <h2 id="confirm-title" className="text-2xl font-extrabold tracking-tight text-neutral-800">
             {title}
           </h2>
-          <p id="confirm-desc" className="mt-2.5 text-sm font-medium leading-6 text-neutral-subtle">
+          <p id="confirm-desc" className="mt-3 text-[15px] font-medium leading-relaxed text-neutral-500">
             {message}
           </p>
         </div>
 
-        <div className="flex flex-col-reverse gap-2.5 border-t border-neutral-border/70 bg-neutral-soft/70 px-6 py-4 sm:flex-row sm:justify-end sm:px-7">
+        <div className="flex w-full flex-col-reverse justify-center gap-3 px-8 pb-10 sm:flex-row sm:gap-4 sm:px-10">
           <button
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="min-h-11 rounded-xl border border-neutral-border bg-white px-5 text-sm font-bold text-neutral-text shadow-sm transition hover:border-neutral-muted hover:bg-neutral-bg focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10 sm:min-w-[105px]"
+            className="min-h-12 w-full sm:w-auto min-w-[120px] rounded-full border border-neutral-300 bg-transparent px-6 text-[15px] font-bold text-neutral-700 transition hover:bg-neutral-50 hover:border-neutral-400 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary/10"
           >
             {cancelText}
           </button>
@@ -163,7 +163,7 @@ const ConfirmationDialog = ({
             ref={confirmRef}
             type="button"
             onClick={onConfirm}
-            className={`min-h-11 rounded-xl px-5 text-sm font-bold shadow-lg transition hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 sm:min-w-[135px] ${config.confirmBtnClass}`}
+            className={`min-h-12 w-full sm:w-auto min-w-[120px] rounded-full px-6 text-[15px] font-bold shadow-md transition hover:-translate-y-0.5 active:translate-y-0 focus-visible:outline-none focus-visible:ring-4 ${config.confirmBtnClass}`}
           >
             {confirmText ?? config.defaultConfirmText}
           </button>

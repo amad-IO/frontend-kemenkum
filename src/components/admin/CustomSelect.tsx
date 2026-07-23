@@ -36,7 +36,7 @@ const CustomSelect = ({ options, value, onChange, icon, fullWidth = false }: Cus
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between gap-2 rounded-xl border border-neutral-border bg-white px-4 py-2.5 text-sm font-semibold text-neutral-text shadow-sm transition-all duration-200 hover:border-primary focus:border-primary focus:outline-none ${fullWidth ? 'w-full' : 'min-w-[140px]'}`}
+        className={`flex items-center justify-between gap-2 rounded-xl border border-neutral-border bg-[#fcfaf7] px-4 py-2.5 text-sm font-semibold text-neutral-text shadow-sm transition-all duration-200 hover:border-primary focus:border-primary focus:outline-none ${fullWidth ? 'w-full' : 'min-w-[140px]'}`}
       >
         <div className="flex items-center gap-2">
           {icon}
@@ -46,7 +46,7 @@ const CustomSelect = ({ options, value, onChange, icon, fullWidth = false }: Cus
       </button>
 
       <div
-        className={`absolute right-0 top-full z-50 mt-2 w-full min-w-max origin-top-right overflow-hidden rounded-2xl border border-neutral-border bg-white p-1.5 shadow-xl transition-all duration-200 ${
+        className={`absolute right-0 top-full z-50 mt-2 w-full min-w-max origin-top-right overflow-hidden rounded-2xl border border-neutral-border bg-[#fcfaf7] p-1.5 shadow-xl transition-all duration-200 ${
           isOpen
             ? 'visible translate-y-0 scale-100 opacity-100'
             : 'invisible -translate-y-2 scale-95 opacity-0'

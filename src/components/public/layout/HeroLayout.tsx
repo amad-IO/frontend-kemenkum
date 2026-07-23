@@ -44,7 +44,7 @@ const HeroLayout = ({ children, image, title, subtitle, badge }: HeroLayoutProps
                 {titleLines.map((line, index) => (
                   <span
                     key={line}
-                    className="hero-title-line block whitespace-nowrap"
+                    className="hero-title-line block"
                     style={{ animationDelay: `${360 + index * 260}ms` }}
                   >
                     {line}

@@ -329,22 +329,22 @@ const Dashboard = () => {
     <div className="flex flex-col gap-6">
 
       {/* ── Page Header ── */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Dashboard</h1>
+          <h1 className="text-xl font-extrabold tracking-tight text-neutral-text sm:text-2xl">Dashboard</h1>
           <p className="mt-0.5 text-sm text-neutral-muted">Ringkasan pendaftaran Magang &amp; Penelitian</p>
         </div>
         <button
           onClick={() => refetch()}
           disabled={refreshing}
-          className="flex items-center gap-2 rounded-xl border border-neutral-border bg-neutral-card px-4 py-2.5 text-sm font-semibold text-neutral-subtle shadow-card transition hover:border-primary hover:text-primary"
+          className="flex shrink-0 items-center gap-2 rounded-full border border-neutral-border bg-white px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:bg-neutral-bg"
         >
           <RefreshCw size={15} className={refreshing ? 'animate-spin' : ''} /> Refresh
         </button>
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
         <StatCard label="Total Pendaftaran" value={stats.total} icon={ClipboardList} color="bg-primary" />
         <StatCard label="Menunggu Review" value={stats.pending} icon={Clock} color="bg-yellow-400" sub="Perlu ditindaklanjuti" />
         <StatCard label="Diterima" value={stats.approved} icon={CheckCircle2} color="bg-green-500" />
@@ -352,7 +352,7 @@ const Dashboard = () => {
       </div>
 
       {/* ── Split Cards Row ── */}
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
 
         {/* Jenis Program Card */}
         <div className="rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card">
@@ -439,10 +439,10 @@ const Dashboard = () => {
       </div>
 
       {/* ── Recent Submissions Table Container ── */}
-      <div className="overflow-hidden rounded-2xl border border-neutral-border bg-neutral-card shadow-card">
+      <div className="overflow-hidden rounded-2xl border border-neutral-border bg-[#f3efea] shadow-card">
         <div className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
           <h2 className="text-sm font-bold text-neutral-text">Pendaftaran Terbaru</h2>
-          <a href="/admin/pendaftar" className="text-xs font-semibold text-primary hover:underline">Lihat semua →</a>
+          <a href="/admin/pendaftar" className="text-xs font-semibold text-primary hover:underline">Lihat semua</a>
         </div>
 
         {/* Memanggil Reusable Table Component */}

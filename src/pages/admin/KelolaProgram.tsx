@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Edit2, Trash2, RefreshCw, CalendarDays, AlertCircle, ArrowRight, Users } from 'lucide-react'
+import { Plus, Edit2, Trash2, RefreshCw, CalendarDays, AlertCircle, ArrowRight, Users, Settings as SettingsIcon } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getAllPeriod, createPeriod, updatePeriod, deletePeriod } from '../../services/programService'
@@ -143,8 +143,11 @@ const KelolaProgramPage = () => {
             {/* ── Page Header ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight text-neutral-text">Setting Periode Magang</h1>
-          <p className="mt-0.5 text-sm text-neutral-muted">
+          <h2 className="text-lg font-bold text-neutral-text flex items-center gap-2">
+            <SettingsIcon size={20} className="text-primary" />
+            Pengaturan Periode Magang
+          </h2>
+          <p className="mt-1.5 text-sm text-neutral-muted leading-relaxed">
             Atur periode pendaftaran magang beserta kuotanya
           </p>
         </div>
@@ -152,7 +155,7 @@ const KelolaProgramPage = () => {
           <button
             onClick={() => refetch()}
             disabled={refreshing}
-            className="flex items-center gap-2 rounded-xl bg-white border border-neutral-200 px-4 py-2.5 text-sm font-semibold text-neutral-600 shadow-sm transition-all hover:bg-neutral-50 hover:text-neutral-900"
+            className="flex items-center gap-2 rounded-full border border-neutral-border bg-white px-4 py-2 text-sm font-bold text-primary shadow-sm transition hover:bg-neutral-bg"
           >
             <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
             Refresh
@@ -313,56 +316,58 @@ const KelolaProgramPage = () => {
           </div>
 
           {/* Desktop/tablet lebar: baris tabel compact seperti referensi. */}
-          <div className="hidden md:block">
-            <table className="w-full border-separate border-spacing-y-2 text-sm">
+          <div className="hidden md:block overflow-hidden rounded-2xl border border-neutral-border bg-[#f3efea] shadow-sm">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="text-left text-[10px] font-extrabold uppercase tracking-[0.1em] text-[#6e625d]">
-                  <th className="w-[39%] px-5 pb-2 pt-3">Periode Magang</th>
-                  <th className="w-[15%] px-5 pb-2 pt-3">Kuota Total</th>
-                  <th className="w-[15%] px-5 pb-2 pt-3">Sisa Kuota</th>
-                  <th className="w-[17%] px-5 pb-2 pt-3">Status</th>
-                  <th className="w-[14%] px-5 pb-2 pt-3 text-right">Aksi</th>
+                <tr className="border-b border-neutral-border bg-transparent text-xs font-bold text-primary">
+                  <th className="w-[39%] px-5 py-4 text-left">Periode Magang</th>
+                  <th className="w-[15%] px-5 py-4 text-left">Kuota Total</th>
+                  <th className="w-[15%] px-5 py-4 text-left">Sisa Kuota</th>
+                  <th className="w-[17%] px-5 py-4 text-left">Status</th>
+                  <th className="w-[14%] px-5 py-4 text-center">Aksi</th>
                 </tr>
               </thead>
               <tbody>
-                {periods.map((p) => (
+                {periods.map((p, i) => (
                   <tr
                     key={p.id}
-                    className="group text-[#322a27] transition-colors"
+                    className={`group bg-transparent transition-colors hover:bg-[#faf9f8] ${
+                      i !== periods.length - 1 ? 'border-b border-neutral-border/40' : ''
+                    }`}
                   >
-                    <td className="rounded-l-xl border-y border-l border-[#dfd3cc] bg-transparent px-4 py-3">
+                    <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-[#a89790] text-[#79594e] transition-colors group-hover:border-primary group-hover:bg-primary/5">
-                          <CalendarDays size={13} />
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-neutral-200 bg-neutral-bg text-neutral-500">
+                          <CalendarDays size={14} />
                         </div>
-                        <div className="flex min-w-0 items-center gap-2.5 text-xs font-bold">
+                        <div className="flex min-w-0 items-center gap-2.5 text-xs font-bold text-neutral-700">
                           <span className="whitespace-nowrap">{formatDate(p.start_date)}</span>
-                          <span className="flex h-5 w-5 shrink-0 items-center justify-center text-[#a89790]">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center text-neutral-400">
                             <ArrowRight size={11} />
                           </span>
                           <span className="whitespace-nowrap">{formatDate(p.end_date)}</span>
                         </div>
                       </div>
                     </td>
-                    <td className="border-y border-[#dfd3cc] bg-transparent px-5 py-3">
-                      <div className="inline-flex items-center gap-2 text-xs">
-                        <Users size={14} className="text-[#9a8880]" />
+                    <td className="px-5 py-4">
+                      <div className="inline-flex items-center gap-2 text-xs text-neutral-600">
+                        <Users size={14} className="text-neutral-400" />
                         <span className="font-bold tabular-nums">{p.quota}</span>
-                        <span className="font-medium text-[#8c7f79]">orang</span>
+                        <span className="font-medium text-neutral-500">orang</span>
                       </div>
                     </td>
-                    <td className="border-y border-[#dfd3cc] bg-transparent px-5 py-3">
+                    <td className="px-5 py-4">
                       <div className="inline-flex items-center gap-1.5 text-xs">
-                        <span className="font-extrabold tabular-nums text-[#674237]">{p.remaining_quota}</span>
-                        <span className="font-medium text-[#8c7f79]">orang</span>
+                        <span className="font-extrabold tabular-nums text-neutral-700">{p.remaining_quota}</span>
+                        <span className="font-medium text-neutral-500">orang</span>
                       </div>
                     </td>
-                    <td className="border-y border-[#dfd3cc] bg-transparent px-5 py-3">
+                    <td className="px-5 py-4">
                       <button
                         type="button"
                         onClick={() => handleToggleStatus(p)}
                         disabled={togglingId === p.id}
-                        className={`inline-flex min-w-[98px] items-center justify-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-extrabold uppercase tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                           p.status === 'active'
                             ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
                             : 'bg-red-50 text-red-700 hover:bg-red-100'
@@ -377,22 +382,20 @@ const KelolaProgramPage = () => {
                         {p.status === 'active' ? 'Aktif' : 'Tidak Aktif'}
                       </button>
                     </td>
-                    <td className="rounded-r-xl border-y border-r border-[#dfd3cc] bg-transparent px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2 opacity-80 transition-opacity group-hover:opacity-100">
+                    <td className="px-5 py-4 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         <button
                           onClick={() => handleOpenEdit(p)}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ded6d1] bg-[#faf8f7] text-[#796b65] transition-all hover:border-[#b99b8e] hover:bg-[#f2e7e1] hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-neutral-bg text-neutral-500 transition-all hover:bg-neutral-border/30 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                           title="Edit periode"
-                          aria-label={`Edit periode ${formatDate(p.start_date)} sampai ${formatDate(p.end_date)}`}
                         >
                           <Edit2 size={14} />
                         </button>
                         <button
                           onClick={() => handleDelete(p.id)}
                           disabled={deletingId === p.id}
-                          className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#ded6d1] bg-[#faf8f7] text-[#796b65] transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:opacity-50"
+                          className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-200 bg-neutral-bg text-neutral-500 transition-all hover:border-red-200 hover:bg-red-50 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-100 disabled:opacity-50"
                           title="Hapus periode"
-                          aria-label={`Hapus periode ${formatDate(p.start_date)} sampai ${formatDate(p.end_date)}`}
                         >
                           {deletingId === p.id ? <RefreshCw size={14} className="animate-spin" /> : <Trash2 size={14} />}
                         </button>
