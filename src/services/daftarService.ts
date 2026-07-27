@@ -69,7 +69,8 @@ export const getPersyaratanMagang = (): KategoriPersyaratan[] => [
         items: [
             { teks: 'Surat Permohonan Magang dari Kampus / Institusi' },
             { teks: 'Proposal Magang' },
-            { teks: 'Kartu Tanda Mahasiswa (KTM) / Kartu Identitas Pelajar (format ZIP)' },
+            { teks: 'Kartu Tanda Mahasiswa (KTM) / Kartu Identitas Pelajar' },
+            { teks: 'Semua dokumen di atas dijadikan satu dalam bentuk format ZIP' },
         ],
     },
     {
@@ -101,7 +102,8 @@ export const getPersyaratanPenelitian = (): KategoriPersyaratan[] => [
         items: [
             { teks: 'Surat Permohonan Penelitian dari Kampus / Institusi' },
             { teks: 'Proposal Penelitian' },
-            { teks: 'Kartu Tanda Mahasiswa (KTM) / Kartu Identitas Pelajar (format ZIP)' },
+            { teks: 'Kartu Tanda Mahasiswa (KTM) / Kartu Identitas Pelajar' },
+            { teks: 'Semua dokumen di atas dijadikan satu dalam bentuk format ZIP' },
         ],
     },
     {
