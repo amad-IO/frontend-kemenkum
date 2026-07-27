@@ -314,7 +314,12 @@ const CertificateSettingPage = () => {
             const response = await api.get(url, { responseType: 'arraybuffer' })
             const arrayBuffer: ArrayBuffer = response.data
 
-            const loadingTask = pdfjs.getDocument({ data: new Uint8Array(arrayBuffer) })
+            const loadingTask = pdfjs.getDocument({ 
+                data: new Uint8Array(arrayBuffer),
+                standardFontDataUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/standard_fonts/`,
+                cMapUrl: `https://unpkg.com/pdfjs-dist@${pdfjs.version}/cmaps/`,
+                cMapPacked: true,
+            })
             const pdf      = await loadingTask.promise
             const page     = await pdf.getPage(1)
             const viewport = page.getViewport({ scale: 2.0 })
