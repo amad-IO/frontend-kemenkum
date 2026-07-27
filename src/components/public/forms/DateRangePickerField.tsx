@@ -143,7 +143,7 @@ const DateRangePickerField = ({
               hasError ? 'border-red-300' : 'border-neutral-border'
             }`}
           >
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <span className="flex shrink-0 items-center justify-center text-primary">
               <CalendarDays size={20} />
             </span>
             <span className="min-w-0 flex-1">
@@ -167,10 +167,10 @@ const DateRangePickerField = ({
 
       {open && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-neutral-text/40 px-3 py-4 sm:items-center backdrop-blur-sm date-picker-backdrop-enter">
-          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl date-picker-popup-enter">
+          <div className="w-full max-w-4xl overflow-hidden rounded-2xl border border-neutral-border bg-white date-picker-popup-enter">
             <div className="flex items-center justify-between border-b border-neutral-border px-5 py-4">
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-neutral-border bg-neutral-soft text-primary">
+                <span className="flex shrink-0 items-center justify-center text-primary">
                   <CalendarDays size={20} />
                 </span>
                 <div className="min-w-0">
@@ -232,7 +232,7 @@ const DateRangePickerField = ({
                         onClick={() => chooseDate(date)}
                         className={`mx-auto flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition ${
                           active || rangeEdge
-                            ? 'bg-primary text-white shadow-card'
+                            ? 'bg-primary text-white '
                             : inRange
                               ? 'bg-secondary-light text-primary'
                               : 'text-neutral-text hover:bg-neutral-soft'

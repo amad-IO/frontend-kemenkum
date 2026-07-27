@@ -12,7 +12,7 @@ const PersyaratanBox = ({ kategoriList, jenis }: Props) => {
       {kategoriList.map((kategori, idx) => (
         <div
           key={idx}
-          className="rounded-2xl border border-neutral-border bg-neutral-card p-5 shadow-card"
+          className="rounded-2xl border border-neutral-border bg-neutral-card p-5 "
         >
           <div className="mb-3 flex items-center gap-2">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">

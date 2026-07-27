@@ -16,32 +16,38 @@ import RegencyCombobox from '../../components/public/forms/RegencyCombobox'
 import EducationLevelSelect from '../../components/public/forms/EducationLevelSelect'
 import SingleDatePickerField from '../../components/public/forms/SingleDatePickerField'
 
+const nameRegex = /^[a-zA-Z\s.,']+$/
+const nimRegex = /^[a-zA-Z0-9\s.\/-]+$/
+const institutionRegex = /^[a-zA-Z0-9\s.,'()-]+$/
+const letterNumberRegex = /^[a-zA-Z0-9\s.\/-]+$/
+const researchTitleRegex = /^[a-zA-Z0-9\s.,'()\-:"!?]+$/
+
 const anggotaSchema = z.object({
-  nama: z.string().min(2, 'Nama minimal 2 karakter'),
-  nim: z.string().min(3, 'No. Identitas tidak valid'),
+  nama: z.string().min(2, 'Nama minimal 2 karakter').regex(nameRegex, 'Hanya menerima input berupa karakter huruf/teks'),
+  nim: z.string().min(3, 'No. Identitas tidak valid').regex(nimRegex, 'Hanya menerima input berupa karakter huruf dan angka'),
 })
 
 const phoneRegex = /^(08\d{8,11}|\+628\d{8,11})$/
 const phoneErrorMessage = 'Gunakan format 08xxxxxxxxxx atau +628xxxxxxxxxx tanpa tanda -.'
-const emialRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-const emailErrorMessage = 'Email tidak valid'
+const emialRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+const emailErrorMessage = 'Email tidak valid atau mengandung karakter terlarang'
 
 const penelitianSchema = z
   .object({
-    institution: z.string().min(3, 'Nama instansi tidak valid'),
-    study_program: z.string(),
+    institution: z.string().min(3, 'Nama instansi tidak valid').regex(institutionRegex, 'Hanya menerima input berupa karakter'),
+    study_program: z.string().refine(val => !val || institutionRegex.test(val), 'Hanya menerima input berupa karakter'),
     education_level: z.enum(EDUCATION_LEVELS, { message: 'Pilih jenjang pendidikan' }),
     campus_city: z.string().min(1, 'Pilih lokasi kampus'),
-    research_title: z.string().min(8, 'Judul penelitian minimal 8 karakter'),
+    research_title: z.string().min(8, 'Judul penelitian minimal 8 karakter').regex(researchTitleRegex, 'Hanya menerima input berupa karakter'),
     start_date: z.string().min(1, 'Tanggal mulai wajib dipilih'),
     end_date: z.string().min(1, 'Tanggal selesai wajib dipilih'),
     jenis_peserta: z.enum(['individu', 'kelompok']),
-    nama_ketua: z.string().min(2, 'Nama minimal 2 karakter'),
-    nim_ketua: z.string().min(3, 'No. Identitas tidak valid'),
+    nama_ketua: z.string().min(2, 'Nama minimal 2 karakter').regex(nameRegex, 'Hanya menerima input berupa karakter huruf/teks'),
+    nim_ketua: z.string().min(3, 'No. Identitas tidak valid').regex(nimRegex, 'Hanya menerima input berupa karakter huruf dan angka'),
     whatsapp: z.string().trim().refine((v) => phoneRegex.test(v), { message: phoneErrorMessage }),
     email: z.string().regex(emialRegex, {message: emailErrorMessage}),
     anggota: z.array(anggotaSchema).max(9),
-    letter_number: z.string().min(3, 'Nomor surat tidak valid'),
+    letter_number: z.string().min(3, 'Nomor surat tidak valid').regex(letterNumberRegex, 'Hanya menerima input berupa karakter huruf, angka, dan garis miring'),
     letter_date: z.string().min(1, 'Tanggal surat permohonan wajib dipilih'),
     document: z
       .instanceof(FileList)
@@ -71,7 +77,7 @@ type ViewTransitionDocument = Document & {
 }
 
 const fieldWrap = 'flex flex-col gap-1.5'
-const sectionClass = 'relative rounded-2xl border border-neutral-200/60 bg-white/80 p-5 shadow-[0_8px_30px_rgb(0,0,0,0.04)] backdrop-blur-xl sm:p-7 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] hover:border-primary/20 hover:z-30 focus-within:z-30'
+const sectionClass = 'relative rounded-2xl border border-neutral-200 bg-white p-5 sm:p-7 transition-all duration-300 hover:border-primary/20'
 const sectionTitleClass = 'mb-5 flex items-center gap-2.5 text-lg font-extrabold text-neutral-text'
 
 const FormPenelitianPage = () => {

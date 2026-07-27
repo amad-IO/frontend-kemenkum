@@ -63,7 +63,7 @@ const Dashboard = () => {
   const confirm = useConfirm()
 
   const {
-    data: rawSubmissions = [],
+    data: queryData = { submissions: [], stats: null },
     isLoading: loading,
     isFetching: refreshing,
     refetch,
@@ -72,7 +72,9 @@ const Dashboard = () => {
     queryFn: async () => {
       const res = await api.get('/admin/submissions')
       const responseData = res.data?.data
-      return (Array.isArray(responseData) ? responseData : (responseData?.data ?? [])) as Submission[]
+      const submissions = (Array.isArray(responseData) ? responseData : (responseData?.data ?? [])) as Submission[]
+      const stats = res.data?.stats || null
+      return { submissions, stats }
     },
     staleTime: 8_000,
     refetchInterval: 10_000,
@@ -86,9 +88,9 @@ const Dashboard = () => {
     setLocalPatches(prev => ({ ...prev, [id]: { ...prev[id], ...patch } }))
   }
 
-  const submissions: Submission[] = rawSubmissions.map(s => ({ ...s, ...(localPatches[s.id] ?? {}) }))
+  const submissions: Submission[] = queryData.submissions.map(s => ({ ...s, ...(localPatches[s.id] ?? {}) }))
 
-  const stats: Stats = {
+  const stats: Stats = queryData.stats || {
     total: submissions.length,
     pending: submissions.filter(s => s.status === 'pending').length,
     approved: submissions.filter(s => s.status === 'approved').length,

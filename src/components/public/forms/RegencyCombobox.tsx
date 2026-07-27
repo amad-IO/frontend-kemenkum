@@ -56,7 +56,7 @@ const RegencyCombobox = ({ value = '', onChange, hasError = false }: RegencyComb
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-1.5 shadow-xl">
+        <div className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-neutral-200 bg-white p-1.5 ">
           {options.length > 0 ? (
             options.map((area) => (
               <button

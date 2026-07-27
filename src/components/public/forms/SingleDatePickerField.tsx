@@ -84,10 +84,10 @@ const SingleDatePickerField = ({ value = '', onChange, hasError = false }: Singl
 
       {isOpen && createPortal(
         <div className={`${isClosing ? 'date-picker-backdrop-exit' : 'date-picker-backdrop-enter'} fixed inset-0 z-[9999] flex items-end justify-center bg-neutral-text/15 p-3 sm:items-center`}>
-          <div className={`${isClosing ? 'date-picker-popup-exit' : 'date-picker-popup-enter'} w-full max-w-sm overflow-hidden rounded-xl border border-neutral-border bg-white shadow-md`}>
+          <div className={`${isClosing ? 'date-picker-popup-exit' : 'date-picker-popup-enter'} w-full max-w-sm overflow-hidden rounded-xl border border-neutral-border bg-white `}>
             <div className="flex items-center justify-between border-b border-neutral-border px-3.5 py-2.5">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full border border-neutral-border bg-neutral-soft text-primary">
+                <span className="flex items-center justify-center text-primary">
                   <CalendarDays size={16} />
                 </span>
                 <div>
@@ -144,7 +144,7 @@ const SingleDatePickerField = ({ value = '', onChange, hasError = false }: Singl
                       onClick={() => setSelectedDate(dateValue)}
                       className={`mx-auto flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold transition ${
                         isSelected
-                          ? 'bg-primary text-white shadow-card'
+                          ? 'bg-primary text-white '
                           : 'text-neutral-text hover:bg-neutral-soft hover:text-primary'
                       } disabled:cursor-default disabled:text-neutral-muted/35 disabled:hover:bg-transparent`}
                     >

@@ -44,7 +44,7 @@ const ConfirmModal = ({
 
   return (
     <div className={`modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm ${isClosing ? 'modal-backdrop-exit' : 'modal-backdrop-enter'}`}>
-      <div className={`modal-panel w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ${isClosing ? 'modal-panel-exit' : 'modal-panel-enter'}`}>
+      <div className={`modal-panel w-full max-w-md overflow-hidden rounded-2xl bg-white ${isClosing ? 'modal-panel-exit' : 'modal-panel-enter'}`}>
         <div className="flex items-center justify-between border-b border-neutral-border bg-neutral-bg/50 px-5 py-4">
           <div className={`flex items-center gap-2 ${isSuccess ? 'text-emerald-600' : 'text-primary'}`}>
             {isSuccess ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
@@ -108,7 +108,7 @@ const ConfirmModal = ({
             <div className="mt-4 grid gap-2 text-left">
               {accountEmail && (
                 <div className="flex items-center gap-3 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-emerald-600 shadow-sm">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-emerald-600 ">
                     <Mail size={17} />
                   </span>
                   <div className="min-w-0">
@@ -120,7 +120,7 @@ const ConfirmModal = ({
 
               {accountNim && (
                 <div className="flex items-center gap-3 rounded-xl border border-amber-100 bg-amber-50/80 px-3 py-2">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-amber-600 shadow-sm">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white text-amber-600 ">
                     <IdCard size={17} />
                   </span>
                   <div className="min-w-0">
@@ -137,7 +137,7 @@ const ConfirmModal = ({
             <button
               type="button"
               onClick={handleClose}
-              className="flex min-w-[110px] items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:bg-primary-dark"
+              className="flex min-w-[110px] items-center justify-center rounded-xl bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark"
             >
               OK
             </button>
@@ -155,7 +155,7 @@ const ConfirmModal = ({
                 type="button"
                 onClick={onConfirm}
                 disabled={isLocked}
-                className="flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white shadow-md transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70"
+                className="flex min-w-[140px] items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-70"
               >
                 {isSubmitting ? (
                   <>
