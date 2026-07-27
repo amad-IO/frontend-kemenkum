@@ -17,12 +17,12 @@ import {
 import echo from '../../services/echo'
 import { toast } from 'react-toastify'
 
-const steps = [
+const getSteps = (type: ProgramType) => [
     { id: 1, title: 'Pendaftaran', description: 'Berkas berhasil dikirim', icon: ClipboardEdit },
     { id: 2, title: 'Verifikasi', description: 'Verifikasi kelengkapan data peserta', icon: CheckSquare },
     { id: 3, title: 'Review Berkas', description: 'Admin sedang meninjau dokumen pendaftaran', icon: FileSearch },
     { id: 4, title: 'Forum Diskusi', description: 'Sesi QnA dengan Admin', icon: MessageCircle },
-    { id: 5, title: 'Pengumuman', description: 'Hasil akhir & Dokumen Izin Magang', icon: Megaphone },
+    { id: 5, title: 'Pengumuman', description: `Hasil akhir & Dokumen Izin ${type === 'penelitian' ? 'Penelitian' : 'Magang'}`, icon: Megaphone },
 ]
 
 type ApplicantAccount = {
@@ -132,6 +132,7 @@ const CheckStatusPage = () => {
         ? 'text-red-500'
         : 'text-primary'
     const discussionIsAvailable = effectiveStage === 'discussion' || Boolean(discussionStartedAt)
+    const steps = getSteps(programType)
 
     useLayoutEffect(() => {
         const updateTimelineLines = () => {
@@ -562,7 +563,7 @@ const CheckStatusPage = () => {
                                                                     className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white shadow-lg shadow-primary/30 transition-all hover:-translate-y-1 hover:bg-primary-dark disabled:opacity-60"
                                                                 >
                                                                     <Download size={18} />
-                                                                    {downloadingPermit ? 'Mengunduh...' : 'Unduh Surat Izin Magang'}
+                                                                    {downloadingPermit ? 'Mengunduh...' : `Unduh Surat Izin ${programType === 'penelitian' ? 'Penelitian' : 'Magang'}`}
                                                                 </button>
                                                             )}
                                                         </div>
