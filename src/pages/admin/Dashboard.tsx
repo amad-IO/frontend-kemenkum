@@ -10,6 +10,7 @@ import {
   RefreshCw 
 } from 'lucide-react'
 import { toast } from 'react-toastify'
+import { Link } from 'react-router-dom'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
@@ -427,15 +428,15 @@ const Dashboard = () => {
         <div className="rounded-2xl border border-neutral-border bg-primary p-5 shadow-card text-white">
           <h2 className="mb-4 text-sm font-bold">Aksi Cepat</h2>
           <div className="flex flex-col gap-2">
-            <a href="/admin/pendaftar" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
+            <Link to="/admin/pendaftar" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
               <Users size={15} /> Lihat Semua Pendaftar
-            </a>
-            <a href="/admin/pendaftar?status=pending" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
+            </Link>
+            <Link to="/admin/pendaftar?status=pending" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
               <Clock size={15} /> Review Pending ({stats.pending})
-            </a>
-            <a href="/admin/program" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
+            </Link>
+            <Link to="/admin/program" className="flex items-center gap-2 rounded-xl bg-white/15 px-4 py-2.5 text-sm font-semibold transition hover:bg-white/25">
               <Download size={15} /> Kelola Periode Magang
-            </a>
+            </Link>
           </div>
         </div>
       </div>

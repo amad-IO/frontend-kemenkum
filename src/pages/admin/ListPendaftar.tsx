@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Search, Filter, RefreshCw, ChevronLeft, ChevronRight, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'react-toastify'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query'
 import api from '../../services/api'
 import DetailPendaftarModal from '../../components/admin/DetailPendaftarModal'
@@ -45,10 +46,11 @@ const ListPendaftarPage = () => {
     const confirm = useConfirm()
 
     // Filters & Pagination
+    const [searchParams] = useSearchParams()
     const [search, setSearch] = useState('')
     const [debouncedSearch, setDebouncedSearch] = useState('')
     const [typeFilter, setTypeFilter] = useState<string>('all')
-    const [statusFilter, setStatusFilter] = useState<string>('all')
+    const [statusFilter, setStatusFilter] = useState<string>(searchParams.get('status') || 'all')
     const [currentPage, setCurrentPage] = useState(1)
 
     // Modal State
