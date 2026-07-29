@@ -44,13 +44,18 @@ const CertificateModal = ({ submission, onClose, onSuccess }: Props) => {
             const res = await api.post(`/admin/submissions/${submission.id}/certificate`)
             const data = res.data?.data
 
-            // Auto-download ZIP
-            const link = document.createElement('a')
-            link.href = data.zip_url
-            link.download = data.zip_filename
-            document.body.appendChild(link)
-            link.click()
-            document.body.removeChild(link)
+            // Auto-download ZIP via API (bypasses symlink and APP_URL issues on Hostinger)
+            const downloadRes = await api.get(`/admin/submissions/${submission.id}/certificate/download`, {
+                responseType: 'blob',
+            })
+            const url = URL.createObjectURL(new Blob([downloadRes.data], { type: 'application/zip' }))
+            const a = document.createElement('a')
+            a.href = url
+            a.download = data.zip_filename || `Sertifikat_${submission.id}.zip`
+            document.body.appendChild(a)
+            a.click()
+            document.body.removeChild(a)
+            URL.revokeObjectURL(url)
 
             toast.success(`${data.member_count} sertifikat berhasil di-generate!`)
             onSuccess({

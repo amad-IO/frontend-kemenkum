@@ -5,6 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <title>Dino Runner</title>
     <link rel="stylesheet" href="runner.css">
+    <script>
+      try { window.devicePixelRatio = 1; } catch(e) {}
+      try { Object.defineProperty(window, 'devicePixelRatio', { get: () => 1, configurable: true }); } catch(e) {}
+    </script>
     <script src="runner.js" defer></script>
   </head>
   <body class="offline">

@@ -7,16 +7,13 @@ import {
 import { toast } from 'react-toastify'
 import Draggable from 'react-draggable'
 import * as pdfjs from 'pdfjs-dist'
-// ?url: Vite meng-copy worker ke /assets/ dengan MIME type yang benar.
-// Gunakan pdfjs-dist v4.x — v5 punya regresi n.toHex bug pada PDF dari Canva.
-import pdfjsWorkerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
+// Set worker sekali di module level menggunakan CDN untuk menghindari masalah MIME type (.mjs) di Hostinger
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 import api from '../../services/api'
 import CustomSelect from '../../components/admin/CustomSelect'
 import { useConfirm } from '../../context/ConfirmContext'
 import { Skeleton } from '../../components/ui/Skeleton'
 
-// Set worker sekali di module level
-pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorkerSrc
 
 // ── Tipe Data ─────────────────────────────────────────────────────────────────
 interface CertField {

@@ -117,7 +117,7 @@ const DetailPendaftarModal = ({
             return allMessages
         },
         enabled: chatOpen && !!submission,
-        staleTime: Infinity,
+        refetchInterval: 3000,
     })
 
     useEffect(() => {
@@ -835,7 +835,7 @@ const DetailPendaftarModal = ({
                         <section
                             ref={chatPanelRef}
                             style={chatOnly && chatPosition ? { left: chatPosition.x, top: chatPosition.y } : defaultPanelStyle}
-                            className={`pointer-events-auto flex h-[min(560px,calc(100vh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl ${chatOnly && (chatPosition || defaultPanelStyle) ? 'absolute' : 'absolute bottom-4 right-4 sm:bottom-6 sm:right-6'
+                            className={`pointer-events-auto flex h-[min(560px,calc(100dvh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl ${chatOnly && (chatPosition || defaultPanelStyle) ? 'absolute' : 'absolute bottom-4 right-4 sm:bottom-6 sm:right-6'
                                 }`}
                         >
                             <div

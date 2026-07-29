@@ -15,7 +15,7 @@ export const INDONESIA_REGENCIES = regenciesCsv
     return {
       code,
       provinceCode,
-      name: fullName?.replace(/^(Kabupaten|Kota)\s+/i, '') ?? '',
+      name: fullName?.replace(/^(Kabupaten( Administrasi)?|Kota( Administrasi)?)\s+/i, '') ?? '',
     }
   })
   .filter((area) => Boolean(area.code && area.name))

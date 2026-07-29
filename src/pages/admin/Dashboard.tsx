@@ -19,6 +19,7 @@ import type { Submission } from './ListPendaftar'
 import { useAdminChat } from '../../contexts/AdminChatContext'
 import { useConfirm } from '../../context/ConfirmContext'
 import { Skeleton } from '../../components/ui/Skeleton'
+import { useSubmissionActions } from '../../hooks/useSubmissionActions'
 
 interface Stats {
   total: number
@@ -101,132 +102,19 @@ const Dashboard = () => {
   }
 
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null)
-  const [isUpdating, setIsUpdating] = useState(false)
-  const [isDownloading, setIsDownloading] = useState(false)
-  const [isUploadingPermit, setIsUploadingPermit] = useState(false)
-  const [isStartingDiscussion, setIsStartingDiscussion] = useState(false)
 
-  const handleStatusChange = async (id: number, status: 'approved' | 'rejected') => {
-    const isApproving = status === 'approved'
-    const ok = await confirm({
-      title: isApproving ? 'Terima permohonan ini?' : 'Tolak permohonan ini?',
-      message: isApproving
-        ? 'Status pendaftar akan diubah menjadi Diterima. Pastikan data sudah diperiksa sebelum dikonfirmasi.'
-        : 'Status pendaftar akan diubah menjadi Ditolak. Tindakan ini dapat diubah kembali jika diperlukan.',
-      variant: isApproving ? 'default' : 'danger',
-      confirmText: isApproving ? 'Ya, Terima' : 'Ya, Tolak',
-    })
-    if (!ok) return
+  const {
+    isUpdating,
+    isDownloading,
+    isUploadingPermit,
+    isStartingDiscussion,
+    handleStatusChange,
+    handleDatesChange,
+    handleDownload,
+    handleUploadPermit,
+    handleStartDiscussion,
+  } = useSubmissionActions(patchSubmission, selectedSubmission, setSelectedSubmission, submissions)
 
-    try {
-      setIsUpdating(true)
-      await api.patch(`/admin/submissions/${id}/status`, { status })
-      patchSubmission(id, { status })
-      if (selectedSubmission?.id === id) {
-        setSelectedSubmission(prev => prev ? { ...prev, status } : null)
-      }
-      toast.success(`Status permohonan berhasil diperbarui`)
-      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Gagal mengubah status permohonan')
-    } finally {
-      setIsUpdating(false)
-    }
-  }
-
-  const handleDatesChange = async (id: number, start_date: string, end_date: string) => {
-    try {
-      setIsUpdating(true)
-      await api.patch(`/admin/submissions/${id}/dates`, { start_date, end_date })
-      patchSubmission(id, { start_date, end_date })
-      if (selectedSubmission?.id === id) {
-        setSelectedSubmission(prev => prev ? { ...prev, start_date, end_date } : null)
-      }
-      toast.success('Tanggal kegiatan berhasil diperbarui')
-    } catch {
-      toast.error('Gagal memperbarui tanggal kegiatan')
-    } finally {
-      setIsUpdating(false)
-    }
-  }
-
-  const handleDownload = async (id: number, e?: React.MouseEvent) => {
-    e?.stopPropagation()
-    try {
-      setIsDownloading(true)
-      const res = await api.get(`/admin/submissions/${id}/download`, { responseType: 'blob' })
-      const submission = submissions.find(s => s.id === id)
-      let filename = `permohonan-${id}.zip`
-      if (submission) {
-        const ketua = submission.member_1.split('|')[0] || 'ketua'
-        const kampus = submission.institution || 'kampus'
-        filename = `permohonan_${ketua.toLowerCase().replace(/[^a-z0-9]+/g, '_')}_${kampus.toLowerCase().replace(/[^a-z0-9]+/g, '_')}.zip`
-      }
-      const url = window.URL.createObjectURL(new Blob([res.data]))
-      const link = document.createElement('a')
-      link.href = url
-      link.setAttribute('download', filename)
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      window.URL.revokeObjectURL(url)
-
-      const downloadedAt = new Date().toISOString()
-      patchSubmission(id, { document_downloaded_at: downloadedAt })
-      if (selectedSubmission?.id === id) {
-        setSelectedSubmission(prev => prev ? { ...prev, document_downloaded_at: prev.document_downloaded_at ?? downloadedAt } : null)
-      }
-      toast.success('Berkas berhasil diunduh')
-      queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
-    } catch {
-      toast.error('Gagal mengunduh berkas ZIP.')
-    } finally {
-      setIsDownloading(false)
-    }
-  }
-
-  const handleUploadPermit = async (id: number, file: File, replace = false) => {
-    try {
-      setIsUploadingPermit(true)
-      const formData = new FormData()
-      formData.append('permit_file', file)
-      if (replace) formData.append('replace', '1')
-      const res = await api.post(`/admin/submissions/${id}/permit`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
-      const updated = res.data?.data as Submission
-      patchSubmission(id, { permit_file_path: updated.permit_file_path, permit_file_name: updated.permit_file_name })
-      if (selectedSubmission?.id === id) {
-        setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
-      }
-      toast.success('File izin berhasil diunggah')
-      return true
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Gagal mengunggah file izin')
-      return false
-    } finally {
-      setIsUploadingPermit(false)
-    }
-  }
-
-  const handleStartDiscussion = async (id: number) => {
-    try {
-      setIsStartingDiscussion(true)
-      const res = await api.post(`/admin/submissions/${id}/discussion/start`)
-      const updated = res.data?.data as Submission
-      patchSubmission(id, { discussion_started_at: updated.discussion_started_at })
-      if (selectedSubmission?.id === id) {
-        setSelectedSubmission(prev => prev ? { ...prev, ...updated } : null)
-      }
-      toast.success('Forum diskusi berhasil dibuka')
-      return true
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Gagal membuka forum diskusi')
-      return false
-    } finally {
-      setIsStartingDiscussion(false)
-    }
-  }
 
   const handleOpenChatFromTable = (submission: Submission) => {
     openAdminChat(submission)

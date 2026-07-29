@@ -21,6 +21,7 @@ export type SubmissionChatSyncEvent =
         kind: 'status-updated'
         submissionId: number
         status: 'pending' | 'approved' | 'rejected'
+        rejection_note?: string | null
     }
 
 const CHANNEL_NAME = 'ruang-magang-submission-chat-sync'
@@ -55,7 +56,7 @@ const isSubmissionChatSyncEvent = (value: unknown): value is SubmissionChatSyncE
     }
 
     if (event.kind === 'status-updated') {
-        return typeof event.submissionId === 'number' && typeof event.status === 'string'
+        return typeof event.submissionId === 'number' && typeof event.status === 'string' && (event.rejection_note === undefined || event.rejection_note === null || typeof event.rejection_note === 'string')
     }
 
     return false

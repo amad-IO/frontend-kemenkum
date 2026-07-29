@@ -21,7 +21,7 @@ const PublicNavbar = () => {
       aria-label="Navigasi publik"
     >
       <div className="flex min-w-0 flex-1 items-center gap-4 text-xl font-bold italic text-primary sm:text-2xl lg:text-[1.7rem]">
-        <span className="shrink-0">Kementerian Hukum</span>
+        <span className="shrink-0">Ruang Magang</span>
         <span className="hidden h-px flex-1 rounded-full bg-primary/80 sm:block" aria-hidden="true" />
       </div>
 

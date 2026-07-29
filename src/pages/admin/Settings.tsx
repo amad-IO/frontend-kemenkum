@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 import { Settings as SettingsIcon, Save, Loader2, User } from 'lucide-react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { getSettings, updateSettings, SettingsData } from '../../services/settingsService'
 import { Skeleton } from '../../components/ui/Skeleton'
 
 const Settings = () => {
+  const queryClient = useQueryClient()
   const [settings, setSettings] = useState<SettingsData>({
     pejabat_name: '',
   })
@@ -43,6 +44,7 @@ const Settings = () => {
     setSaving(true)
     try {
       await updateSettings(settings)
+      queryClient.invalidateQueries({ queryKey: ['admin-settings'] })
       toast.success('Pengaturan berhasil disimpan')
     } catch (error: any) {
       toast.error(error.response?.data?.message || 'Gagal menyimpan pengaturan')

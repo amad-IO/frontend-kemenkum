@@ -101,6 +101,24 @@ const CheckStatusPage = () => {
     const [rejectionNote, setRejectionNote] = useState<string | null>(null)
     const [discussionStartedAt, setDiscussionStartedAt] = useState<string | null>(null)
     const [chatOpen, setChatOpen] = useState(false)
+
+    // Bug Fix: Kunci scroll body di iOS Safari saat chat terbuka
+    useEffect(() => {
+        if (chatOpen) {
+            const scrollY = window.scrollY
+            document.body.style.position = 'fixed'
+            document.body.style.top = `-${scrollY}px`
+            document.body.style.width = '100%'
+            document.body.style.overflow = 'hidden'
+            return () => {
+                document.body.style.position = ''
+                document.body.style.top = ''
+                document.body.style.width = ''
+                document.body.style.overflow = ''
+                window.scrollTo(0, scrollY)
+            }
+        }
+    }, [chatOpen])
     const [chatMessage, setChatMessage] = useState('')
     const [sendingMessage, setSendingMessage] = useState(false)
     const [downloadingPermit, setDownloadingPermit] = useState(false)
@@ -124,7 +142,7 @@ const CheckStatusPage = () => {
             return (res.data?.data ?? []) as DiscussionMessage[]
         },
         enabled: chatOpen && !!submissionId, // Hanya fetch jika chat terbuka
-        staleTime: Infinity, // WebSocket yang akan mengupdate cache
+        refetchInterval: 3000, // Poll setiap 3 detik karena WebSocket tidak jalan di Hostinger
     })
 
     const statusLabel = getStatusLabel(effectiveStage, finalStatus)
@@ -279,10 +297,13 @@ const CheckStatusPage = () => {
 
             if (event.kind === 'status-updated') {
                 setFinalStatus(event.status)
+                if (event.rejection_note !== undefined) {
+                    setRejectionNote(event.rejection_note)
+                }
                 const nextStage: EffectiveStage = event.status === 'pending' ? 'verification' : 'announcement'
                 setEffectiveStage(nextStage)
                 setCurrentStep(stageStepMap[nextStage])
-                setStatusMessage(getStageMessage(nextStage, event.status, programType, rejectionNote))
+                setStatusMessage(getStageMessage(nextStage, event.status, programType, event.rejection_note !== undefined ? event.rejection_note : rejectionNote))
                 setHasResult(true)
                 return
             }
@@ -407,7 +428,8 @@ const CheckStatusPage = () => {
             badge="Track Application"
         >
             <main className="bg-neutral-card min-h-[50vh]">
-                <div className={`mx-auto w-full max-w-3xl px-4 py-10 sm:px-6 lg:px-8 ${isSuccessRedirect ? 'status-page-enter' : ''}`}>
+                {/* Bug Fix: overflow-x-hidden mencegah timeline aktif (yang punya negative margin) memicu horizontal scroll di mobile */}
+                <div className={`mx-auto w-full max-w-3xl overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8 ${isSuccessRedirect ? 'status-page-enter' : ''}`}>
                     {/* Breadcrumb */}
                     <nav className="mb-6 flex items-center gap-1.5 text-xs text-neutral-muted" aria-label="Breadcrumb">
                         <Link to="/" className="hover:text-primary transition-colors">Home</Link>
@@ -524,7 +546,8 @@ const CheckStatusPage = () => {
                                                 </div>
 
                                                 {/* Konten Step */}
-                                                <div className={`flex-1 pt-1 pb-2 transition-all duration-500 ease-out ${isActive ? 'bg-primary/[0.04] border border-primary/15 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 -mt-3 -ml-2 shadow-[inset_0_0_20px_rgba(0,0,0,0.015)] backdrop-blur-sm' : 'pl-2'}`}>
+                                                {/* Bug Fix: -ml-2 dihapus karena memicu horizontal scroll di mobile. Diganti dengan pl-0 agar tidak ada overflow */}
+                                                <div className={`flex-1 pt-1 pb-2 transition-all duration-500 ease-out ${isActive ? 'bg-primary/[0.04] border border-primary/15 rounded-2xl px-4 py-3 sm:px-5 sm:py-4 -mt-3 shadow-[inset_0_0_20px_rgba(0,0,0,0.015)] backdrop-blur-sm' : 'pl-2'}`}>
                                                     <h4 className={`text-base font-extrabold sm:text-lg transition-colors duration-300 ${isActive ? 'text-primary' :
                                                             isCompleted ? 'text-neutral-text' :
                                                                 hasResult ? 'text-neutral-muted' : 'text-neutral-text'
@@ -645,10 +668,11 @@ const CheckStatusPage = () => {
             </main>
 
             {chatOpen && (
-                <div className="fixed inset-0 z-50">
-                    <div className="absolute inset-0 bg-black/15 backdrop-blur-[1px]" />
-                    <section className="absolute bottom-4 right-4 flex h-[min(560px,calc(100vh-2rem))] w-[calc(100vw-2rem)] max-w-md flex-col overflow-hidden rounded-2xl border border-neutral-border bg-white shadow-2xl sm:bottom-6 sm:right-6">
-                        <div className="flex items-center justify-between border-b border-neutral-border bg-primary px-4 py-4 text-white">
+                <>
+                    {/* Bug Fix: overscroll-none + touch-none mencegah halaman di belakang chat bisa di-scroll di iOS Safari */}
+                    <div className="fixed inset-0 z-[60] touch-none overscroll-none bg-black/15 backdrop-blur-[1px]" onClick={() => setChatOpen(false)} />
+                    <section className="fixed left-0 top-0 z-[61] flex h-[100dvh] w-full flex-col overflow-hidden bg-white shadow-2xl sm:bottom-6 sm:left-auto sm:right-6 sm:top-auto sm:h-[min(560px,calc(100dvh-2rem))] sm:w-[28rem] sm:max-w-md sm:rounded-2xl sm:border sm:border-neutral-border">
+                        <div className="shrink-0 flex items-center justify-between border-b border-neutral-border bg-primary px-4 py-4 pt-[max(env(safe-area-inset-top),1rem)] text-white sm:pt-4">
                             <div className="flex items-center gap-3">
                                 <div className="grid h-10 w-10 place-items-center rounded-full bg-white/15">
                                     <MessageCircle size={20} />
@@ -668,7 +692,7 @@ const CheckStatusPage = () => {
                             </button>
                         </div>
 
-                        <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-bg p-4">
+                        <div ref={messageListRef} className="flex-1 space-y-3 overflow-y-auto bg-neutral-bg p-4 pb-[env(safe-area-inset-bottom)]">
                             {/* Loading awal: hanya tampil kalau belum ada pesan sama sekali */}
                             {loadingMessages && messages.length === 0 ? (
                                 <div className="flex flex-col gap-3 py-2">
@@ -722,7 +746,7 @@ const CheckStatusPage = () => {
                             )}
                         </div>
 
-                        <div className="border-t border-neutral-border bg-white p-3">
+                        <div className="shrink-0 border-t border-neutral-border bg-white p-3 pb-[max(env(safe-area-inset-bottom),0.75rem)]">
                             <div className="flex items-center gap-2 rounded-2xl border border-neutral-border bg-neutral-card px-3 py-2 focus-within:border-primary">
                                 <input
                                     value={chatMessage}
@@ -734,7 +758,7 @@ const CheckStatusPage = () => {
                                         }
                                     }}
                                     placeholder="Tulis pesan..."
-                                    className="min-w-0 flex-1 bg-transparent text-sm font-semibold text-neutral-text outline-none placeholder:text-neutral-muted"
+                                    className="min-w-0 flex-1 bg-transparent text-[16px] font-semibold text-neutral-text outline-none placeholder:text-neutral-muted sm:text-sm"
                                 />
                                 <button
                                     type="button"
@@ -747,7 +771,7 @@ const CheckStatusPage = () => {
                             </div>
                         </div>
                     </section>
-                </div>
+                </>
             )}
 
             <Footer />
