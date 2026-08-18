@@ -24,6 +24,13 @@ export interface Submission {
     member_1: string
     member_2: string | null
     member_3: string | null
+    member_4?: string | null
+    member_5?: string | null
+    member_6?: string | null
+    member_7?: string | null
+    member_8?: string | null
+    member_9?: string | null
+    member_10?: string | null
     letter_number: string
     phone_number: string
     status: 'pending' | 'approved' | 'rejected'
@@ -39,6 +46,9 @@ export interface Submission {
         created_at: string
     } | null
     created_at: string
+    certificate_generated_at?: string | null
+    certificate_number_suffixes?: string[] | null
+    certificate_zip_path?: string | null
 }
 
 const ListPendaftarPage = () => {

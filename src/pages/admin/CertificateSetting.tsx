@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react
 import {
     Upload, Plus, Trash2, Save, Award, AlertCircle, Eye, EyeOff, Crosshair,
     CheckCircle2, Loader2, GripVertical, ChevronDown, AlignLeft, AlignCenter, AlignRight,
-    Settings as SettingsIcon
+    Settings as SettingsIcon, FileText
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Draggable from 'react-draggable'
@@ -35,32 +35,42 @@ interface CertField {
 // Field yang tersedia untuk ditambahkan
 const AVAILABLE_FIELDS = [
     { id: 'nama',              label: 'Nama Peserta' },
-    { id: 'institusi',         label: 'Institusi / Sekolah' },
-    { id: 'prodi',             label: 'Program Studi' },
-    { id: 'periode',           label: 'Periode Magang' },
+    { id: 'nim',               label: 'NIM / NISN' },
+    { id: 'asal_instansi',     label: 'Asal Instansi' },
     { id: 'nomor_sertifikat',  label: 'Nomor Sertifikat' },
     { id: 'tanggal_terbit',    label: 'Tanggal Terbit' },
+    { id: 'teks_kegiatan',     label: 'Teks Kegiatan' },
+    { id: 'nama_pejabat',      label: 'Nama Pejabat' },
+    { id: 'nama_pejabat',      label: 'Nama Pejabat' },
 ]
 
 // ── Warna tiap field ──────────────────────────────────────────────────────────
 const FIELD_COLORS: Record<string, string> = {
     nama:             'border-rose-500 bg-rose-500/10 text-rose-700',
-    institusi:        'border-blue-500 bg-blue-500/10 text-blue-700',
-    prodi:            'border-violet-500 bg-violet-500/10 text-violet-700',
-    periode:          'border-amber-500 bg-amber-500/10 text-amber-700',
+    nim:              'border-indigo-500 bg-indigo-500/10 text-indigo-700',
+    asal_instansi:    'border-blue-500 bg-blue-500/10 text-blue-700',
     nomor_sertifikat: 'border-emerald-500 bg-emerald-500/10 text-emerald-700',
     tanggal_terbit:   'border-sky-500 bg-sky-500/10 text-sky-700',
+    teks_kegiatan:    'border-teal-500 bg-teal-500/10 text-teal-700',
+    nama_pejabat:     'border-purple-500 bg-purple-500/10 text-purple-700',
+    // Fallback legacy keys
+    institusi:        'border-blue-500 bg-blue-500/10 text-blue-700',
+    prodi:            'border-violet-500 bg-violet-500/10 text-violet-700',
 }
 
 // Data contoh hanya untuk kanvas preview. Sertifikat hasil generate tetap
 // menggunakan data pendaftar yang sebenarnya dari database.
 const FIELD_PREVIEW_VALUES: Record<string, string> = {
-    nama: 'Muhammad Rizky Pratama Wijaya Kusuma',
-    institusi: 'Universitas Pembangunan Nasional Veteran Jakarta',
-    prodi: 'Teknik Informatika',
-    periode: '01 Agustus 2026 – 31 Desember 2026',
-    nomor_sertifikat: 'W.10-1234/PK.01.01/2026',
-    tanggal_terbit: '16 Juli 2026',
+    nama:             "Qanita Shafiyah Qurrata'ain",
+    nim:              '1203230094',
+    asal_instansi:    'Program Studi S1 Informatika, Universitas Telkom Surabaya',
+    teks_kegiatan:    'Telah menyelesaikan magang/praktek kerja lapangan di Kantor Wilayah Kementerian Hukum Jawa Timur mulai 06 Juli 2026 hingga 28 Agustus 2026',
+    nomor_sertifikat: 'W.15-UM.01.01-001',
+    tanggal_terbit:   'Surabaya, 28 Agustus 2026',
+    nama_pejabat:     'R. Prasetyo Wibowo, S.H., M.H.',
+    // Fallback legacy keys
+    institusi:        'Universitas Telkom Surabaya',
+    prodi:            'Program Studi S1 Informatika',
 }
 
 const CERTIFICATE_FONTS = [
@@ -72,6 +82,7 @@ const CERTIFICATE_FONTS = [
     { value: 'playfair', label: 'Playfair Display', fontFamily: '"Playfair Display", Georgia, serif' },
     { value: 'dancing-script', label: 'Dancing Script', fontFamily: '"Dancing Script", cursive' },
     { value: 'great-vibes', label: 'Great Vibes', fontFamily: '"Great Vibes", cursive' },
+    { value: 'niconne', label: 'Niconne', fontFamily: '"Niconne", cursive' },
 ]
 
 const FONT_VARIANTS: Record<string, Array<{ weight: number; style: 'normal' | 'italic'; label: string }>> = {
@@ -111,6 +122,7 @@ const FONT_VARIANTS: Record<string, Array<{ weight: number; style: 'normal' | 'i
         label: ({ 400: 'Regular', 500: 'Medium', 600: 'SemiBold', 700: 'Bold' } as Record<number, string>)[weight],
     })),
     'great-vibes': [{ weight: 400, style: 'normal', label: 'Regular' }],
+    'niconne': [{ weight: 400, style: 'normal', label: 'Regular' }],
 }
 
 const FONT_CSS: Record<string, string> = {
@@ -122,15 +134,22 @@ const FONT_CSS: Record<string, string> = {
     playfair: '"Playfair Display", Georgia, serif',
     'dancing-script': '"Dancing Script", cursive',
     'great-vibes': '"Great Vibes", cursive',
+    'niconne': '"Niconne", cursive',
 }
 
-const AutoFitText = ({ text, maxSize, align, fontFamily, fontWeight, fontStyle }: { text: string; maxSize: number; align: CertField['text_align']; fontFamily: string; fontWeight: number; fontStyle: CertField['font_style'] }) => {
+const AutoFitText = ({ text, maxSize, align, fontFamily, fontWeight, fontStyle, multiline }: { text: string; maxSize: number; align: CertField['text_align']; fontFamily: string; fontWeight: number; fontStyle: CertField['font_style']; multiline?: boolean }) => {
     const ref = useRef<HTMLSpanElement>(null)
     const [size, setSize] = useState(maxSize)
 
     useLayoutEffect(() => {
         const element = ref.current
         if (!element) return
+
+        if (multiline) {
+            setSize(maxSize)
+            return
+        }
+
         const fit = () => {
             element.style.fontSize = `${maxSize}px`
             const available = element.clientWidth
@@ -141,9 +160,9 @@ const AutoFitText = ({ text, maxSize, align, fontFamily, fontWeight, fontStyle }
         const observer = new ResizeObserver(fit)
         observer.observe(element)
         return () => observer.disconnect()
-    }, [text, maxSize, fontFamily, fontWeight, fontStyle])
+    }, [text, maxSize, fontFamily, fontWeight, fontStyle, multiline])
 
-    return <span ref={ref} className="min-w-0 flex-1 overflow-hidden whitespace-nowrap" style={{ fontSize: size, lineHeight: 1, textAlign: align, fontFamily, fontWeight, fontStyle }}>{text}</span>
+    return <span ref={ref} className={`min-w-0 flex-1 overflow-hidden ${multiline ? 'whitespace-pre-wrap' : 'whitespace-nowrap'}`} style={{ fontSize: size, lineHeight: multiline ? 1.5 : 1, textAlign: align, fontFamily, fontWeight, fontStyle }}>{text}</span>
 }
 
 interface DraggableFieldProps {
@@ -197,7 +216,7 @@ const DraggableField = ({ field, position, selected, width, previewMode, onSelec
         >
             <div
                 ref={nodeRef}
-                className={`absolute z-20 flex items-start whitespace-nowrap ${previewMode ? 'border-transparent bg-transparent shadow-none' : `${FIELD_COLORS[field.id] ?? 'border-gray-400 bg-gray-100 text-gray-700'} cursor-grab border active:cursor-grabbing`} ${selected && !previewMode ? 'ring-2 ring-primary' : ''}`}
+                className={`absolute z-20 flex items-start ${field.id === 'teks_kegiatan' ? '' : 'whitespace-nowrap'} ${previewMode ? 'border-transparent bg-transparent shadow-none' : `${FIELD_COLORS[field.id] ?? 'border-gray-400 bg-gray-100 text-gray-700'} cursor-grab border active:cursor-grabbing`} ${selected && !previewMode ? 'ring-2 ring-primary' : ''}`}
                 style={{
                     top: 0,
                     left: 0,
@@ -206,8 +225,8 @@ const DraggableField = ({ field, position, selected, width, previewMode, onSelec
                 }}
                 onClick={onSelect}
             >
-                {!previewMode && <GripVertical size={12} className="mx-1 shrink-0 opacity-60" />}
-                <AutoFitText text={field.preview_text} maxSize={field.font_size} align={field.text_align} fontFamily={FONT_CSS[field.font_family] ?? FONT_CSS.helvetica} fontWeight={field.font_weight} fontStyle={field.font_style} />
+                {!previewMode && <GripVertical size={12} className="mx-1 shrink-0 opacity-60 mt-1" />}
+                <AutoFitText text={field.preview_text} maxSize={field.font_size} align={field.text_align} fontFamily={FONT_CSS[field.font_family] ?? FONT_CSS.helvetica} fontWeight={field.font_weight} fontStyle={field.font_style} multiline={field.id === 'teks_kegiatan'} />
                 {!previewMode && selected && <>
                     <button type="button" className="resize-handle absolute inset-y-0 left-0 w-2 cursor-ew-resize bg-current/20" onPointerDown={event => startResize('left', event)} aria-label="Ubah lebar dari kiri" />
                     <button type="button" className="resize-handle absolute inset-y-0 right-0 w-2 cursor-ew-resize bg-current/20" onPointerDown={event => startResize('right', event)} aria-label="Ubah lebar dari kanan" />
@@ -235,6 +254,14 @@ const CertificateSettingPage = () => {
     const [previewMode, setPreviewMode]       = useState(false)
     const [showGuides, setShowGuides]         = useState(true)
 
+    // Pengaturan teks sertifikat
+    const [textSettings, setTextSettings] = useState({
+        prefix: '',
+        text_magang: '',
+        text_penelitian: '',
+    })
+    const [savingTextSettings, setSavingTextSettings] = useState(false)
+
     const containerRef  = useRef<HTMLDivElement>(null)
     const fileInputRef  = useRef<HTMLInputElement>(null)
     const addMenuRef    = useRef<HTMLDivElement>(null)
@@ -250,7 +277,14 @@ const CertificateSettingPage = () => {
                 const data = res.data?.data
                 setTemplateUrl(data?.template_url ?? null)
                 setTemplatePath(data?.template_path ?? null)
-                setFields((data?.fields ?? []).map((field: Partial<CertField> & Pick<CertField, 'id' | 'label'>) => ({
+                setTextSettings({
+                    prefix: data?.prefix ?? data?.certificate_prefix ?? '',
+                    text_magang: data?.text_magang ?? data?.certificate_text_magang ?? '',
+                    text_penelitian: data?.text_penelitian ?? data?.certificate_text_penelitian ?? '',
+                })
+                const rawFields = data?.fields ?? []
+                const validFields = rawFields.filter((field: any) => AVAILABLE_FIELDS.some(available => available.id === field.id))
+                setFields(validFields.map((field: Partial<CertField> & Pick<CertField, 'id' | 'label'>) => ({
                     ...field,
                     x: Number(field.x ?? 10),
                     y: Number(field.y ?? 10),
@@ -437,7 +471,7 @@ const CertificateSettingPage = () => {
             y:          10,
             font_size:  14,
             font_color: '#1a1a1a',
-            width:      40,
+            width:      fieldId === 'teks_kegiatan' ? 80 : 40,
             text_align: 'center',
             font_family: 'helvetica',
             font_weight: 400,
@@ -551,6 +585,28 @@ const CertificateSettingPage = () => {
             toast.error(firstValidationError || error.response?.data?.message || 'Gagal menyimpan pengaturan field')
         } finally {
             setSaving(false)
+        }
+    }
+
+    // ── Simpan pengaturan teks sertifikat ke backend ─────────────────────────
+    const handleSaveTextSettings = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault()
+        setSavingTextSettings(true)
+        try {
+            await api.post('/admin/certificate/text-settings', {
+                prefix: textSettings.prefix,
+                text_magang: textSettings.text_magang,
+                text_penelitian: textSettings.text_penelitian,
+            })
+            toast.success('Pengaturan teks sertifikat berhasil disimpan!')
+        } catch (error: any) {
+            const validationErrors = error.response?.data?.errors
+            const firstValidationError = validationErrors
+                ? (Object.values(validationErrors).flat()[0] as string | undefined)
+                : undefined
+            toast.error(firstValidationError || error.response?.data?.message || 'Gagal menyimpan pengaturan teks sertifikat')
+        } finally {
+            setSavingTextSettings(false)
         }
     }
 
@@ -733,6 +789,98 @@ const CertificateSettingPage = () => {
                 />
             </div>
 
+            {/* ── Section: Pengaturan Teks Sertifikat ── */}
+            <div className="rounded-2xl border border-neutral-border bg-neutral-card p-3 shadow-sm sm:p-6">
+                <div className="mb-4 flex items-center justify-between border-b border-neutral-border pb-3">
+                    <div>
+                        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-primary">
+                            <FileText size={15} />
+                            Pengaturan Teks Sertifikat
+                        </h2>
+                        <p className="mt-1 text-xs text-neutral-muted">
+                            Konfigurasi nomor surat dan template kalimat kegiatan untuk sertifikat.
+                            Nama pejabat dikelola di halaman{' '}
+                            <a href="/admin/settings" className="font-semibold text-primary underline">Pengaturan</a>.
+                        </p>
+                    </div>
+                </div>
+
+                <form onSubmit={handleSaveTextSettings} className="space-y-4">
+                    {/* Prefix Nomor Sertifikat */}
+                    <div className="max-w-sm">
+                        <label className="mb-1.5 block text-xs font-bold text-neutral-text">
+                            Prefix Nomor Sertifikat
+                        </label>
+                        <input
+                            type="text"
+                            value={textSettings.prefix}
+                            onChange={(e) => setTextSettings(prev => ({ ...prev, prefix: e.target.value }))}
+                            placeholder="Contoh: W.15-UM.01.01-"
+                            className="w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-text placeholder:text-neutral-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                        />
+                        <p className="mt-1 text-[11px] text-neutral-muted">
+                            Prefix yang digabungkan dengan suffix nomor per peserta (misal: <span className="font-mono font-semibold text-neutral-text">{textSettings.prefix || 'W.15-UM.01.01-'}001</span>)
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        {/* Teks Kegiatan Magang */}
+                        <div>
+                            <label className="mb-1.5 block text-xs font-bold text-neutral-text">
+                                Teks Kegiatan (Program Magang)
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={textSettings.text_magang}
+                                onChange={(e) => setTextSettings(prev => ({ ...prev, text_magang: e.target.value }))}
+                                placeholder="Telah menyelesaikan magang/praktek kerja lapangan di Kantor Wilayah Kementerian Hukum Jawa Timur mulai {periode}"
+                                className="w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-text placeholder:text-neutral-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <p className="mt-1 text-[11px] text-neutral-muted">
+                                Gunakan tag <code className="rounded bg-neutral-bg px-1 py-0.5 font-mono text-primary font-bold">{'{periode}'}</code> untuk rentang tanggal otomatis.
+                            </p>
+                        </div>
+
+                        {/* Teks Kegiatan Penelitian */}
+                        <div>
+                            <label className="mb-1.5 block text-xs font-bold text-neutral-text">
+                                Teks Kegiatan (Program Penelitian)
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={textSettings.text_penelitian}
+                                onChange={(e) => setTextSettings(prev => ({ ...prev, text_penelitian: e.target.value }))}
+                                placeholder="Telah melaksanakan penelitian di Kantor Wilayah Kementerian Hukum Jawa Timur mulai {periode}"
+                                className="w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-text placeholder:text-neutral-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <p className="mt-1 text-[11px] text-neutral-muted">
+                                Gunakan tag <code className="rounded bg-neutral-bg px-1 py-0.5 font-mono text-primary font-bold">{'{periode}'}</code> untuk rentang tanggal otomatis.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="flex justify-end pt-2">
+                        <button
+                            type="submit"
+                            disabled={savingTextSettings}
+                            className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-primary-dark disabled:opacity-50"
+                        >
+                            {savingTextSettings ? (
+                                <>
+                                    <Loader2 size={14} className="animate-spin" />
+                                    <span>Menyimpan Pengaturan Teks...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Save size={14} />
+                                    <span>Simpan Pengaturan Teks</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
+                </form>
+            </div>
+
             {/* ── Section 2: Visual Editor ── */}
             {templateUrl && (
                 <div className="rounded-2xl border border-neutral-border bg-neutral-card p-3 shadow-sm sm:p-6">
@@ -845,10 +993,15 @@ const CertificateSettingPage = () => {
                                     const pos = pixelPositions[field.id]
                                     if (!pos) return null
 
+                                    const dynamicField = { ...field }
+                                    if (field.id === 'teks_kegiatan' && textSettings.text_magang) {
+                                        dynamicField.preview_text = textSettings.text_magang.replace('{periode}', '06 Juli 2026 – 28 Agustus 2026')
+                                    }
+
                                     return (
                                         <DraggableField
                                             key={field.id}
-                                            field={field}
+                                            field={dynamicField}
                                             position={pos}
                                             selected={selectedField === field.id}
                                             width={((containerRef.current?.clientWidth ?? 400) * field.width) / 100}
@@ -873,7 +1026,7 @@ const CertificateSettingPage = () => {
                             </div>
                             <label className="block">
                               <span className="mb-1.5 block text-[11px] font-bold text-neutral-muted">Teks Preview</span>
-                              <input value={selectedFieldData.preview_text} onChange={event => updateField(selectedFieldData.id, { preview_text: event.target.value })} className="w-full rounded-lg border border-neutral-border bg-white px-3 py-2 text-xs outline-none focus:border-primary" />
+                              <textarea rows={3} value={selectedFieldData.preview_text} onChange={event => updateField(selectedFieldData.id, { preview_text: event.target.value })} className="w-full rounded-lg border border-neutral-border bg-white px-3 py-2 text-xs outline-none focus:border-primary resize-y" />
                             </label>
                             <div>
                               <span className="mb-1.5 block text-[11px] font-bold text-neutral-muted">Jenis Font</span>

@@ -12,7 +12,7 @@ import { toast } from 'react-toastify'
 import { useQueryClient } from '@tanstack/react-query'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
-import logo1 from '../../assets/logo 1.svg'
+import logoAdmin from '../../assets/logo admin.svg'
 import { useConfirm } from '../../context/ConfirmContext'
 
 const navItems = [
@@ -110,13 +110,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       >
         {/* Brand */}
         <div className="flex items-center gap-3 border-b border-neutral-border px-6 py-5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-black">
-            <img src={logo1} alt="Logo" className="h-7 w-7" />
-          </div>
-          <div className="leading-tight">
-            <p className="text-sm font-extrabold text-neutral-text">Ruang Magang</p>
-            <p className="text-[10px] text-neutral-muted">Admin Panel</p>
-          </div>
+          <img src={logoAdmin} alt="Ruang Magang Admin Panel" className="h-14 w-auto" />
           <button
             className="ml-auto text-neutral-muted hover:text-primary lg:hidden"
             onClick={() => setSidebarOpen(false)}

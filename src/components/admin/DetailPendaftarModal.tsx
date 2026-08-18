@@ -88,6 +88,14 @@ const DetailPendaftarModal = ({
     const [showCertificateModal, setShowCertificateModal] = useState(false)
     const [showRejectForm, setShowRejectForm] = useState(false)
     const [rejectionNote, setRejectionNote] = useState('')
+    const [currentSubmission, setCurrentSubmission] = useState<Submission | null>(submission)
+
+    useEffect(() => {
+        setCurrentSubmission(submission)
+    }, [submission])
+
+    const activeSubmission = currentSubmission ?? submission
+
     const permitInputRef = useRef<HTMLInputElement>(null)
     const messageListRef = useRef<HTMLDivElement>(null)
     const chatPanelRef = useRef<HTMLElement>(null)
@@ -212,18 +220,27 @@ const DetailPendaftarModal = ({
         }
     }, [isDraggingChat, chatOnly])
 
-    const parseMember = (memberStr: string | null) => {
+    const parseMember = (memberStr: string | null | undefined) => {
         if (!memberStr) return null
         const [nama, nim, email] = memberStr.split('|')
-        return { nama, nim, email }
+        return { nama: nama?.trim() ?? '-', nim: nim?.trim() ?? '', email: email?.trim() ?? '' }
     }
 
-    const ketua = submission ? parseMember(submission.member_1) : null
-    const anggota2 = submission ? parseMember(submission.member_2) : null
-    const anggota3 = submission ? parseMember(submission.member_3) : null
-    const anggotaList = [anggota2, anggota3].filter(Boolean)
-    const chatCanStart = Boolean(submission?.document_downloaded_at)
-    const chatIsActive = Boolean(submission?.discussion_started_at)
+    const memberKeys = [
+        'member_1', 'member_2', 'member_3', 'member_4', 'member_5',
+        'member_6', 'member_7', 'member_8', 'member_9', 'member_10'
+    ] as const
+
+    const allMembers = activeSubmission
+        ? (memberKeys
+            .map(key => parseMember((activeSubmission as any)[key]))
+            .filter(Boolean) as { nama: string; nim: string; email: string }[])
+        : []
+
+    const ketua = allMembers[0] ?? (activeSubmission ? parseMember(activeSubmission.member_1) : null)
+    const anggotaList = allMembers.slice(1)
+    const chatCanStart = Boolean(activeSubmission?.document_downloaded_at)
+    const chatIsActive = Boolean(activeSubmission?.discussion_started_at)
     const chatBadgeLabel = chatIsActive ? 'Aktif' : chatCanStart ? 'Siap' : 'Terkunci'
     const latestMessageFallbackCount = submission?.latest_message?.sender_type === 'applicant'
         && Number(submission.latest_message.id) > Number(readSeenMessageIds()[String(submission.id)] ?? 0)
@@ -701,6 +718,42 @@ const DetailPendaftarModal = ({
                                     </div>
                                 </section>
 
+                                {activeSubmission?.certificate_number_suffixes && activeSubmission.certificate_number_suffixes.length > 0 && (
+                                    <section>
+                                        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-muted flex items-center gap-1.5">
+                                            <Award size={14} className="text-amber-500" />
+                                            Sertifikat Terbit
+                                        </h3>
+                                        <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4 shadow-sm space-y-3">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span className="font-bold text-amber-800 flex items-center gap-1.5">
+                                                    <CheckCircle2 size={14} className="text-amber-600" /> Sertifikat Telah Diterbitkan
+                                                </span>
+                                                {activeSubmission.certificate_generated_at && (
+                                                    <span className="text-[10px] text-amber-700 font-medium">
+                                                        {new Date(activeSubmission.certificate_generated_at).toLocaleString('id-ID')}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <ul className="flex flex-col gap-2">
+                                                {allMembers.map((m, idx) => (
+                                                    <li key={idx} className="flex items-center justify-between rounded-lg border border-amber-200/80 bg-white px-3 py-2 text-xs shadow-xs">
+                                                        <div className="min-w-0 pr-2">
+                                                            <p className="font-bold text-neutral-text truncate">{m.nama}</p>
+                                                            {m.nim && <p className="text-[10px] text-neutral-muted">NIM: {m.nim}</p>}
+                                                        </div>
+                                                        <div className="shrink-0 text-right">
+                                                            <span className="inline-block rounded-md bg-amber-100 px-2.5 py-1 font-mono text-xs font-extrabold text-amber-800">
+                                                                Suffix: {activeSubmission.certificate_number_suffixes?.[idx] || '-'}
+                                                            </span>
+                                                        </div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </section>
+                                )}
+
                                 <section>
                                     <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-muted">Berkas Pendukung</h3>
                                     <div className="rounded-xl border border-neutral-border bg-neutral-card p-4 shadow-sm">
@@ -965,10 +1018,12 @@ const DetailPendaftarModal = ({
         {/* ── Certificate Modal ── */}
         {showCertificateModal && (
             <CertificateModal
-                submission={submission}
+                submission={activeSubmission}
                 onClose={() => setShowCertificateModal(false)}
-                onSuccess={(_updatedSubmission) => {
+                onSuccess={(updatedSubmission) => {
                     setShowCertificateModal(false)
+                    setCurrentSubmission(updatedSubmission)
+                    queryClient.invalidateQueries({ queryKey: ['admin-submissions'] })
                 }}
             />
         )}
