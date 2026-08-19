@@ -259,6 +259,8 @@ const CertificateSettingPage = () => {
         prefix: '',
         text_magang: '',
         text_penelitian: '',
+        format_nim: '',
+        format_instansi: '',
     })
     const [savingTextSettings, setSavingTextSettings] = useState(false)
 
@@ -281,6 +283,8 @@ const CertificateSettingPage = () => {
                     prefix: data?.prefix ?? data?.certificate_prefix ?? '',
                     text_magang: data?.text_magang ?? data?.certificate_text_magang ?? '',
                     text_penelitian: data?.text_penelitian ?? data?.certificate_text_penelitian ?? '',
+                    format_nim: data?.format_nim ?? data?.certificate_format_nim ?? 'Nomor Induk Mahasiswa: {nim}',
+                    format_instansi: data?.format_instansi ?? data?.certificate_format_instansi ?? 'Asal Instansi: {instansi}',
                 })
                 const rawFields = data?.fields ?? []
                 const validFields = rawFields.filter((field: any) => AVAILABLE_FIELDS.some(available => available.id === field.id))
@@ -859,6 +863,42 @@ const CertificateSettingPage = () => {
                         </div>
                     </div>
 
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 pt-2">
+                        {/* Format NIM */}
+                        <div>
+                            <label className="mb-1.5 block text-xs font-bold text-neutral-text">
+                                Format Teks NIM
+                            </label>
+                            <input
+                                type="text"
+                                value={textSettings.format_nim}
+                                onChange={(e) => setTextSettings(prev => ({ ...prev, format_nim: e.target.value }))}
+                                placeholder="Nomor Induk Mahasiswa: {nim}"
+                                className="w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-text placeholder:text-neutral-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <p className="mt-1 text-[11px] text-neutral-muted">
+                                Gunakan tag <code className="rounded bg-neutral-bg px-1 py-0.5 font-mono text-primary font-bold">{'{nim}'}</code>.
+                            </p>
+                        </div>
+
+                        {/* Format Asal Instansi */}
+                        <div>
+                            <label className="mb-1.5 block text-xs font-bold text-neutral-text">
+                                Format Teks Asal Instansi
+                            </label>
+                            <input
+                                type="text"
+                                value={textSettings.format_instansi}
+                                onChange={(e) => setTextSettings(prev => ({ ...prev, format_instansi: e.target.value }))}
+                                placeholder="Asal Instansi: {instansi}"
+                                className="w-full rounded-xl border border-neutral-border bg-white px-3.5 py-2.5 text-sm font-medium text-neutral-text placeholder:text-neutral-muted focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                            />
+                            <p className="mt-1 text-[11px] text-neutral-muted">
+                                Gunakan tag <code className="rounded bg-neutral-bg px-1 py-0.5 font-mono text-primary font-bold">{'{instansi}'}</code>.
+                            </p>
+                        </div>
+                    </div>
+
                     <div className="flex justify-end pt-2">
                         <button
                             type="submit"
@@ -996,6 +1036,12 @@ const CertificateSettingPage = () => {
                                     const dynamicField = { ...field }
                                     if (field.id === 'teks_kegiatan' && textSettings.text_magang) {
                                         dynamicField.preview_text = textSettings.text_magang.replace('{periode}', '06 Juli 2026 – 28 Agustus 2026')
+                                    }
+                                    if (field.id === 'nim' && textSettings.format_nim) {
+                                        dynamicField.preview_text = textSettings.format_nim.replace('{nim}', '1203230094')
+                                    }
+                                    if (field.id === 'asal_instansi' && textSettings.format_instansi) {
+                                        dynamicField.preview_text = textSettings.format_instansi.replace('{instansi}', 'Program Studi S1 Informatika, Universitas Telkom Surabaya')
                                     }
 
                                     return (
