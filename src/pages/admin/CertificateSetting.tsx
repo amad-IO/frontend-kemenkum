@@ -41,7 +41,6 @@ const AVAILABLE_FIELDS = [
     { id: 'tanggal_terbit',    label: 'Tanggal Terbit' },
     { id: 'teks_kegiatan',     label: 'Teks Kegiatan' },
     { id: 'nama_pejabat',      label: 'Nama Pejabat' },
-    { id: 'nama_pejabat',      label: 'Nama Pejabat' },
 ]
 
 // ── Warna tiap field ──────────────────────────────────────────────────────────
