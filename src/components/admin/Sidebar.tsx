@@ -13,7 +13,7 @@ import { toast } from 'react-toastify'
 import { useQueryClient } from '@tanstack/react-query'
 import useAuthStore from '../../store/authStore'
 import api from '../../services/api'
-import logoAdmin from '../../assets/logo admin.svg'
+
 import { useConfirm } from '../../context/ConfirmContext'
 
 const navItems = [
@@ -122,7 +122,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       >
         {/* Brand */}
         <div className="flex items-center gap-3 border-b border-neutral-border px-6 py-5">
-          <img src={logoAdmin} alt="Ruang Magang Admin Panel" className="h-14 w-auto" />
+          <img src="/favicon.svg" alt="Ruang Magang Admin Panel" className="h-14 w-auto" />
           <button
             className="ml-auto text-neutral-muted hover:text-primary lg:hidden"
             onClick={() => setSidebarOpen(false)}
