@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react
 import {
     Upload, Plus, Trash2, Save, Award, AlertCircle, Eye, EyeOff, Crosshair,
     CheckCircle2, Loader2, GripVertical, ChevronDown, AlignLeft, AlignCenter, AlignRight,
-    Settings as SettingsIcon, FileText
+    Settings as SettingsIcon, FileText, Palette
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import Draggable from 'react-draggable'
+import { HexColorPicker } from "react-colorful"
 import * as pdfjs from 'pdfjs-dist'
 // Set worker sekali di module level menggunakan CDN untuk menghindari masalah MIME type (.mjs) di Hostinger
 pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
@@ -262,10 +263,12 @@ const CertificateSettingPage = () => {
         format_instansi: '',
     })
     const [savingTextSettings, setSavingTextSettings] = useState(false)
+    const [showColorPicker, setShowColorPicker] = useState(false)
 
     const containerRef  = useRef<HTMLDivElement>(null)
     const fileInputRef  = useRef<HTMLInputElement>(null)
     const addMenuRef    = useRef<HTMLDivElement>(null)
+    const colorPickerRef = useRef<HTMLDivElement>(null)
 
     // Posisi draggable (dalam piksel, dikonversi ke % saat simpan)
     const [pixelPositions, setPixelPositions] = useState<Record<string, { x: number; y: number }>>({})
@@ -317,6 +320,19 @@ const CertificateSettingPage = () => {
     }, [templatePath])
 
     // ── Inisialisasi posisi piksel dari persen saat gambar PDF siap ───────────
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (addMenuRef.current && !addMenuRef.current.contains(e.target as Node)) {
+                setShowAddMenu(false)
+            }
+            if (colorPickerRef.current && !colorPickerRef.current.contains(e.target as Node)) {
+                setShowColorPicker(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
     useEffect(() => {
         if (!pdfImageUrl || !containerRef.current) return
         const { width, height } = containerRef.current.getBoundingClientRect()
@@ -1122,12 +1138,40 @@ const CertificateSettingPage = () => {
                                 <button type="button" onClick={() => centerField(selectedFieldData, 'vertical')} className="rounded-lg border border-neutral-border bg-white px-2 py-2 text-[10px] font-bold text-neutral-text hover:border-primary hover:text-primary">Tengah Vertikal</button>
                               </div>
                             </div>
-                            <label className="block">
+                            <label className="block relative" ref={colorPickerRef}>
                               <span className="mb-1.5 block text-[11px] font-bold text-neutral-muted">Warna Teks</span>
                               <div className="flex items-center gap-2 rounded-lg border border-neutral-border bg-white p-2">
-                                <input type="color" value={selectedFieldData.font_color} onChange={event => updateField(selectedFieldData.id, { font_color: event.target.value })} className="h-7 w-9 cursor-pointer border-0 bg-transparent" />
+                                <button
+                                  type="button"
+                                  onClick={() => setShowColorPicker(!showColorPicker)}
+                                  style={{ backgroundColor: selectedFieldData.font_color }}
+                                  className="h-7 w-9 cursor-pointer rounded-md border border-neutral-border shadow-sm flex items-center justify-center"
+                                >
+                                    <Palette size={14} className="text-white mix-blend-difference" />
+                                </button>
                                 <span className="text-xs font-mono">{selectedFieldData.font_color}</span>
                               </div>
+                              {showColorPicker && (
+                                <div className="absolute top-full left-0 mt-2 z-50">
+                                  <div className="rounded-xl bg-white p-3 shadow-xl border border-neutral-border">
+                                    <HexColorPicker
+                                        color={selectedFieldData.font_color}
+                                        onChange={(color) => updateField(selectedFieldData.id, { font_color: color })}
+                                    />
+                                    <div className="mt-3 flex gap-2 flex-wrap max-w-[200px]">
+                                        {['#1a1a1a', '#ffffff', '#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#d97706'].map(preset => (
+                                            <button
+                                                key={preset}
+                                                type="button"
+                                                onClick={() => updateField(selectedFieldData.id, { font_color: preset })}
+                                                className="h-6 w-6 rounded-full border border-neutral-border shadow-sm"
+                                                style={{ backgroundColor: preset }}
+                                            />
+                                        ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
                             </label>
                             <button type="button" onClick={() => handleRemoveField(selectedFieldData.id)} className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500 bg-red-500 py-2 text-xs font-bold text-white transition hover:bg-red-600"><Trash2 size={13} /> Hapus Field</button>
                           </div>

@@ -20,6 +20,7 @@
     "pdfjs-dist": "^4.9.155",
     "pusher-js": "^8.5.0",
     "react": "^19.2.7",
+    "react-colorful": "^5.8.0",
     "react-dom": "^19.2.7",
     "react-draggable": "^4.7.0",
     "react-hook-form": "^7.81.0",
