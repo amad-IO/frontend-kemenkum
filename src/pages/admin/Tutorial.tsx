@@ -347,6 +347,15 @@ const TutorialPage = () => {
                         <div className="h-full w-full bg-gradient-to-br from-red-900 to-red-700" />
                       )
                     })()
+                  ) : tutorial.video_type === 'file' ? (
+                    /* Tampilkan frame pertama video asli sebagai thumbnail */
+                    <video
+                      preload="metadata"
+                      muted
+                      playsInline
+                      className="h-full w-full object-cover"
+                      src={tutorial.video_url || tutorial.video_source}
+                    />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-neutral-800 to-neutral-700">
                       <Film size={40} className="text-white/30" />
