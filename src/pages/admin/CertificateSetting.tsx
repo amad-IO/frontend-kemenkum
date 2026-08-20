@@ -1138,7 +1138,7 @@ const CertificateSettingPage = () => {
                                 <button type="button" onClick={() => centerField(selectedFieldData, 'vertical')} className="rounded-lg border border-neutral-border bg-white px-2 py-2 text-[10px] font-bold text-neutral-text hover:border-primary hover:text-primary">Tengah Vertikal</button>
                               </div>
                             </div>
-                            <label className="block relative" ref={colorPickerRef}>
+                            <div className="block relative" ref={colorPickerRef}>
                               <span className="mb-1.5 block text-[11px] font-bold text-neutral-muted">Warna Teks</span>
                               <div className="flex items-center gap-2 rounded-lg border border-neutral-border bg-white p-2">
                                 <button
@@ -1172,7 +1172,7 @@ const CertificateSettingPage = () => {
                                   </div>
                                 </div>
                               )}
-                            </label>
+                            </div>
                             <button type="button" onClick={() => handleRemoveField(selectedFieldData.id)} className="flex w-full items-center justify-center gap-2 rounded-full border border-red-500 bg-red-500 py-2 text-xs font-bold text-white transition hover:bg-red-600"><Trash2 size={13} /> Hapus Field</button>
                           </div>
                         ) : (

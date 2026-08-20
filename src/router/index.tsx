@@ -20,6 +20,7 @@ const Dashboard          = lazy(() => import('../pages/admin/Dashboard'))
 const KelolaProgramPage  = lazy(() => import('../pages/admin/KelolaProgram'))
 const ListPendaftarPage  = lazy(() => import('../pages/admin/ListPendaftar'))
 const CertificateSettingPage = lazy(() => import('../pages/admin/CertificateSetting'))
+const TutorialPage       = lazy(() => import('../pages/admin/Tutorial'))
 
 import AdminLayout from '../components/admin/AdminLayout'
 
@@ -131,6 +132,7 @@ const router = createBrowserRouter([
       { path: 'program',   element: withAdminSuspense(<KelolaProgramPage />) },
       { path: 'pendaftar', element: withAdminSuspense(<ListPendaftarPage />) },
       { path: 'sertifikat', element: withAdminSuspense(<CertificateSettingPage />) },
+      { path: 'tutorial',  element: withAdminSuspense(<TutorialPage />) },
     ],
   },
   

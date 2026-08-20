@@ -7,6 +7,7 @@ import {
   ChevronRight,
   Settings,
   Award,
+  Video,
 } from 'lucide-react'
 import { toast } from 'react-toastify'
 import { useQueryClient } from '@tanstack/react-query'
@@ -19,6 +20,7 @@ const navItems = [
   { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
   { label: 'List Pendaftar', to: '/admin/pendaftar', icon: Users },
   { label: 'Sertifikat', to: '/admin/sertifikat', icon: Award },
+  { label: 'Tutorial', to: '/admin/tutorial', icon: Video },
   { label: 'Pengaturan', to: '/admin/program', icon: Settings },
 ]
 
@@ -56,6 +58,16 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
       })
     } else if (to === '/admin/sertifikat') {
       import('../../pages/admin/CertificateSetting')
+    } else if (to === '/admin/tutorial') {
+      import('../../pages/admin/Tutorial')
+      queryClient.prefetchQuery({
+        queryKey: ['admin-tutorials'],
+        queryFn: async () => {
+          const res = await api.get('/admin/tutorials')
+          return res.data?.data
+        },
+        staleTime: 60_000,
+      })
     } else if (to === '/admin/program') {
       import('../../pages/admin/KelolaProgram')
       queryClient.prefetchQuery({
