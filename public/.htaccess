@@ -8,6 +8,7 @@
     RewriteRule ^api/(.*)$ backend/public/api/$1 [L]
     RewriteRule ^sanctum/(.*)$ backend/public/sanctum/$1 [L]
     RewriteRule ^storage/(.*)$ backend/public/storage/$1 [L]
+    RewriteRule ^uploads/(.*)$ backend/public/uploads/$1 [L]
 
     # Routing untuk Frontend React (dan folder lain seperti dino-runner)
     RewriteCond %{REQUEST_FILENAME} !-f
