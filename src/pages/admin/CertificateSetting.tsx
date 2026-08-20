@@ -1149,7 +1149,24 @@ const CertificateSettingPage = () => {
                                 >
                                     <Palette size={14} className="text-white mix-blend-difference" />
                                 </button>
-                                <span className="text-xs font-mono">{selectedFieldData.font_color}</span>
+                                <input
+                                  type="text"
+                                  value={selectedFieldData.font_color}
+                                  onChange={e => {
+                                    const val = e.target.value
+                                    updateField(selectedFieldData.id, { font_color: val })
+                                  }}
+                                  onBlur={e => {
+                                    // Jika bukan hex valid, kembalikan ke hitam
+                                    const val = e.target.value
+                                    if (!/^#[0-9A-Fa-f]{3,6}$/.test(val)) {
+                                      updateField(selectedFieldData.id, { font_color: '#1a1a1a' })
+                                    }
+                                  }}
+                                  maxLength={7}
+                                  className="w-24 bg-transparent text-xs font-mono text-neutral-text border-0 outline-none focus:ring-1 focus:ring-primary/40 rounded px-1"
+                                  placeholder="#000000"
+                                />
                               </div>
                               {showColorPicker && (
                                 <div className="absolute top-full left-0 mt-2 z-50">
